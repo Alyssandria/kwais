@@ -1,14 +1,43 @@
 import { Navigate, createBrowserRouter, type RouteObject } from 'react-router-dom';
-import { HomePage } from '@/pages/public/HomePage';
+import { RedirectIfSignedIn, RequireAuth } from '@/features/auth/guards';
+import { PublicLayout } from '@/pages/public/PublicLayout';
+import { LandingPage } from '@/pages/public/LandingPage';
+import { DisclaimerPage, PrivacyPage, TermsPage } from '@/pages/public/LegalPages';
 import { NotFoundPage } from '@/pages/public/NotFoundPage';
+import { LoginPage } from '@/pages/auth/LoginPage';
+import { RegisterPage } from '@/pages/auth/RegisterPage';
+import { ForgotPasswordPage } from '@/pages/auth/ForgotPasswordPage';
+import { ResetPasswordPage } from '@/pages/auth/ResetPasswordPage';
 import { PatientLayout } from '@/pages/patient/PatientLayout';
 import { ComingSoonPage } from '@/pages/patient/ComingSoonPage';
 import { ComponentGallery } from '@/pages/dev/ComponentGallery';
+import { StatusPage } from '@/pages/dev/StatusPage';
 
-/** /patient/* — each page is a placeholder until its section lands. */
+const publicRoutes: RouteObject = {
+  element: <PublicLayout />,
+  children: [
+    { path: '/', element: <LandingPage /> },
+    { path: '/privacy', element: <PrivacyPage /> },
+    { path: '/terms', element: <TermsPage /> },
+    { path: '/disclaimer', element: <DisclaimerPage /> },
+  ],
+};
+
+const authRoutes: RouteObject[] = [
+  { path: '/login', element: <RedirectIfSignedIn><LoginPage /></RedirectIfSignedIn> },
+  { path: '/register', element: <RedirectIfSignedIn><RegisterPage /></RedirectIfSignedIn> },
+  { path: '/forgot-password', element: <ForgotPasswordPage /> },
+  { path: '/reset-password', element: <ResetPasswordPage /> },
+];
+
+/** /patient/* — signed-in patients only. Pages are placeholders until their section lands. */
 const patientRoutes: RouteObject = {
   path: '/patient',
-  element: <PatientLayout />,
+  element: (
+    <RequireAuth role="patient">
+      <PatientLayout />
+    </RequireAuth>
+  ),
   children: [
     { index: true, element: <Navigate to="dashboard" replace /> },
     { path: 'dashboard', element: <ComingSoonPage title="Dashboard" section={4} /> },
@@ -23,12 +52,17 @@ const patientRoutes: RouteObject = {
   ],
 };
 
-const routes: RouteObject[] = [
-  { path: '/', element: <HomePage /> },
-  patientRoutes,
-  // Development-only component gallery
-  ...(import.meta.env.DEV ? [{ path: '/dev/components', element: <ComponentGallery /> }] : []),
-  { path: '*', element: <NotFoundPage /> },
-];
+const devRoutes: RouteObject[] = import.meta.env.DEV
+  ? [
+      { path: '/dev/components', element: <ComponentGallery /> },
+      { path: '/dev/status', element: <StatusPage /> },
+    ]
+  : [];
 
-export const router = createBrowserRouter(routes);
+export const router = createBrowserRouter([
+  publicRoutes,
+  ...authRoutes,
+  patientRoutes,
+  ...devRoutes,
+  { path: '*', element: <NotFoundPage /> },
+]);

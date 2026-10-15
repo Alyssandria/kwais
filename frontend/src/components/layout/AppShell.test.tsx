@@ -4,10 +4,12 @@ import { MemoryRouter } from 'react-router-dom';
 import { AppShell } from './AppShell';
 import { patientNav } from './nav';
 
+const onSignOut = vi.fn();
+
 function renderShell(path = '/patient/dashboard') {
   return render(
     <MemoryRouter initialEntries={[path]}>
-      <AppShell nav={patientNav} user={{ firstName: 'Maria', lastName: 'Santos' }} unreadCount={2}>
+      <AppShell nav={patientNav} user={{ firstName: 'Maria', lastName: 'Santos' }} unreadCount={2} onSignOut={onSignOut}>
         <p>Page content</p>
       </AppShell>
     </MemoryRouter>,
@@ -41,6 +43,12 @@ describe('AppShell', () => {
     expect(screen.getByRole('button', { name: 'Close menu' })).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Close menu' }));
     expect(screen.queryByRole('button', { name: 'Close menu' })).not.toBeInTheDocument();
+  });
+
+  it('signs out from the top bar', async () => {
+    renderShell();
+    await userEvent.click(screen.getByRole('button', { name: 'Sign out' }));
+    expect(onSignOut).toHaveBeenCalled();
   });
 
   it('shows four short tabs and an Add-a-meal button on phones', () => {

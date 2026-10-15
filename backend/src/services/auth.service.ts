@@ -1,0 +1,212 @@
+import { randomUUID } from 'node:crypto';
+import { env } from '../config/env.js';
+import { HttpError } from '../lib/http-error.js';
+import { signAccessToken } from '../lib/jwt.js';
+import { getDummyHash, hashPassword, verifyPassword } from '../lib/password.js';
+import { generatePatientCode, randomToken, sha256 } from '../lib/tokens.js';
+import { PasswordResetModel } from '../models/password-reset.model.js';
+import { RefreshTokenModel } from '../models/refresh-token.model.js';
+import { UserModel, type PublicUser } from '../models/user.model.js';
+import { AuditService, type RequestMeta } from './audit.service.js';
+import { MailService } from './mail.service.js';
+
+/** Version of the privacy notice and terms the user agreed to. Bump when either changes. */
+export const POLICY_VERSION = '2026-10';
+
+const MAX_FAILED_LOGINS = 5;
+const LOCKOUT_MINUTES = 15;
+
+export interface AuthUser {
+  id: string;
+  email: string;
+  role: 'patient' | 'doctor';
+  firstName: string | null;
+  lastName: string | null;
+  patientCode: string | null;
+  onboardingComplete: boolean;
+}
+
+/** What controllers receive after a successful sign-in, sign-up or refresh. */
+export interface Session {
+  user: AuthUser;
+  accessToken: string;
+  accessTokenExpiresIn: number;
+  /** Raw refresh token: the controller puts it in an httpOnly cookie and never in the body. */
+  refreshToken: string;
+  refreshTokenExpiresAt: Date;
+}
+
+export function toAuthUser(u: PublicUser): AuthUser {
+  return {
+    id: u.id,
+    email: u.email,
+    role: u.role,
+    firstName: u.patientProfile?.firstName ?? null,
+    lastName: u.patientProfile?.lastName ?? null,
+    patientCode: u.patientProfile?.patientCode ?? null,
+    onboardingComplete: Boolean(u.patientProfile?.onboardingDoneAt),
+  };
+}
+
+const normaliseEmail = (email: string) => email.trim().toLowerCase();
+
+async function issueSession(user: PublicUser, family: string = randomUUID()): Promise<Session> {
+  const refreshToken = randomToken();
+  const refreshTokenExpiresAt = new Date(Date.now() + env.REFRESH_TOKEN_TTL_DAYS * 86_400_000);
+  await RefreshTokenModel.create({
+    userId: user.id,
+    tokenHash: sha256(refreshToken),
+    family,
+    expiresAt: refreshTokenExpiresAt,
+  });
+  return {
+    user: toAuthUser(user),
+    accessToken: signAccessToken({ sub: user.id, role: user.role }, env.JWT_ACCESS_SECRET, env.ACCESS_TOKEN_TTL_SECONDS),
+    accessTokenExpiresIn: env.ACCESS_TOKEN_TTL_SECONDS,
+    refreshToken,
+    refreshTokenExpiresAt,
+  };
+}
+
+async function uniquePatientCode(): Promise<string> {
+  for (let i = 0; i < 10; i++) {
+    const code = generatePatientCode();
+    if (!(await UserModel.patientCodeExists(code))) return code;
+  }
+  throw new Error('Could not generate a unique patient code');
+}
+
+export interface RegisterInput {
+  email: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+  acceptTerms: true;
+  acceptHealthData: true;
+}
+
+export const AuthService = {
+  async register(input: RegisterInput, meta: RequestMeta): Promise<Session> {
+    const email = normaliseEmail(input.email);
+    if (await UserModel.emailExists(email)) {
+      throw HttpError.conflict('An account with this email already exists. Try signing in instead.');
+    }
+    const user = await UserModel.createPatient({
+      email,
+      passwordHash: await hashPassword(input.password),
+      firstName: input.firstName.trim(),
+      lastName: input.lastName.trim(),
+      patientCode: await uniquePatientCode(),
+      policyVersion: POLICY_VERSION,
+      consents: [
+        { type: 'terms', granted: input.acceptTerms },
+        { type: 'health_data', granted: input.acceptHealthData },
+      ],
+    });
+    await AuditService.record('create', 'user', meta, { actorId: user.id, actorRole: 'patient', resourceId: user.id });
+    return issueSession(user);
+  },
+
+  async login(emailRaw: string, password: string, meta: RequestMeta): Promise<Session> {
+    const email = normaliseEmail(emailRaw);
+    const creds = await UserModel.findCredentialsByEmail(email);
+    const invalid = new HttpError(401, 'invalid_credentials', 'Email or password is incorrect.');
+
+    if (!creds) {
+      await verifyPassword(password, await getDummyHash()); // same timing as a real check
+      await AuditService.record('login_failed', 'user', meta);
+      throw invalid;
+    }
+
+    if (creds.lockedUntil && creds.lockedUntil > new Date()) {
+      await AuditService.record('login_failed', 'user', meta, { resourceId: creds.id });
+      throw new HttpError(429, 'too_many_attempts', `Too many attempts. Try again in ${LOCKOUT_MINUTES} minutes.`);
+    }
+
+    if (!(await verifyPassword(password, creds.passwordHash))) {
+      const failed = creds.failedLoginCount + 1;
+      const lock = failed >= MAX_FAILED_LOGINS;
+      await UserModel.recordFailedLogin(creds.id, lock ? 0 : failed, lock ? new Date(Date.now() + LOCKOUT_MINUTES * 60_000) : null);
+      await AuditService.record('login_failed', 'user', meta, { resourceId: creds.id });
+      if (lock) {
+        throw new HttpError(429, 'too_many_attempts', `Too many attempts. Try again in ${LOCKOUT_MINUTES} minutes.`);
+      }
+      throw invalid;
+    }
+
+    if (creds.status !== 'active') {
+      throw new HttpError(403, 'account_inactive', 'This account is not active. Contact support for help.');
+    }
+
+    await UserModel.recordSuccessfulLogin(creds.id);
+    await AuditService.record('login', 'user', meta, { actorId: creds.id, actorRole: creds.role, resourceId: creds.id });
+    const user = await UserModel.findPublicById(creds.id);
+    if (!user) throw invalid;
+    return issueSession(user);
+  },
+
+  /**
+   * Rotates the refresh token. Presenting a token that was already rotated means it was
+   * copied: the whole chain is revoked and the user must sign in again.
+   */
+  async refresh(rawToken: string | undefined, meta: RequestMeta): Promise<Session> {
+    const expired = new HttpError(401, 'session_expired', 'Your session has ended. Please sign in again.');
+    if (!rawToken) throw expired;
+
+    const stored = await RefreshTokenModel.findByHash(sha256(rawToken));
+    if (!stored) throw expired;
+
+    if (stored.revokedAt) {
+      await RefreshTokenModel.revokeFamily(stored.family);
+      await AuditService.record('access_denied', 'refresh_token', meta, { actorId: stored.userId, resourceId: stored.id });
+      throw expired;
+    }
+    if (stored.expiresAt <= new Date()) throw expired;
+
+    const user = await UserModel.findPublicById(stored.userId);
+    if (!user || user.status !== 'active') throw expired;
+
+    await RefreshTokenModel.revoke(stored.id);
+    return issueSession(user, stored.family);
+  },
+
+  async logout(rawToken: string | undefined): Promise<void> {
+    if (!rawToken) return;
+    const stored = await RefreshTokenModel.findByHash(sha256(rawToken));
+    if (stored) await RefreshTokenModel.revokeFamily(stored.family);
+  },
+
+  /** Always succeeds from the caller's point of view, so it never reveals whether an email is registered. */
+  async forgotPassword(emailRaw: string, meta: RequestMeta): Promise<void> {
+    const creds = await UserModel.findCredentialsByEmail(normaliseEmail(emailRaw));
+    if (!creds || creds.status !== 'active') return;
+
+    await PasswordResetModel.invalidateAllForUser(creds.id);
+    const token = randomToken();
+    await PasswordResetModel.create({
+      userId: creds.id,
+      tokenHash: sha256(token),
+      expiresAt: new Date(Date.now() + env.PASSWORD_RESET_TTL_MINUTES * 60_000),
+    });
+    const user = await UserModel.findPublicById(creds.id);
+    await MailService.sendPasswordReset(creds.email, user?.patientProfile?.firstName, token, env.PASSWORD_RESET_TTL_MINUTES);
+    await AuditService.record('update', 'password_reset_request', meta, { actorId: creds.id, resourceId: creds.id });
+  },
+
+  async resetPassword(token: string, newPassword: string, meta: RequestMeta): Promise<void> {
+    const invalid = new HttpError(400, 'invalid_reset_link', 'This reset link is invalid or has expired. Request a new one.');
+    const reset = await PasswordResetModel.findByHash(sha256(token));
+    if (!reset || reset.usedAt || reset.expiresAt <= new Date()) throw invalid;
+
+    await UserModel.updatePassword(reset.userId, await hashPassword(newPassword));
+    await PasswordResetModel.invalidateAllForUser(reset.userId);
+    await RefreshTokenModel.revokeAllForUser(reset.userId); // sign out every device
+    await AuditService.record('update', 'password', meta, { actorId: reset.userId, resourceId: reset.userId });
+  },
+
+  async me(userId: string): Promise<AuthUser> {
+    const user = await UserModel.findPublicById(userId);
+    if (!user) throw HttpError.unauthorized();
+    return toAuthUser(user);
+  },
+};

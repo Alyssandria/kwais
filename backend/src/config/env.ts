@@ -11,8 +11,11 @@ const EnvSchema = z.object({
   CLIENT_URL: z.string().url().default('http://localhost:5173'),
   DATABASE_URL: z.string().min(1, 'DATABASE_URL is required (see backend/.env.example)'),
 
-  JWT_ACCESS_SECRET: z.string().optional(),
-  JWT_REFRESH_SECRET: z.string().optional(),
+  JWT_ACCESS_SECRET: z.string().min(32, 'JWT_ACCESS_SECRET must be at least 32 characters'),
+  JWT_REFRESH_SECRET: z.string().min(32, 'JWT_REFRESH_SECRET must be at least 32 characters'),
+  ACCESS_TOKEN_TTL_SECONDS: z.coerce.number().int().positive().default(900),
+  REFRESH_TOKEN_TTL_DAYS: z.coerce.number().int().positive().default(14),
+  PASSWORD_RESET_TTL_MINUTES: z.coerce.number().int().positive().default(30),
   LAB_ENCRYPTION_KEY: z.string().optional(),
   LAB_ENCRYPTION_KEY_VERSION: z.coerce.number().int().positive().default(1),
 
@@ -20,6 +23,13 @@ const EnvSchema = z.object({
   GEMINI_API_KEY: z.string().optional(),
   GEMINI_MODEL: z.string().default('gemini-2.5-flash'),
   AI_TIMEOUT_MS: z.coerce.number().int().positive().default(20000),
+}).superRefine((e, ctx) => {
+  if (e.NODE_ENV !== 'production') return;
+  for (const key of ['JWT_ACCESS_SECRET', 'JWT_REFRESH_SECRET'] as const) {
+    if (e[key].startsWith('change-me')) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: [key], message: 'Replace the example value with a random secret' });
+    }
+  }
 });
 
 export type Env = z.infer<typeof EnvSchema>;

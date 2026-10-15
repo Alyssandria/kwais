@@ -50,11 +50,14 @@ pnpm install
 pnpm dev                        # http://localhost:5173
 ```
 
-Open http://localhost:5173. The start page shows three green checks when the web app, API
-and database are connected, and links to:
+Open http://localhost:5173 for the landing page, then create an account at `/register`.
+Development-only pages:
 
-- **App shell** at `/patient/dashboard`: sidebar, drawer and phone tab bar, with placeholder pages
-- **Component gallery** at `/dev/components` (development only): every shared UI piece in each state
+- **Status** at `/dev/status`: green checks when the web app, API and database are connected
+- **Component gallery** at `/dev/components`: every shared UI piece in each state
+
+**Password reset in development:** no email is sent. The reset link is printed in the
+terminal running the backend (`pnpm dev`).
 
 ## Everyday commands
 
@@ -95,7 +98,7 @@ The work is split into sections so each can be reviewed and committed on its own
 | --- | --- | --- |
 | 1 | Foundation: apps, tokens, database schema, health checks | ✅ |
 | 2 | Design system and app shell | ✅ |
-| 3 | Landing page and authentication | |
+| 3 | Landing page and authentication | ✅ |
 | 4 | Patient dashboard (mock data) | |
 | 5 | Onboarding, profile, targets, lab results | |
 | 6 | Meal logging and nutrition engine | |

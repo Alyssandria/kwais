@@ -1,15 +1,25 @@
-import { Outlet } from 'react-router-dom';
+import { Outlet, useNavigate } from 'react-router-dom';
 import { AppShell } from '@/components/layout/AppShell';
 import { patientNav } from '@/components/layout/nav';
+import { useAuth } from '@/features/auth/AuthProvider';
 
-/**
- * Wraps every /patient/* page in the app shell.
- * Section 3 puts this behind the sign-in guard and reads the real user;
- * until then it shows a fictional sample patient.
- */
+/** Wraps every /patient/* page in the app shell with the signed-in user. */
 export function PatientLayout() {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const signOut = async () => {
+    await logout();
+    navigate('/login', { replace: true });
+  };
+
   return (
-    <AppShell nav={patientNav} user={{ firstName: 'Maria', lastName: 'Santos' }} unreadCount={2}>
+    <AppShell
+      nav={patientNav}
+      user={{ firstName: user?.firstName ?? '', lastName: user?.lastName ?? '' }}
+      unreadCount={0}
+      onSignOut={signOut}
+    >
       <Outlet />
     </AppShell>
   );

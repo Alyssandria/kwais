@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Bell, Menu } from 'lucide-react';
+import { Bell, LogOut, Menu } from 'lucide-react';
 import { IconButton } from '@/components/ui';
 import { Logo } from './Logo';
 
@@ -12,12 +12,14 @@ export function Topbar({
   user,
   unreadCount,
   onOpenMenu,
+  onSignOut,
   notificationsTo,
   profileTo,
 }: {
   user: ShellUser;
   unreadCount: number;
   onOpenMenu: () => void;
+  onSignOut: () => void;
   notificationsTo: string;
   profileTo: string;
 }) {
@@ -60,6 +62,7 @@ export function Topbar({
           </span>
           <span className="sr-only sm:hidden">Your profile</span>
         </Link>
+        <IconButton label="Sign out" icon={<LogOut className="size-[18px]" />} variant="ghost" onClick={onSignOut} />
       </div>
     </header>
   );

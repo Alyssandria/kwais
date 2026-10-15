@@ -68,3 +68,18 @@ File naming: `<resource>.<layer>.ts`, e.g. `meal.model.ts`, `meal.service.ts`,
 | Vite dev proxy for `/api` | Cookies stay same-origin in development, matching production behind one domain |
 | Doctor-portal tables deferred | v0 schema holds only what the patient portal uses; v1 adds a migration |
 | `citext` for email | Case-insensitive uniqueness without lower-casing in every query |
+
+## Section 3 decisions: authentication
+
+| Decision | Why |
+| --- | --- |
+| Passwords hashed with Node's built-in `scrypt` (N=2^15, r=8, p=1, 16-byte salt) | Memory-hard and OWASP-recommended; no native build step on Windows; parameters stored with each hash so they can be raised later |
+| Access token: HS256 JWT, 15 minutes, kept in browser memory only | Short-lived; never in localStorage, so injected scripts cannot lift a long-lived credential |
+| Refresh token: random 256-bit string in an `httpOnly`, `SameSite=Strict` cookie scoped to `/api/v1/auth`, stored only as a SHA-256 hash | Survives page reloads without exposing it to JavaScript; a database leak gives no usable tokens |
+| Refresh rotation with reuse detection | Each refresh issues a new token; replaying an old one revokes the whole chain and forces sign-in |
+| Account lockout: 5 wrong passwords → 15 minutes; 10 credential requests per 15 minutes per IP | Slows password guessing |
+| Same error and similar timing for unknown email and wrong password; forgot-password always answers the same | Does not reveal which emails are registered |
+| Password reset links: single use, 30 minutes, all older links invalidated; reset signs out every device | Limits the damage of a leaked or old email |
+| Consent recorded at sign-up (`terms`, `health_data`) with the policy version | Data Privacy Act: explicit, versioned consent for sensitive personal information |
+| Sign-ins, failures, token replays and password changes written to `audit_logs` with a salted IP hash | Security trail without storing raw IP addresses |
+| Emails printed to the backend console in v0 | No mail server yet; swap `mail.service.ts` for SMTP before real users |

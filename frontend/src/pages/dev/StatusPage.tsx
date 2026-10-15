@@ -10,10 +10,10 @@ interface Health {
 }
 
 /**
- * Temporary start page for Section 1: proves the frontend, the API proxy and
- * the database are wired up. Section 3 replaces it with the landing page.
+ * Development-only status page (/dev/status): checks that the web app,
+ * the API proxy and the database are wired up.
  */
-export function HomePage() {
+export function StatusPage() {
   const apiHealth = useQuery({
     queryKey: ['health'],
     queryFn: async () => (await api.get<{ data: Health }>('/health')).data.data,
@@ -53,19 +53,17 @@ export function HomePage() {
 
       <nav aria-label="Preview" className="flex flex-wrap gap-3">
         <Link
-          to="/patient/dashboard"
+          to="/"
           className="inline-flex h-11 items-center rounded-card bg-accent px-5 font-extrabold text-ink no-underline"
         >
-          Open the app shell
+          Landing page
         </Link>
-        {import.meta.env.DEV && (
-          <Link
-            to="/dev/components"
-            className="inline-flex h-11 items-center rounded-card border border-line bg-surface px-5 font-semibold no-underline"
-          >
-            Component gallery
-          </Link>
-        )}
+        <Link
+          to="/dev/components"
+          className="inline-flex h-11 items-center rounded-card border border-line bg-surface px-5 font-semibold no-underline"
+        >
+          Component gallery
+        </Link>
       </nav>
     </main>
   );

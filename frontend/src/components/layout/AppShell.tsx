@@ -15,11 +15,13 @@ export function AppShell({
   nav,
   user,
   unreadCount = 0,
+  onSignOut,
   children,
 }: {
   nav: NavItem[];
   user: ShellUser;
   unreadCount?: number;
+  onSignOut: () => void;
   children: ReactNode;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -43,6 +45,7 @@ export function AppShell({
           user={user}
           unreadCount={unreadCount}
           onOpenMenu={() => setMenuOpen(true)}
+          onSignOut={onSignOut}
           notificationsTo="/patient/notifications"
           profileTo="/patient/profile"
         />
