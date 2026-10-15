@@ -10,6 +10,7 @@ import { ForgotPasswordPage } from '@/pages/auth/ForgotPasswordPage';
 import { ResetPasswordPage } from '@/pages/auth/ResetPasswordPage';
 import { PatientLayout } from '@/pages/patient/PatientLayout';
 import { ComingSoonPage } from '@/pages/patient/ComingSoonPage';
+import { DashboardPage } from '@/features/dashboard/DashboardPage';
 import { ComponentGallery } from '@/pages/dev/ComponentGallery';
 import { StatusPage } from '@/pages/dev/StatusPage';
 
@@ -40,7 +41,7 @@ const patientRoutes: RouteObject = {
   ),
   children: [
     { index: true, element: <Navigate to="dashboard" replace /> },
-    { path: 'dashboard', element: <ComingSoonPage title="Dashboard" section={4} /> },
+    { path: 'dashboard', element: <DashboardPage /> },
     { path: 'meals', element: <ComingSoonPage title="Meal history" section={8} /> },
     { path: 'meals/new', element: <ComingSoonPage title="Log a meal" section={6} /> },
     { path: 'meals/:id', element: <ComingSoonPage title="Meal analysis" section={7} /> },

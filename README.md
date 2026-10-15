@@ -99,7 +99,7 @@ The work is split into sections so each can be reviewed and committed on its own
 | 1 | Foundation: apps, tokens, database schema, health checks | ✅ |
 | 2 | Design system and app shell | ✅ |
 | 3 | Landing page and authentication | ✅ |
-| 4 | Patient dashboard (mock data) | |
+| 4 | Patient dashboard (sample data) | ✅ |
 | 5 | Onboarding, profile, targets, lab results | |
 | 6 | Meal logging and nutrition engine | |
 | 7 | Gemini layer (parsing + structured analysis) | |
