@@ -1,0 +1,460 @@
+// K-WAIS v0 data model (patient portal).
+// Doctor-portal tables (assignments, clinical reviews, reports) arrive in v1.
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [citext]
+}
+
+// ─── Enums ───────────────────────────────────────────────────────────────────
+
+enum Role {
+  patient
+  doctor
+}
+
+enum UserStatus {
+  active
+  locked
+  pending_deletion
+}
+
+/// Who supplied a clinical value. Nothing is ever inferred by the app.
+enum ValueSource {
+  patient_entered
+  clinician_verified
+}
+
+enum DialysisStatus {
+  none
+  hemodialysis
+  peritoneal
+  unknown
+}
+
+enum Nutrient {
+  sodium
+  potassium
+  phosphorus
+  protein
+}
+
+enum FoodSource {
+  PH_FCT
+  USDA_FDC
+  recipe
+  custom
+}
+
+enum MealCategory {
+  breakfast
+  lunch
+  dinner
+  snack
+}
+
+enum MealStatus {
+  draft
+  saved     // saved without AI analysis
+  analysed
+}
+
+enum CondimentAmount {
+  konti
+  tsp
+  tbsp
+  marami
+}
+
+enum AiStatus {
+  ok
+  unavailable
+  mock
+}
+
+enum LabTest {
+  potassium
+  phosphorus
+  sodium
+  creatinine
+  egfr
+  bun
+  albumin
+  calcium
+  hemoglobin
+  bicarbonate
+  pth
+  uric_acid
+  other
+}
+
+enum NotificationType {
+  meal_reminder
+  analysis_ready
+  account
+}
+
+enum ConsentType {
+  terms
+  health_data
+  ai_processing
+  reminders
+}
+
+enum DataRequestType {
+  export
+  deletion
+}
+
+enum DataRequestStatus {
+  pending
+  completed
+  rejected
+}
+
+enum AuditAction {
+  login
+  login_failed
+  read
+  create
+  update
+  delete
+  export
+  access_denied
+}
+
+// ─── Accounts ────────────────────────────────────────────────────────────────
+
+model User {
+  id               String     @id @default(uuid()) @db.Uuid
+  email            String     @unique @db.Citext
+  passwordHash     String     @map("password_hash")
+  role             Role       @default(patient)
+  status           UserStatus @default(active)
+  failedLoginCount Int        @default(0) @map("failed_login_count")
+  lockedUntil      DateTime?  @map("locked_until")
+  lastLoginAt      DateTime?  @map("last_login_at")
+  createdAt        DateTime   @default(now()) @map("created_at")
+  updatedAt        DateTime   @updatedAt @map("updated_at")
+
+  patientProfile PatientProfile?
+  refreshTokens  RefreshToken[]
+  passwordResets PasswordReset[]
+  notifications  Notification[]
+  consents       ConsentRecord[]
+  dataRequests   DataRequest[]
+
+  @@map("users")
+}
+
+model RefreshToken {
+  id         String    @id @default(uuid()) @db.Uuid
+  userId     String    @map("user_id") @db.Uuid
+  tokenHash  String    @unique @map("token_hash")
+  family     String    @db.Uuid // rotation chain; reuse of a revoked token revokes the family
+  expiresAt  DateTime  @map("expires_at")
+  revokedAt  DateTime? @map("revoked_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([family])
+  @@map("refresh_tokens")
+}
+
+model PasswordReset {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  tokenHash String    @unique @map("token_hash")
+  expiresAt DateTime  @map("expires_at")
+  usedAt    DateTime? @map("used_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("password_resets")
+}
+
+// ─── Patient profile ─────────────────────────────────────────────────────────
+
+model PatientProfile {
+  id                 String         @id @default(uuid()) @db.Uuid
+  userId             String         @unique @map("user_id") @db.Uuid
+  patientCode        String         @unique @map("patient_code") // e.g. KW-000123, shared with a doctor in v1
+  firstName          String         @map("first_name")
+  lastName           String         @map("last_name")
+  birthYear          Int?           @map("birth_year") // year only (data minimisation)
+  sex                String?
+  dietaryPreferences String[]       @default([]) @map("dietary_preferences")
+  allergies          String[]       @default([])
+  restrictions       String[]       @default([]) // as given by the patient's care team
+  ckdStage           String?        @map("ckd_stage") // as stated by the patient; never inferred
+  ckdStageSource     ValueSource?   @map("ckd_stage_source")
+  dialysisStatus     DialysisStatus @default(unknown) @map("dialysis_status")
+  onboardingStep     Int            @default(0) @map("onboarding_step")
+  onboardingDoneAt   DateTime?      @map("onboarding_done_at")
+  reminderTime       String?        @map("reminder_time") // "HH:mm" local
+  timezone           String         @default("Asia/Manila")
+  createdAt          DateTime       @default(now()) @map("created_at")
+  updatedAt          DateTime       @updatedAt @map("updated_at")
+
+  user     User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  targets  NutritionTarget[]
+  labs     LabResult[]
+  meals    Meal[]
+  analyses MealAnalysis[]
+
+  @@map("patient_profiles")
+}
+
+model NutritionTarget {
+  id            String      @id @default(uuid()) @db.Uuid
+  patientId     String      @map("patient_id") @db.Uuid
+  nutrient      Nutrient
+  dailyMax      Decimal?    @map("daily_max") @db.Decimal(10, 2)
+  dailyMin      Decimal?    @map("daily_min") @db.Decimal(10, 2)
+  unit          String // mg for minerals, g for protein
+  source        ValueSource @default(patient_entered)
+  note          String?
+  effectiveFrom DateTime    @default(now()) @map("effective_from")
+  effectiveTo   DateTime?   @map("effective_to") // targets are ended, never edited in place
+  createdAt     DateTime    @default(now()) @map("created_at")
+
+  patient PatientProfile @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  @@index([patientId, nutrient, effectiveFrom(sort: Desc)])
+  @@map("nutrition_targets")
+}
+
+/// Values and range bounds are AES-256-GCM ciphertext (Section 5).
+/// Encryption protects the data at rest; it does not take it outside the Data Privacy Act.
+model LabResult {
+  id          String      @id @default(uuid()) @db.Uuid
+  patientId   String      @map("patient_id") @db.Uuid
+  test        LabTest
+  testLabel   String?     @map("test_label") // for test = other
+  valueEnc    Bytes       @map("value_enc")
+  refLowEnc   Bytes?      @map("ref_low_enc")
+  refHighEnc  Bytes?      @map("ref_high_enc")
+  unit        String
+  collectedOn DateTime    @map("collected_on") @db.Date
+  labName     String?     @map("lab_name")
+  source      ValueSource @default(patient_entered)
+  keyVersion  Int         @default(1) @map("key_version")
+  createdAt   DateTime    @default(now()) @map("created_at")
+  updatedAt   DateTime    @updatedAt @map("updated_at")
+
+  patient PatientProfile @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  @@index([patientId, test, collectedOn(sort: Desc)])
+  @@map("lab_results")
+}
+
+// ─── Food composition ────────────────────────────────────────────────────────
+
+/// Per-100 g edible portion. Null = not reported by the source, never zero-filled.
+model FoodItem {
+  id           String     @id @default(uuid()) @db.Uuid
+  name         String
+  localNames   String[]   @default([]) @map("local_names")
+  category     String?
+  source       FoodSource
+  sourceRef    String     @map("source_ref")
+  sodiumMg     Decimal?   @map("sodium_mg") @db.Decimal(10, 2)
+  potassiumMg  Decimal?   @map("potassium_mg") @db.Decimal(10, 2)
+  phosphorusMg Decimal?   @map("phosphorus_mg") @db.Decimal(10, 2)
+  proteinG     Decimal?   @map("protein_g") @db.Decimal(10, 2)
+  verified     Boolean    @default(false)
+  createdAt    DateTime   @default(now()) @map("created_at")
+
+  portions          FoodPortion[]
+  recipeComponents  RecipeIngredient[] @relation("recipe")
+  usedInRecipes     RecipeIngredient[] @relation("ingredient")
+  mealItems         MealItem[]
+
+  @@unique([source, sourceRef])
+  @@map("food_items")
+}
+
+model FoodPortion {
+  id         String  @id @default(uuid()) @db.Uuid
+  foodItemId String  @map("food_item_id") @db.Uuid
+  unit       String // tasa, sandok, piraso, mangkok, tbsp, tsp, serving…
+  grams      Decimal @db.Decimal(8, 2)
+
+  foodItem FoodItem @relation(fields: [foodItemId], references: [id], onDelete: Cascade)
+
+  @@unique([foodItemId, unit])
+  @@map("food_portions")
+}
+
+/// Breaks a mixed dish (adobo, sinigang, pinakbet) into ingredients.
+model RecipeIngredient {
+  id                 String  @id @default(uuid()) @db.Uuid
+  recipeId           String  @map("recipe_id") @db.Uuid
+  ingredientId       String  @map("ingredient_id") @db.Uuid
+  gramsPer100gDish   Decimal @map("grams_per_100g_dish") @db.Decimal(8, 2)
+
+  recipe     FoodItem @relation("recipe", fields: [recipeId], references: [id], onDelete: Cascade)
+  ingredient FoodItem @relation("ingredient", fields: [ingredientId], references: [id], onDelete: Restrict)
+
+  @@unique([recipeId, ingredientId])
+  @@map("recipe_ingredients")
+}
+
+// ─── Meals ───────────────────────────────────────────────────────────────────
+
+model Meal {
+  id             String       @id @default(uuid()) @db.Uuid
+  patientId      String       @map("patient_id") @db.Uuid
+  eatenAt        DateTime     @map("eaten_at")
+  category       MealCategory
+  rawText        String       @map("raw_text") // exactly what the patient typed
+  drinks         String[]     @default([])
+  cookingMethods String[]     @default([]) @map("cooking_methods")
+  notes          String?
+  status         MealStatus   @default(draft)
+  deletedAt      DateTime?    @map("deleted_at")
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+
+  patient    PatientProfile  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  condiments MealCondiment[]
+  items      MealItem[]
+  analyses   MealAnalysis[]
+
+  @@index([patientId, eatenAt(sort: Desc)])
+  @@index([patientId, status])
+  @@map("meals")
+}
+
+model MealCondiment {
+  id     String          @id @default(uuid()) @db.Uuid
+  mealId String          @map("meal_id") @db.Uuid
+  name   String // toyo, patis, bagoong…
+  amount CondimentAmount
+
+  meal Meal @relation(fields: [mealId], references: [id], onDelete: Cascade)
+
+  @@unique([mealId, name])
+  @@map("meal_condiments")
+}
+
+/// Structured items produced when a meal is analysed (Gemini parse → dataset match).
+model MealItem {
+  id              String    @id @default(uuid()) @db.Uuid
+  mealId          String    @map("meal_id") @db.Uuid
+  foodItemId      String?   @map("food_item_id") @db.Uuid
+  label           String // as parsed from the patient's text
+  quantity        Decimal   @db.Decimal(8, 2)
+  unit            String
+  grams           Decimal?  @db.Decimal(8, 2)
+  preparation     String?
+  matchConfidence Decimal?  @map("match_confidence") @db.Decimal(4, 3)
+  amountGuessed   Boolean   @default(false) @map("amount_guessed")
+
+  meal     Meal      @relation(fields: [mealId], references: [id], onDelete: Cascade)
+  foodItem FoodItem? @relation(fields: [foodItemId], references: [id], onDelete: SetNull)
+
+  @@index([mealId])
+  @@map("meal_items")
+}
+
+/// Immutable. Re-analysis creates a new version.
+model MealAnalysis {
+  id             String   @id @default(uuid()) @db.Uuid
+  mealId         String   @map("meal_id") @db.Uuid
+  patientId      String   @map("patient_id") @db.Uuid
+  version        Int
+  engineVersion  String   @map("engine_version")
+  promptVersion  String?  @map("prompt_version")
+  model          String?
+  totals         Json // { sodium: { value, unit, source } … }
+  itemBreakdown  Json     @map("item_breakdown")
+  inputsSnapshot Json     @map("inputs_snapshot") // exactly what was sent to the AI
+  score          Int?     @db.SmallInt // 1–10, null when there is no target or lab range to judge against
+  scoreBand      String?  @map("score_band")
+  aiOutput       Json?    @map("ai_output") // schema-validated
+  aiStatus       AiStatus @map("ai_status")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  meal    Meal           @relation(fields: [mealId], references: [id], onDelete: Cascade)
+  patient PatientProfile @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  @@unique([mealId, version])
+  @@index([patientId, createdAt(sort: Desc)])
+  @@map("meal_analyses")
+}
+
+// ─── Notifications, consent, privacy, audit ─────────────────────────────────
+
+model Notification {
+  id        String           @id @default(uuid()) @db.Uuid
+  userId    String           @map("user_id") @db.Uuid
+  type      NotificationType
+  title     String
+  body      String
+  link      String?
+  readAt    DateTime?        @map("read_at")
+  createdAt DateTime         @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, readAt, createdAt(sort: Desc)])
+  @@map("notifications")
+}
+
+/// Append-only: a change of mind is a new row.
+model ConsentRecord {
+  id            String      @id @default(uuid()) @db.Uuid
+  userId        String      @map("user_id") @db.Uuid
+  consentType   ConsentType @map("consent_type")
+  granted       Boolean
+  policyVersion String      @map("policy_version")
+  createdAt     DateTime    @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, consentType, createdAt(sort: Desc)])
+  @@map("consent_records")
+}
+
+model DataRequest {
+  id        String            @id @default(uuid()) @db.Uuid
+  userId    String            @map("user_id") @db.Uuid
+  type      DataRequestType
+  status    DataRequestStatus @default(pending)
+  handledAt DateTime?         @map("handled_at")
+  createdAt DateTime          @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("data_requests")
+}
+
+/// Append-only. No foreign keys so records survive account anonymisation.
+model AuditLog {
+  id           String      @id @default(uuid()) @db.Uuid
+  actorId      String?     @map("actor_id") @db.Uuid
+  actorRole    Role?       @map("actor_role")
+  action       AuditAction
+  resourceType String      @map("resource_type")
+  resourceId   String?     @map("resource_id")
+  patientId    String?     @map("patient_id") @db.Uuid
+  ipHash       String?     @map("ip_hash")
+  userAgent    String?     @map("user_agent")
+  at           DateTime    @default(now())
+
+  @@index([patientId, at(sort: Desc)])
+  @@index([actorId, at(sort: Desc)])
+  @@map("audit_logs")
+}

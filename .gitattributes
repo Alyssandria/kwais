@@ -1,0 +1,41 @@
+# Normalise line endings: LF in the repository and in the working tree,
+# so Windows and Linux checkouts produce identical diffs.
+* text=auto eol=lf
+
+# Source and config
+*.ts      text eol=lf
+*.tsx     text eol=lf
+*.js      text eol=lf
+*.json    text eol=lf
+*.css     text eol=lf
+*.html    text eol=lf
+*.md      text eol=lf
+*.yml     text eol=lf
+*.yaml    text eol=lf
+*.prisma  text eol=lf
+*.sql     text eol=lf
+*.svg     text eol=lf
+.env.example text eol=lf
+
+# Windows-only scripts must keep CRLF
+*.cmd     text eol=crlf
+*.bat     text eol=crlf
+*.ps1     text eol=crlf
+
+# Lockfiles: always LF, collapsed in diffs, and never auto-merged line by line
+pnpm-lock.yaml  text eol=lf -diff linguist-generated=true merge=binary
+
+# Prisma migrations are generated SQL; keep them out of language stats
+backend/prisma/migrations/** linguist-generated=true
+
+# Binary assets
+*.png    binary
+*.jpg    binary
+*.jpeg   binary
+*.gif    binary
+*.webp   binary
+*.ico    binary
+*.pdf    binary
+*.woff   binary
+*.woff2  binary
+*.ttf    binary
