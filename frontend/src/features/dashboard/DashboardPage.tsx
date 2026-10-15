@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { Card, ErrorState, LoadingRegion, Notice, Skeleton } from '@/components/ui';
 import { useAuth } from '@/features/auth/AuthProvider';
 import { errorMessage } from '@/lib/api';
@@ -31,6 +32,13 @@ export function DashboardPage() {
 
   return (
     <div className="flex flex-col gap-6">
+      {user && !user.onboardingComplete && (
+        <Notice tone="warn" title="Finish setting up">
+          Add your kidney health details and any targets from your care team so estimates can be compared with them.{' '}
+          <Link to="/patient/onboarding">Continue setup</Link>
+        </Notice>
+      )}
+
       {data.isSample && (
         <Notice>
           You’re seeing fictional sample data while this dashboard is being built. Your own meals and lab results will

@@ -12,7 +12,7 @@ let query: { data?: PatientDashboard; isPending: boolean; isError: boolean; erro
 
 vi.mock('./useDashboard', () => ({ useDashboard: () => ({ ...query, refetch }) }));
 vi.mock('@/features/auth/AuthProvider', () => ({
-  useAuth: () => ({ user: { firstName: 'Maria' } }),
+  useAuth: () => ({ user: { firstName: 'Maria', onboardingComplete: true } }),
 }));
 
 const { DashboardPage } = await import('./DashboardPage');

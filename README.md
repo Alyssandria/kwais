@@ -84,7 +84,7 @@ Secrets live only in `backend/.env`; the browser only ever sees `VITE_*` values.
 | --- | --- | --- |
 | `DATABASE_URL` | Section 1 | Docker Postgres from `docker-compose.yml` |
 | `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET` | Section 3 | Any long random strings |
-| `LAB_ENCRYPTION_KEY` | Section 5 | 32 random bytes, base64 |
+| `LAB_ENCRYPTION_KEY` | Section 5 (required) | 32 random bytes, base64. Back it up: without it, saved lab values cannot be read |
 | `AI_PROVIDER`, `GEMINI_API_KEY`, `GEMINI_MODEL` | Section 7 | `AI_PROVIDER=mock` works offline |
 
 Use only fictional data with a free-tier Gemini key, since free-tier inputs may be used to
@@ -100,7 +100,7 @@ The work is split into sections so each can be reviewed and committed on its own
 | 2 | Design system and app shell | ✅ |
 | 3 | Landing page and authentication | ✅ |
 | 4 | Patient dashboard (sample data) | ✅ |
-| 5 | Onboarding, profile, targets, lab results | |
+| 5 | Onboarding, profile, targets, lab results | ✅ |
 | 6 | Meal logging and nutrition engine | |
 | 7 | Gemini layer (parsing + structured analysis) | |
 | 8 | Live dashboard, history, analytics, reminders | |

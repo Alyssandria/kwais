@@ -34,7 +34,7 @@ export function RegisterPage() {
     setFormError(null);
     try {
       const user = await signUp(values);
-      navigate(homeFor(user), { replace: true });
+      navigate(user.role === 'patient' ? '/patient/onboarding' : homeFor(user), { replace: true });
     } catch (err) {
       const fields = fieldErrors(err);
       const known = Object.entries(fields).filter(([k]) => k in values);

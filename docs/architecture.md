@@ -83,3 +83,16 @@ File naming: `<resource>.<layer>.ts`, e.g. `meal.model.ts`, `meal.service.ts`,
 | Consent recorded at sign-up (`terms`, `health_data`) with the policy version | Data Privacy Act: explicit, versioned consent for sensitive personal information |
 | Sign-ins, failures, token replays and password changes written to `audit_logs` with a salted IP hash | Security trail without storing raw IP addresses |
 | Emails printed to the backend console in v0 | No mail server yet; swap `mail.service.ts` for SMTP before real users |
+
+## Section 5 decisions: profile, targets, lab results
+
+| Decision | Why |
+| --- | --- |
+| Patient routes resolve the patient id from the signed-in user (`requirePatient`); ids in the URL or query are never trusted | A patient can only ever reach their own records |
+| Lab values and reference-range bounds encrypted with AES-256-GCM, a fresh IV per value, key version stored in each value | Database dumps and backups hold no readable lab values; keys can be rotated |
+| Each ciphertext is bound to `lab:<patientId>:<column>` as authenticated data | A value copied into another patient's row or another column fails to decrypt instead of showing a wrong number |
+| Lab rows are looked up with both `id` and `patientId` | Another patient's lab id behaves exactly like a missing one (404) |
+| Clinical fields record `source`: `patient_entered` or `clinician_verified`; a patient edit always sets `patient_entered` | The UI can show who entered each value; a doctor's verification (v1) is never silently kept after a change |
+| CKD stage is a fixed list including "not sure"; nothing derives it | Brief requirement: never infer or diagnose CKD stage |
+| Targets have fixed units per nutrient (mg, g for protein) and sanity limits; setting one ends the previous target | Numbers cannot land in the wrong unit, and past analyses keep the target that applied at the time |
+| AI processing and reminders are separate, append-only consent records | AI use needs its own explicit consent under the Data Privacy Act; the history of choices is kept |

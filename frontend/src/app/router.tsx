@@ -11,6 +11,9 @@ import { ResetPasswordPage } from '@/pages/auth/ResetPasswordPage';
 import { PatientLayout } from '@/pages/patient/PatientLayout';
 import { ComingSoonPage } from '@/pages/patient/ComingSoonPage';
 import { DashboardPage } from '@/features/dashboard/DashboardPage';
+import { OnboardingPage } from '@/features/profile/OnboardingPage';
+import { ProfilePage } from '@/features/profile/ProfilePage';
+import { LabsPage } from '@/features/labs/LabsPage';
 import { ComponentGallery } from '@/pages/dev/ComponentGallery';
 import { StatusPage } from '@/pages/dev/StatusPage';
 
@@ -46,11 +49,21 @@ const patientRoutes: RouteObject = {
     { path: 'meals/new', element: <ComingSoonPage title="Log a meal" section={6} /> },
     { path: 'meals/:id', element: <ComingSoonPage title="Meal analysis" section={7} /> },
     { path: 'analytics', element: <ComingSoonPage title="Analytics" section={8} /> },
-    { path: 'labs', element: <ComingSoonPage title="Lab results" section={5} /> },
+    { path: 'labs', element: <LabsPage /> },
     { path: 'notifications', element: <ComingSoonPage title="Notifications" section={8} /> },
-    { path: 'profile', element: <ComingSoonPage title="Profile" section={5} /> },
+    { path: 'profile', element: <ProfilePage /> },
     { path: 'settings', element: <ComingSoonPage title="Settings" section={9} /> },
   ],
+};
+
+/** Full-screen guided setup, signed-in patients only, outside the app shell. */
+const onboardingRoute: RouteObject = {
+  path: '/patient/onboarding',
+  element: (
+    <RequireAuth role="patient">
+      <OnboardingPage />
+    </RequireAuth>
+  ),
 };
 
 const devRoutes: RouteObject[] = import.meta.env.DEV
@@ -63,6 +76,7 @@ const devRoutes: RouteObject[] = import.meta.env.DEV
 export const router = createBrowserRouter([
   publicRoutes,
   ...authRoutes,
+  onboardingRoute,
   patientRoutes,
   ...devRoutes,
   { path: '*', element: <NotFoundPage /> },
