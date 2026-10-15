@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { Link } from 'react-router-dom';
 import { CheckCircle2, CircleAlert, Loader2 } from 'lucide-react';
 import { api, errorMessage } from '@/lib/api';
 
@@ -28,7 +29,7 @@ export function HomePage() {
         <div aria-hidden className="absolute -top-20 -right-16 size-64 rounded-full bg-[#0a7480]" />
         <div aria-hidden className="absolute top-8 right-20 size-4 rounded-full bg-accent" />
         <div className="relative">
-          <p className="text-sm font-semibold text-primary-line">Section 1 · Foundation</p>
+          <p className="text-sm font-semibold text-primary-line">Development start page</p>
           <h1 className="mt-1 text-3xl font-extrabold tracking-tight">K-WAIS is running</h1>
           <p className="mt-2 max-w-md text-[#d7eeeb]">
             Your kidney care companion. This page only checks that the pieces are connected.
@@ -49,6 +50,23 @@ export function HomePage() {
           detail={db.isError ? errorMessage(db.error) : db.data ? 'PostgreSQL reachable' : 'Checking…'}
         />
       </ul>
+
+      <nav aria-label="Preview" className="flex flex-wrap gap-3">
+        <Link
+          to="/patient/dashboard"
+          className="inline-flex h-11 items-center rounded-card bg-accent px-5 font-extrabold text-ink no-underline"
+        >
+          Open the app shell
+        </Link>
+        {import.meta.env.DEV && (
+          <Link
+            to="/dev/components"
+            className="inline-flex h-11 items-center rounded-card border border-line bg-surface px-5 font-semibold no-underline"
+          >
+            Component gallery
+          </Link>
+        )}
+      </nav>
     </main>
   );
 }

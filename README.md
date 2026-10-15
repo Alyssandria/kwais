@@ -51,7 +51,10 @@ pnpm dev                        # http://localhost:5173
 ```
 
 Open http://localhost:5173. The start page shows three green checks when the web app, API
-and database are connected.
+and database are connected, and links to:
+
+- **App shell** at `/patient/dashboard`: sidebar, drawer and phone tab bar, with placeholder pages
+- **Component gallery** at `/dev/components` (development only): every shared UI piece in each state
 
 ## Everyday commands
 
@@ -91,7 +94,7 @@ The work is split into sections so each can be reviewed and committed on its own
 | # | Section | Status |
 | --- | --- | --- |
 | 1 | Foundation: apps, tokens, database schema, health checks | ✅ |
-| 2 | Design system and app shell | |
+| 2 | Design system and app shell | ✅ |
 | 3 | Landing page and authentication | |
 | 4 | Patient dashboard (mock data) | |
 | 5 | Onboarding, profile, targets, lab results | |
