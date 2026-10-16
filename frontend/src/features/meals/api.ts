@@ -38,6 +38,19 @@ export interface DataNote {
   nutrient?: NutrientKey;
 }
 
+export interface AiAnalysis {
+  score: number | null;
+  scoreReasons: { title: string; detail: string; deduction: number | null }[];
+  summary: string;
+  observations: string[];
+  concerns: string[];
+  clinicianQuestions: string[];
+  dataQuality: string;
+  usedInputs: string[];
+}
+
+type Totals = Record<NutrientKey, number>;
+
 export interface MealAnalysis {
   id: string;
   version: number;
@@ -46,9 +59,17 @@ export interface MealAnalysis {
   totals: Record<NutrientKey, NutrientTotal>;
   items: AnalysedItem[];
   notes: DataNote[];
+  day: { date: string; earlierMeals: number; totalsBeforeMeal: Totals; totalsWithMeal: Totals } | null;
   score: number | null;
-  scoreBand: string | null;
-  ai: { status: 'ok' | 'unavailable' | 'mock'; output: unknown };
+  scoreBand: 'good' | 'mixed' | 'attention' | null;
+  parser: string | null;
+  ai: {
+    status: 'ok' | 'unavailable' | 'mock';
+    reason: 'no_consent' | 'ai_error' | null;
+    output: AiAnalysis | null;
+    model: string | null;
+    promptVersion: string | null;
+  };
 }
 
 export interface Meal {

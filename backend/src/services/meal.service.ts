@@ -4,9 +4,19 @@ import { MealModel, type AnalysisRecord, type MealData, type MealRecord } from '
 import type { MealCreate, MealListParams, MealUpdate } from '../schemas/meal.schemas.js';
 import { AuditService, type RequestMeta } from './audit.service.js';
 import { FoodService } from './food.service.js';
+import { localDate, localDateTime, localDayStart } from '../lib/time.js';
+import { AiService, type AiSkipReason } from './ai/ai.service.js';
+import { buildAnalysisInput } from './ai/inputs.js';
+import type { AnalysisOutput } from './ai/schemas.js';
+import type { AnalysisInput } from './ai/types.js';
+import { ConsentService } from './consent.service.js';
+import { LabService } from './lab.service.js';
 import { estimateMeal } from './nutrition/engine.js';
-import { PARSER_VERSION } from './nutrition/text-parser.js';
-import type { DataNote, ItemResult, MealInput, NutrientKey, NutrientTotal } from './nutrition/types.js';
+import { NUTRIENT_KEYS, type DataNote, type ItemResult, type MealInput, type NutrientKey, type NutrientTotal } from './nutrition/types.js';
+import { ProfileService } from './profile.service.js';
+import { TargetService } from './target.service.js';
+
+type Totals = Record<NutrientKey, number>;
 
 export interface AnalysisView {
   id: string;
@@ -16,9 +26,17 @@ export interface AnalysisView {
   totals: Record<NutrientKey, NutrientTotal>;
   items: ItemResult[];
   notes: DataNote[];
+  day: { date: string; earlierMeals: number; totalsBeforeMeal: Totals; totalsWithMeal: Totals } | null;
   score: number | null;
   scoreBand: string | null;
-  ai: { status: 'ok' | 'unavailable' | 'mock'; output: unknown };
+  parser: string | null;
+  ai: {
+    status: 'ok' | 'unavailable' | 'mock';
+    reason: AiSkipReason | null;
+    output: AnalysisOutput | null;
+    model: string | null;
+    promptVersion: string | null;
+  };
 }
 
 export interface MealView {
@@ -51,8 +69,19 @@ interface StoredBreakdown {
   notes: DataNote[];
 }
 
+interface StoredSnapshot {
+  parser?: string;
+  parseSentToAi?: string | null;
+  parseError?: string | null;
+  day?: AnalysisView['day'];
+  analysisSentToAi?: AnalysisInput | null;
+  aiSkipped?: AiSkipReason | null;
+  aiError?: string | null;
+}
+
 function analysisView(a: AnalysisRecord): AnalysisView {
   const breakdown = a.itemBreakdown as unknown as StoredBreakdown;
+  const snap = (a.inputsSnapshot ?? {}) as StoredSnapshot;
   return {
     id: a.id,
     version: a.version,
@@ -61,9 +90,17 @@ function analysisView(a: AnalysisRecord): AnalysisView {
     totals: a.totals as unknown as Record<NutrientKey, NutrientTotal>,
     items: breakdown.items ?? [],
     notes: breakdown.notes ?? [],
+    day: snap.day ?? null,
     score: a.score,
     scoreBand: a.scoreBand,
-    ai: { status: a.aiStatus, output: a.aiOutput },
+    parser: snap.parser ?? null,
+    ai: {
+      status: a.aiStatus,
+      reason: snap.aiSkipped ?? null,
+      output: (a.aiOutput as AnalysisOutput | null) ?? null,
+      model: a.model,
+      promptVersion: a.promptVersion,
+    },
   };
 }
 
@@ -87,30 +124,75 @@ export function toMealView(m: MealRecord): MealView {
 
 const json = (v: unknown) => v as Prisma.InputJsonValue;
 
-async function analyse(meal: MealRecord, patientId: string): Promise<void> {
-  const input: MealInput = {
+const zero = (): Totals => ({ sodium: 0, potassium: 0, phosphorus: 0, protein: 0 });
+
+async function dayContext(meal: MealRecord, patientId: string, timeZone: string) {
+  const start = localDayStart(meal.eatenAt, timeZone);
+  const earlier = await MealModel.earlierAnalysedTotals(patientId, start, meal.eatenAt, meal.id);
+  const before = zero();
+  for (const t of earlier) {
+    const totals = t as unknown as Record<NutrientKey, NutrientTotal>;
+    for (const n of NUTRIENT_KEYS) before[n] += totals[n]?.value ?? 0;
+  }
+  for (const n of NUTRIENT_KEYS) before[n] = Math.round(before[n] * 10) / 10;
+  return { date: localDate(meal.eatenAt, timeZone), earlierMeals: earlier.length, totalsBeforeMeal: before };
+}
+
+async function analyse(meal: MealRecord, patientId: string, userId: string, meta: RequestMeta): Promise<void> {
+  const [aiAllowed, profile, targets, labs, catalog] = await Promise.all([
+    ConsentService.hasAiConsent(userId),
+    ProfileService.get(patientId),
+    TargetService.listActive(patientId),
+    LabService.list(patientId),
+    FoodService.catalog(),
+  ]);
+  const mealInput: MealInput = {
     rawText: meal.rawText,
     condiments: meal.condiments,
     drinks: meal.drinks,
     cookingMethods: meal.cookingMethods,
   };
-  const result = estimateMeal(input, await FoodService.catalog());
-  const breakdown: StoredBreakdown = { items: result.items, notes: result.notes };
+
+  const parsed = await AiService.parse(meal.rawText, aiAllowed);
+  const result = estimateMeal(mealInput, catalog, parsed.items);
+  const day = await dayContext(meal, patientId, profile.timezone);
+  const input = buildAnalysisInput({
+    meal: { ...mealInput, category: meal.category, eatenAtLocal: localDateTime(meal.eatenAt, profile.timezone) },
+    engine: result,
+    day,
+    profile,
+    targets,
+    labs,
+  });
+  const ai = await AiService.analyse(input, aiAllowed);
+  if (parsed.sentToAi || ai.sentToAi) {
+    await AuditService.record('read', 'ai_processing', meta, { actorId: userId, actorRole: 'patient', resourceId: meal.id, patientId });
+  }
+
+  const snapshot: StoredSnapshot = {
+    parser: parsed.parser,
+    parseSentToAi: parsed.sentToAi,
+    parseError: parsed.error,
+    day: { ...day, totalsWithMeal: input.day.totalsWithMeal },
+    analysisSentToAi: ai.sentToAi,
+    aiSkipped: ai.reason,
+    aiError: ai.error,
+  };
 
   await MealModel.saveAnalysis(
     meal.id,
     patientId,
     {
       engineVersion: result.engineVersion,
-      promptVersion: null,
-      model: null,
+      promptVersion: ai.promptVersion,
+      model: ai.model,
       totals: json(result.totals),
-      itemBreakdown: json(breakdown),
-      inputsSnapshot: json({ parser: PARSER_VERSION, meal: input, sentToAi: null }),
-      score: null,
-      scoreBand: null,
-      aiOutput: null,
-      aiStatus: 'unavailable',
+      itemBreakdown: json({ items: result.items, notes: result.notes } satisfies StoredBreakdown),
+      inputsSnapshot: json(snapshot),
+      score: ai.score,
+      scoreBand: ai.band,
+      aiOutput: ai.output ? json(ai.output) : null,
+      aiStatus: ai.status,
     },
     result.items.map((i) => ({
       foodItemId: i.match?.foodId ?? null,
@@ -181,7 +263,7 @@ export const MealService = {
     );
     await AuditService.record('create', 'meal', meta, { actorId, actorRole: 'patient', resourceId: meal.id, patientId });
     if (body.status === 'saved' && body.analyse) {
-      await analyse(meal, patientId);
+      await analyse(meal, patientId, actorId, meta);
       return MealService.get(patientId, meal.id);
     }
     return toMealView(meal);
@@ -209,7 +291,7 @@ export const MealService = {
     const meal = await MealModel.update(id, next, body.condiments);
     await AuditService.record('update', 'meal', meta, { actorId, actorRole: 'patient', resourceId: id, patientId });
     if (meal.status === 'saved' && body.analyse) {
-      await analyse(meal, patientId);
+      await analyse(meal, patientId, actorId, meta);
       return MealService.get(patientId, id);
     }
     return toMealView(meal);
@@ -218,7 +300,7 @@ export const MealService = {
   async analyse(patientId: string, id: string, actorId: string, meta: RequestMeta): Promise<MealView> {
     const meal = await ownedOrNotFound(patientId, id);
     if (meal.status === 'draft') throw HttpError.conflict('Save the meal before analysing it');
-    await analyse(meal, patientId);
+    await analyse(meal, patientId, actorId, meta);
     await AuditService.record('create', 'meal_analysis', meta, { actorId, actorRole: 'patient', resourceId: id, patientId });
     return MealService.get(patientId, id);
   },

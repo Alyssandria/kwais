@@ -128,3 +128,29 @@ Log a meal form ──► POST /meals { rawText, condiments, drinks, cookingMeth
 | Analysing is limited to 30 per hour per patient | Protects the Gemini quota from Section 7 |
 | `inputs_snapshot` records the parser version and exactly what was sent to any AI (`null` for now) | Audit trail for the thesis: which inputs produced which output |
 
+## Section 7 decisions: Gemini layer
+
+```
+analyse meal ─► AI consent? ── no ──► rules parser → engine → numbers only (ai_status unavailable, reason no_consent)
+                    │ yes
+                    ▼
+            Gemini parse (JSON schema) ─ fails ─► rules parser
+                    ▼
+            engine (numbers) + same-day totals + supplied details only
+                    ▼
+            Gemini analysis (JSON schema) → server checks → score = 10 − deductions
+                    ▼
+            meal_analyses: ai_output, score, model, prompt_version, inputs_snapshot
+```
+
+| Decision | Why |
+| --- | --- |
+| Gemini runs only with the patient's `ai_processing` consent; the mock follows the same rule | AI use needs its own consent under the Data Privacy Act; development behaves like production |
+| The AI receives the engine's numbers, same-day totals and only the details the patient entered. No name, patient code, contact details or lab name | Data minimisation; nothing is inferred from data that was not given |
+| Structured output: a JSON schema in the request, then Zod validation of the answer, one retry | Malformed or off-schema output never reaches the patient |
+| The server sets the score to 10 minus the listed deductions, removes it when no target or lab range was supplied, and rejects answers that cite inputs not supplied | The score always matches its stated reasons and never rests on assumptions |
+| When the AI fails, the meal keeps its numbers and shows "Try again"; parsing falls back to the rule-based reader | An outage never loses a logged meal |
+| `inputs_snapshot` stores exactly what was sent for parsing and analysis, or why nothing was sent; sending is audited as `ai_processing` | Every output can be traced to its inputs for the thesis and for audits |
+| `AI_PROVIDER=mock` writes rule-based sample text labelled "Sample text, not AI" | Offline development without presenting rules as AI |
+| `pnpm ai:eval` runs 20 sample meals through the configured provider | Repeatable check of parsing and validation for the thesis |
+

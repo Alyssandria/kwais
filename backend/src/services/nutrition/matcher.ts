@@ -18,7 +18,7 @@ const SOURCE_RANK: Record<CatalogFood['source'], number> = { PH_FCT: 0, USDA_FDC
 export function normalizeTokens(text: string): string[] {
   return text
     .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
+    .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, ' ')
     .trim()

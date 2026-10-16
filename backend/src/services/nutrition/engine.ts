@@ -99,15 +99,18 @@ function toMatch(food: CatalogFood, confidence: number): FoodMatch {
   return { foodId: food.id, name: food.name, source: food.source, sourceRef: food.sourceRef, verified: food.verified, confidence };
 }
 
-export function estimateMeal(input: MealInput, catalog: Catalog): EngineResult {
+export function estimateMeal(input: MealInput, catalog: Catalog, parsed: ParsedItem[] = parseMealText(input.rawText)): EngineResult {
   const items: ItemResult[] = [];
   const unmatched: string[] = [];
   const guessed: string[] = [];
   const noPortion: string[] = [];
   const unverified = new Set<string>();
 
-  for (const p of parseMealText(input.rawText)) {
-    const match = matchFood(p.label, catalog);
+  for (const p of parsed) {
+    const match = [p.label, ...(p.altLabels ?? [])].reduce<FoodMatch | null>((best, l) => {
+      const m = matchFood(l, catalog);
+      return m && (!best || m.confidence > best.confidence) ? m : best;
+    }, null);
     const food = match ? catalog.byId.get(match.foodId) : undefined;
     if (!match || !food) {
       unmatched.push(p.label);

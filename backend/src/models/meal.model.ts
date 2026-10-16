@@ -9,6 +9,7 @@ const analysisSelect = {
   model: true,
   totals: true,
   itemBreakdown: true,
+  inputsSnapshot: true,
   score: true,
   scoreBand: true,
   aiOutput: true,
@@ -119,6 +120,15 @@ export const MealModel = {
       }
       return tx.meal.update({ where: { id }, data: meal, select: mealSelect });
     });
+  },
+
+  earlierAnalysedTotals(patientId: string, from: Date, before: Date, excludeId: string): Promise<Prisma.JsonValue[]> {
+    return prisma.meal
+      .findMany({
+        where: { patientId, ...live, status: 'analysed', id: { not: excludeId }, eatenAt: { gte: from, lt: before } },
+        select: { analyses: { select: { totals: true }, orderBy: { version: 'desc' }, take: 1 } },
+      })
+      .then((rows) => rows.flatMap((r) => r.analyses.map((a) => a.totals)));
   },
 
   async softDelete(id: string): Promise<void> {

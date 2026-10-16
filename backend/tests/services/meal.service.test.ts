@@ -11,15 +11,27 @@ vi.mock('../../src/models/meal.model.js', () => ({
     update: vi.fn(),
     softDelete: vi.fn(),
     saveAnalysis: vi.fn(),
+    earlierAnalysedTotals: vi.fn(),
   },
 }));
 vi.mock('../../src/services/food.service.js', () => ({ FoodService: { catalog: vi.fn() } }));
 vi.mock('../../src/models/audit.model.js', () => ({ AuditModel: { create: vi.fn() } }));
+vi.mock('../../src/services/consent.service.js', () => ({ ConsentService: { hasAiConsent: vi.fn() } }));
+vi.mock('../../src/services/profile.service.js', () => ({ ProfileService: { get: vi.fn() } }));
+vi.mock('../../src/services/target.service.js', () => ({ TargetService: { listActive: vi.fn() } }));
+vi.mock('../../src/services/lab.service.js', () => ({ LabService: { list: vi.fn() } }));
 
 const { MealService } = await import('../../src/services/meal.service.js');
 const { MealModel } = await import('../../src/models/meal.model.js');
 const { FoodService } = await import('../../src/services/food.service.js');
 const { AuditModel } = await import('../../src/models/audit.model.js');
+const { ConsentService } = await import('../../src/services/consent.service.js');
+const { ProfileService } = await import('../../src/services/profile.service.js');
+const { TargetService } = await import('../../src/services/target.service.js');
+const { LabService } = await import('../../src/services/lab.service.js');
+const { setAiProviderForTests } = await import('../../src/services/ai/ai.service.js');
+const { createMockProvider } = await import('../../src/services/ai/mock.provider.js');
+const { AiError } = await import('../../src/services/ai/types.js');
 
 const meta = { ipHash: 'h', userAgent: 'vitest' };
 const at = new Date('2026-10-16T04:30:00Z');
@@ -56,7 +68,30 @@ const body = {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  setAiProviderForTests(null);
   vi.mocked(FoodService.catalog).mockResolvedValue(testCatalog());
+  vi.mocked(ConsentService.hasAiConsent).mockResolvedValue(false);
+  vi.mocked(MealModel.earlierAnalysedTotals).mockResolvedValue([]);
+  vi.mocked(ProfileService.get).mockResolvedValue({
+    patientCode: 'KW-000123',
+    firstName: 'Maria',
+    lastName: 'Santos',
+    birthYear: 1970,
+    sex: 'female',
+    dietaryPreferences: [],
+    allergies: [],
+    restrictions: ['Low-salt diet'],
+    ckdStage: null,
+    dialysisStatus: 'unknown',
+    reminderTime: null,
+    timezone: 'Asia/Manila',
+    onboarding: { step: 5, complete: true },
+    updatedAt: '',
+  });
+  vi.mocked(TargetService.listActive).mockResolvedValue([
+    { nutrient: 'sodium', dailyMax: 2000, unit: 'mg', source: 'patient_entered', note: null, since: '' },
+  ]);
+  vi.mocked(LabService.list).mockResolvedValue([]);
 });
 
 describe('MealService.create', () => {
@@ -79,7 +114,7 @@ describe('MealService.create', () => {
     );
   });
 
-  it('stores the engine result as an analysis, with no AI output and no score', async () => {
+  it('without AI consent, reads the text with rules and sends nothing to AI', async () => {
     const saved = mealRow({ condiments: [{ name: 'patis', amount: 'tsp' }], drinks: ['tubig'] });
     vi.mocked(MealModel.create).mockResolvedValue(saved);
     vi.mocked(MealModel.findOwned).mockResolvedValue({ ...saved, status: 'analysed' });
@@ -90,12 +125,51 @@ describe('MealService.create', () => {
     expect([mealId, patientId]).toEqual(['meal-1', 'patient-1']);
     expect((analysis.totals as { sodium: { value: number } }).sodium.value).toBeCloseTo(403.2);
     expect(analysis).toMatchObject({ score: null, scoreBand: null, aiOutput: null, aiStatus: 'unavailable', model: null });
-    expect(analysis.inputsSnapshot).toMatchObject({ parser: 'rules@1', sentToAi: null });
+    expect(analysis.inputsSnapshot).toMatchObject({ parser: 'rules@1', parseSentToAi: null, analysisSentToAi: null, aiSkipped: 'no_consent' });
     expect(items.map((i) => [i.foodItemId, i.label, i.grams])).toEqual([
       ['kanin', 'kanin', 160],
       ['patis', 'patis', 5],
       ['tubig', 'tubig', 240],
     ]);
+    expect(AuditModel.create).not.toHaveBeenCalledWith(expect.objectContaining({ resourceType: 'ai_processing' }));
+  });
+
+  it('with consent, stores the AI analysis, its score and exactly what was sent', async () => {
+    vi.mocked(ConsentService.hasAiConsent).mockResolvedValue(true);
+    vi.mocked(MealModel.earlierAnalysedTotals).mockResolvedValue([
+      { sodium: { value: 1800 }, potassium: { value: 400 }, phosphorus: { value: 300 }, protein: { value: 20 } },
+    ]);
+    const saved = mealRow({ condiments: [{ name: 'patis', amount: 'tsp' }] });
+    vi.mocked(MealModel.create).mockResolvedValue(saved);
+    vi.mocked(MealModel.findOwned).mockResolvedValue({ ...saved, status: 'analysed' });
+
+    await MealService.create('patient-1', body, 'user-1', meta);
+
+    const analysis = vi.mocked(MealModel.saveAnalysis).mock.calls[0]![2];
+    // 1800 earlier + 403.2 now > 2000 target: −2; low-salt diet with patis: −2
+    expect(analysis).toMatchObject({ aiStatus: 'mock', score: 6, scoreBand: 'mixed', promptVersion: 'v1', model: 'mock-rules' });
+    const snap = analysis.inputsSnapshot as Record<string, any>;
+    expect(snap.day).toMatchObject({ earlierMeals: 1, totalsWithMeal: { sodium: 2203.2 } });
+    expect(snap.analysisSentToAi.allowedInputs).toEqual(['meal', 'day', 'target.sodium', 'restrictions']);
+    expect(JSON.stringify(snap.analysisSentToAi)).not.toMatch(/Maria|Santos|KW-000123|1970/);
+    expect(AuditModel.create).toHaveBeenCalledWith(expect.objectContaining({ action: 'read', resourceType: 'ai_processing' }));
+  });
+
+  it('keeps the nutrient estimate when the AI fails', async () => {
+    vi.mocked(ConsentService.hasAiConsent).mockResolvedValue(true);
+    const failing = createMockProvider();
+    failing.analyseMeal = vi.fn().mockRejectedValue(new AiError('timeout', 'slow'));
+    failing.parseMeal = vi.fn().mockRejectedValue(new AiError('http', 'down'));
+    setAiProviderForTests(failing);
+    vi.mocked(MealModel.create).mockResolvedValue(mealRow());
+    vi.mocked(MealModel.findOwned).mockResolvedValue(mealRow({ status: 'analysed' }));
+
+    await MealService.create('patient-1', body, 'user-1', meta);
+
+    const analysis = vi.mocked(MealModel.saveAnalysis).mock.calls[0]![2];
+    expect((analysis.totals as { sodium: { value: number } }).sodium.value).toBeCloseTo(3.2);
+    expect(analysis).toMatchObject({ aiStatus: 'unavailable', score: null, aiOutput: null });
+    expect(analysis.inputsSnapshot).toMatchObject({ parser: 'rules@1', parseError: 'down', aiSkipped: 'ai_error', aiError: 'slow' });
   });
 });
 
@@ -152,6 +226,7 @@ describe('MealService.analyse and ownership', () => {
       model: null,
       totals: { sodium: { value: 3.2, unit: 'mg', source: 'verified', complete: true } },
       itemBreakdown: { items: [{ label: 'kanin' }], notes: [] },
+      inputsSnapshot: { parser: 'rules@1', aiSkipped: 'no_consent' },
       score: null,
       scoreBand: null,
       aiOutput: null,
@@ -160,7 +235,7 @@ describe('MealService.analyse and ownership', () => {
     };
     vi.mocked(MealModel.findOwned).mockResolvedValue(mealRow({ status: 'analysed', analyses: [analysis] }));
     const view = await MealService.get('patient-1', 'meal-1');
-    expect(view.analysis).toMatchObject({ version: 2, items: [{ label: 'kanin' }], notes: [], ai: { status: 'unavailable', output: null } });
+    expect(view.analysis).toMatchObject({ version: 2, items: [{ label: 'kanin' }], notes: [], ai: { status: 'unavailable', reason: 'no_consent', output: null } });
     expect(view.eatenAt).toBe('2026-10-16T04:30:00.000Z');
   });
 });

@@ -31,6 +31,7 @@ export interface Catalog {
 
 export interface ParsedItem {
   label: string;
+  altLabels?: string[];
   quantity: number;
   unit: string | null;
   preparation: string | null;

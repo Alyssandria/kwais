@@ -74,6 +74,7 @@ terminal running the backend (`pnpm dev`).
 | backend | `pnpm db:reset` | Drop and recreate the database, then re-seed (development only) |
 | backend | `pnpm db:seed` | Load or refresh the sample food tables |
 | backend | `pnpm db:import-foods <file.csv>` | Import real PhilFCT / USDA records (checked first; nothing written on errors) |
+| backend | `pnpm ai:eval` | Run 20 sample meals (15 Filipino, 5 international) through the configured AI and check parsing and validation |
 | frontend | `pnpm dev` | Web app with hot reload |
 | frontend | `pnpm build` | Type-check and production build |
 | frontend | `pnpm test` | Component tests (Vitest + Testing Library) |
@@ -88,7 +89,7 @@ Secrets live only in `backend/.env`; the browser only ever sees `VITE_*` values.
 | `DATABASE_URL` | Section 1 | Docker Postgres from `docker-compose.yml` |
 | `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET` | Section 3 | Any long random strings |
 | `LAB_ENCRYPTION_KEY` | Section 5 (required) | 32 random bytes, base64. Back it up: without it, saved lab values cannot be read |
-| `AI_PROVIDER`, `GEMINI_API_KEY`, `GEMINI_MODEL` | Section 7 | `AI_PROVIDER=mock` works offline |
+| `AI_PROVIDER`, `GEMINI_API_KEY`, `GEMINI_MODEL`, `AI_TIMEOUT_MS` | Section 7 | `AI_PROVIDER=mock` works offline with rule-based sample text, labelled as not AI |
 
 Use only fictional data with a free-tier Gemini key, since free-tier inputs may be used to
 improve Google's products. Switch to a paid key before any real patient data is processed.
@@ -105,7 +106,7 @@ The work is split into sections so each can be reviewed and committed on its own
 | 4 | Patient dashboard (sample data) | ✅ |
 | 5 | Onboarding, profile, targets, lab results | ✅ |
 | 6 | Meal logging and nutrition engine | ✅ |
-| 7 | Gemini layer (parsing + structured analysis) | |
+| 7 | Gemini layer (parsing + structured analysis) | ✅ |
 | 8 | Live dashboard, history, analytics, reminders | |
 | 9 | Hardening: privacy requests, audit, tests, accessibility | |
 

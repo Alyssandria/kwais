@@ -3,9 +3,10 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { AxiosError, type AxiosResponse } from 'axios';
 import { ToastProvider } from '@/components/ui';
-import type { Meal, MealAnalysis } from '@/features/meals/api';
+import type { AiAnalysis, Meal, MealAnalysis } from '@/features/meals/api';
 
 const analyse = vi.fn();
+const changeConsent = vi.fn();
 let query: { data?: Meal; isPending: boolean; isError: boolean; error?: unknown } = { isPending: true, isError: false };
 
 vi.mock('@/features/meals/api', () => ({
@@ -15,12 +16,35 @@ vi.mock('@/features/meals/api', () => ({
 }));
 vi.mock('@/features/profile/api', () => ({
   useTargets: () => ({ data: [{ nutrient: 'sodium', dailyMax: 2000, unit: 'mg', source: 'patient_entered', note: null, since: '' }] }),
+  useChangeConsent: () => ({ mutateAsync: changeConsent, isPending: false }),
 }));
 
 const { MealPage } = await import('@/features/meals/MealPage');
 
 const none = { value: null, source: 'missing' as const };
-const analysis: MealAnalysis = {
+const nutrients = (sodium: number, potassium: number, phosphorus: number, protein: number) => ({
+  sodium: { value: sodium, source: 'estimated' as const },
+  potassium: { value: potassium, source: 'estimated' as const },
+  phosphorus: { value: phosphorus, source: 'estimated' as const },
+  protein: { value: protein, source: 'estimated' as const },
+});
+
+const aiOutput: AiAnalysis = {
+  score: 6,
+  scoreReasons: [
+    { title: 'Sodium is over your target', detail: 'Today about 2,203 mg of your 2,000 mg target.', deduction: 2 },
+    { title: 'Conflicts with a restriction you entered', detail: 'Your profile says “Low-salt diet”.', deduction: 2 },
+    { title: 'Phosphorus not scored', detail: 'You have not entered a phosphorus target.', deduction: null },
+  ],
+  summary: 'A filling lunch with most of its sodium from patis.',
+  observations: ['Calamansi on its own keeps the flavour with less sodium.'],
+  concerns: ['Today’s sodium is above the target you entered.'],
+  clinicianQuestions: ['Is 2,000 mg still the right sodium target for me?'],
+  dataQuality: 'Amounts came from what you typed.',
+  usedInputs: ['meal', 'day', 'target.sodium', 'restrictions'],
+};
+
+const analysis = (over: Partial<MealAnalysis> = {}): MealAnalysis => ({
   id: 'a1',
   version: 1,
   engineVersion: 'nutrition-engine@1',
@@ -41,20 +65,34 @@ const analysis: MealAnalysis = {
       preparation: null,
       amountGuessed: false,
       match: { foodId: 'f1', name: 'Kanin', source: 'custom', sourceRef: 'sample:kanin', verified: false, confidence: 1 },
-      nutrients: {
-        sodium: { value: 3.2, source: 'estimated' },
-        potassium: { value: 48, source: 'estimated' },
-        phosphorus: { value: 64, source: 'estimated' },
-        protein: { value: 4.8, source: 'estimated' },
-      },
+      nutrients: nutrients(3.2, 48, 64, 4.8),
+    },
+    {
+      kind: 'condiment',
+      label: 'patis',
+      quantity: 1,
+      unit: 'tsp',
+      grams: 5,
+      preparation: null,
+      amountGuessed: false,
+      match: { foodId: 'f2', name: 'Patis', source: 'custom', sourceRef: 'sample:patis', verified: false, confidence: 1 },
+      nutrients: nutrients(400, 15, 0.5, 0.3),
     },
     { kind: 'food', label: 'balut', quantity: 1, unit: 'piraso', grams: null, preparation: null, amountGuessed: false, match: null, nutrients: { sodium: none, potassium: none, phosphorus: none, protein: none } },
   ],
   notes: [{ code: 'unmatched', items: ['balut'], message: 'Not counted, because we could not find these in the food tables: balut.' }],
-  score: null,
-  scoreBand: null,
-  ai: { status: 'unavailable', output: null },
-};
+  day: {
+    date: '2026-10-16',
+    earlierMeals: 1,
+    totalsBeforeMeal: { sodium: 1800, potassium: 400, phosphorus: 300, protein: 20 },
+    totalsWithMeal: { sodium: 2203.2, potassium: 463, phosphorus: 364.5, protein: 25.1 },
+  },
+  score: 6,
+  scoreBand: 'mixed',
+  parser: 'gemini:gemini-2.5-flash@v1',
+  ai: { status: 'ok', reason: null, output: aiOutput, model: 'gemini-2.5-flash', promptVersion: 'v1' },
+  ...over,
+});
 
 const meal = (over: Partial<Meal> = {}): Meal => ({
   id: 'm1',
@@ -62,13 +100,13 @@ const meal = (over: Partial<Meal> = {}): Meal => ({
   eatenAt: new Date().toISOString(),
   rawText: '1 tasa kanin, 1 piraso balut',
   condiments: [{ name: 'patis', amount: 'tsp' }],
-  drinks: ['tubig'],
+  drinks: [],
   cookingMethods: [],
   notes: null,
   status: 'analysed',
   createdAt: '',
   updatedAt: '',
-  analysis,
+  analysis: analysis(),
   ...over,
 });
 
@@ -95,32 +133,88 @@ describe('MealPage', () => {
     const logged = screen.getByRole('region', { name: 'What you logged' });
     expect(logged).toHaveTextContent('1 tasa kanin, 1 piraso balut');
     expect(logged).toHaveTextContent('Patis (1 tsp)');
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(/^Lunch · today/);
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Your lunch, analysed');
+    expect(screen.getByText(/^Lunch · today/)).toBeInTheDocument();
   });
 
-  it('shows totals with their source, as a floor when something was not counted', () => {
+  it('shows the score with each deduction and labels the text as AI-written', () => {
+    renderPage();
+    const card = screen.getByRole('region', { name: 'Meal score' });
+    expect(within(card).getByRole('img', { name: 'Score 6 out of 10, Mixed' })).toBeInTheDocument();
+    expect(within(card).getAllByLabelText('2 points off')).toHaveLength(2);
+    expect(within(card).getByLabelText('not scored')).toBeInTheDocument();
+    expect(card).toHaveTextContent('Sodium is over your target.');
+    expect(card).toHaveTextContent(/AI-generated/);
+  });
+
+  it('labels the offline mock as sample text', () => {
+    query.data = meal({ analysis: analysis({ ai: { status: 'mock', reason: null, output: aiOutput, model: 'mock-rules', promptVersion: 'v1' } }) });
+    renderPage();
+    expect(within(screen.getByRole('region', { name: 'Meal score' })).getByText(/Sample text, not AI/)).toBeInTheDocument();
+  });
+
+  it('says what to add when there is no score', () => {
+    query.data = meal({ analysis: analysis({ score: null, scoreBand: null, ai: { status: 'ok', reason: null, output: { ...aiOutput, score: null }, model: 'g', promptVersion: 'v1' } }) });
+    renderPage();
+    const card = screen.getByRole('region', { name: 'Meal score' });
+    expect(card).toHaveTextContent('No score yet');
+    expect(within(card).getByRole('link', { name: 'lab result' })).toHaveAttribute('href', '/patient/labs');
+  });
+
+  it('asks before sending anything to AI, then analyses', async () => {
+    query.data = meal({ analysis: analysis({ score: null, scoreBand: null, ai: { status: 'unavailable', reason: 'no_consent', output: null, model: null, promptVersion: null } }) });
+    changeConsent.mockResolvedValue({});
+    analyse.mockResolvedValue(meal());
+    renderPage();
+    const card = screen.getByRole('region', { name: 'AI analysis is off' });
+    expect(card).toHaveTextContent(/Your name and contact details are never sent/);
+    await userEvent.click(within(card).getByRole('button', { name: 'Allow AI and analyse' }));
+    expect(changeConsent).toHaveBeenCalledWith({ consentType: 'ai_processing', granted: true });
+    expect(analyse).toHaveBeenCalledWith('m1');
+  });
+
+  it('offers a retry when the AI failed, keeping the numbers', async () => {
+    query.data = meal({ analysis: analysis({ score: null, ai: { status: 'unavailable', reason: 'ai_error', output: null, model: 'g', promptVersion: null } }) });
+    renderPage();
+    await userEvent.click(within(screen.getByRole('region', { name: /couldn’t run this time/ })).getByRole('button', { name: 'Try again' }));
+    expect(analyse).toHaveBeenCalledWith('m1');
+    expect(screen.getByRole('article', { name: 'Sodium' })).toHaveTextContent('at least 403 mg');
+  });
+
+  it('compares today’s total, including this meal, with the target', () => {
     renderPage();
     const sodium = screen.getByRole('article', { name: 'Sodium' });
     expect(sodium).toHaveTextContent('at least 403 mg');
     expect(within(sodium).getByText('Estimated')).toBeInTheDocument();
-    expect(sodium).toHaveTextContent('20% of your daily target (2,000 mg)');
-    expect(screen.getByRole('article', { name: 'Potassium' })).toHaveTextContent('No daily target set');
-    expect(screen.getByRole('article', { name: 'Protein' })).toHaveTextContent('5.1 g');
+    expect(sodium).toHaveTextContent('Today 2,203 of 2,000 mg');
+    expect(screen.getByRole('article', { name: 'Potassium' })).toHaveTextContent('Today 463 mg · no target set');
+    expect(screen.getByText(/counts this meal and 1 earlier analysed meal/)).toBeInTheDocument();
   });
 
-  it('lists each food, the unmatched ones, and the data notes', () => {
+  it('shows what each food contributed', () => {
+    renderPage();
+    const contrib = screen.getByRole('region', { name: 'What each food contributed' });
+    expect(contrib).toHaveTextContent('patis alone gave more than half of this meal’s sodium');
+    expect(within(contrib).getByRole('img', { name: /^Sodium: kanin 1 percent, patis 99 percent$/ })).toBeInTheDocument();
+  });
+
+  it('lists each food, the unmatched ones, and how sure the numbers are', () => {
     renderPage();
     const table = screen.getByRole('table', { name: /nutrients for each food/i });
     expect(within(table).getByRole('rowheader', { name: 'balut' })).toBeInTheDocument();
     expect(within(table).getByText('Not found · not counted')).toBeInTheDocument();
-    expect(screen.getByText(/could not find these in the food tables: balut/)).toBeInTheDocument();
+    const dq = screen.getByRole('note', { name: 'How sure are these numbers?' });
+    expect(dq).toHaveTextContent('Amounts came from what you typed.');
+    expect(dq).toHaveTextContent(/could not find these in the food tables: balut/);
   });
 
-  it('never presents the estimate as AI output', () => {
+  it('shows observations, concerns and questions', () => {
     renderPage();
-    const ai = screen.getByRole('region', { name: /score and suggestions/i });
-    expect(ai).toHaveTextContent(/aren’t available for this meal yet/);
-    expect(ai).toHaveTextContent(/come from the food tables, not from AI/);
+    expect(screen.getByRole('region', { name: 'Observations and ideas' })).toHaveTextContent('Calamansi on its own');
+    expect(screen.getByRole('region', { name: 'Worth raising with your care team' })).toHaveTextContent('above the target you entered');
+    const q = screen.getByRole('region', { name: 'Questions to ask at your next visit' });
+    expect(within(q).getByRole('listitem')).toHaveTextContent('Is 2,000 mg still the right sodium target for me?');
+    expect(within(q).getByRole('button', { name: 'Copy questions' })).toBeInTheDocument();
   });
 
   it('offers analysis for a meal saved without it', async () => {
