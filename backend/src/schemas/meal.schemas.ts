@@ -67,6 +67,7 @@ export const MealUpdateSchema = z
 
 export const MealListQuery = z.object({
   status: z.enum(['draft', 'saved', 'analysed']).optional(),
+  category: z.enum(MEAL_CATEGORIES).optional(),
   limit: z.coerce.number().int().min(1).max(50).default(20),
   before: z.string().datetime({ offset: true }).optional(),
 });

@@ -49,6 +49,12 @@ export const PatientProfileModel = {
     return prisma.patientProfile.findUnique({ where: { id }, select: profileSelect });
   },
 
+  withReminderTime(): Promise<{ id: string; userId: string; reminderTime: string; timezone: string }[]> {
+    return prisma.patientProfile
+      .findMany({ where: { reminderTime: { not: null } }, select: { id: true, userId: true, reminderTime: true, timezone: true } })
+      .then((rows) => rows.map((r) => ({ ...r, reminderTime: r.reminderTime! })));
+  },
+
   update(id: string, data: ProfileChanges): Promise<ProfileRecord> {
     return prisma.patientProfile.update({ where: { id }, data, select: profileSelect });
   },

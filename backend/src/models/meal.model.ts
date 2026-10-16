@@ -33,6 +33,17 @@ const mealSelect = {
 } satisfies Prisma.MealSelect;
 
 export type MealRecord = Prisma.MealGetPayload<{ select: typeof mealSelect }>;
+
+const summarySelect = {
+  id: true,
+  eatenAt: true,
+  category: true,
+  rawText: true,
+  status: true,
+  analyses: { select: { totals: true, score: true, aiStatus: true, aiOutput: true }, orderBy: { version: 'desc' }, take: 1 },
+} satisfies Prisma.MealSelect;
+
+export type MealSummaryRecord = Prisma.MealGetPayload<{ select: typeof summarySelect }>;
 export type AnalysisRecord = Prisma.MealAnalysisGetPayload<{ select: typeof analysisSelect }>;
 
 export interface MealData {
@@ -89,12 +100,13 @@ export const MealModel = {
     return prisma.meal.findFirst({ where: { id, patientId, ...live }, select: mealSelect });
   },
 
-  list(patientId: string, opts: { status?: MealStatus; limit: number; before?: Date }): Promise<MealRecord[]> {
+  list(patientId: string, opts: { status?: MealStatus; category?: MealCategory; limit: number; before?: Date }): Promise<MealRecord[]> {
     return prisma.meal.findMany({
       where: {
         patientId,
         ...live,
-        ...(opts.status ? { status: opts.status } : {}),
+        ...(opts.status ? { status: opts.status } : { status: { in: ['saved', 'analysed'] } }),
+        ...(opts.category ? { category: opts.category } : {}),
         ...(opts.before ? { eatenAt: { lt: opts.before } } : {}),
       },
       orderBy: [{ eatenAt: 'desc' }, { createdAt: 'desc' }],
@@ -129,6 +141,18 @@ export const MealModel = {
         select: { analyses: { select: { totals: true }, orderBy: { version: 'desc' }, take: 1 } },
       })
       .then((rows) => rows.flatMap((r) => r.analyses.map((a) => a.totals)));
+  },
+
+  summariesBetween(patientId: string, from: Date, to: Date): Promise<MealSummaryRecord[]> {
+    return prisma.meal.findMany({
+      where: { patientId, ...live, status: { in: ['saved', 'analysed'] }, eatenAt: { gte: from, lt: to } },
+      orderBy: { eatenAt: 'desc' },
+      select: summarySelect,
+    });
+  },
+
+  countSince(patientId: string, from: Date): Promise<number> {
+    return prisma.meal.count({ where: { patientId, ...live, status: { in: ['saved', 'analysed'] }, eatenAt: { gte: from } } });
   },
 
   async softDelete(id: string): Promise<void> {

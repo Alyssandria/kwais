@@ -34,12 +34,7 @@ export function DashboardPage() {
         </Notice>
       )}
 
-      {data.isSample && (
-        <Notice>
-          You’re seeing fictional sample data while this dashboard is being built. Your own meals and lab results will
-          appear here once logging is connected.
-        </Notice>
-      )}
+      {data.isSample && <Notice>You’re seeing fictional sample data.</Notice>}
 
       <WelcomeHero firstName={user?.firstName ?? ''} today={data.today} />
 
@@ -69,7 +64,7 @@ export function DashboardPage() {
         <RecentMealsCard meals={data.recentMeals} />
       </div>
 
-      <InsightsCard insights={data.insights} isSample={data.isSample} />
+      <InsightsCard insights={data.insights} isSample={data.isSample || data.sampleInsights} />
 
       <footer className="border-t border-line pt-3 text-[12px] text-muted">
         Nutrient values are estimates from the Philippine Food Composition Tables and other databases and may be

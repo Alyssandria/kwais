@@ -7,6 +7,7 @@ import { useChangeConsent } from '@/features/profile/api';
 import { errorMessage } from '@/lib/api';
 import { AnalysisFooter, Contribution, DataQuality, Insights, ItemsTable, NutrientTotals, ScoreCard } from './analysis';
 import { useAnalyseMeal, useDeleteMeal, useMeal, type Meal } from './api';
+import { ProgressDialog, type ProgressKind } from './ProgressDialog';
 import { amountLabel, condimentLabel, cookingLabel, drinkLabel, mealLabel, whenText } from './options';
 
 function StatusBadge({ status }: { status: Meal['status'] }) {
@@ -50,6 +51,7 @@ export function MealPage() {
   const busy = analyseMeal.isPending || changeConsent.isPending;
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [progress, setProgress] = useState<ProgressKind | null>(null);
 
   const back = (
     <Link to="/patient/dashboard" className="inline-flex min-h-11 items-center gap-2 font-semibold no-underline">
@@ -89,24 +91,26 @@ export function MealPage() {
 
   const m = meal.data;
 
-  const runAnalysis = async () => {
+  const withProgress = async (work: () => Promise<unknown>) => {
     setActionError(null);
+    setProgress('reanalyse');
     try {
-      await analyseMeal.mutateAsync(m.id);
+      await work();
+      toast.success('Analysis ready');
     } catch (err) {
       setActionError(errorMessage(err));
+    } finally {
+      setProgress(null);
     }
   };
 
-  const allowAiAndAnalyse = async () => {
-    setActionError(null);
-    try {
+  const runAnalysis = () => withProgress(() => analyseMeal.mutateAsync(m.id));
+
+  const allowAiAndAnalyse = () =>
+    withProgress(async () => {
       await changeConsent.mutateAsync({ consentType: 'ai_processing', granted: true });
       await analyseMeal.mutateAsync(m.id);
-    } catch (err) {
-      setActionError(errorMessage(err));
-    }
-  };
+    });
 
   const remove = async () => {
     try {
@@ -177,6 +181,8 @@ export function MealPage() {
           <AnalysisFooter analysis={m.analysis} onReanalyse={runAnalysis} busy={busy} />
         </>
       )}
+
+      <ProgressDialog kind={progress} title={`Analysing your ${mealLabel(m.category).toLowerCase()}`} />
 
       <ConfirmDialog
         open={confirmDelete}

@@ -18,6 +18,7 @@ import {
   type RecentMeal,
 } from './api';
 import { ChipGroup, ChipSection, WhenPicker } from './components';
+import { ProgressDialog, type ProgressKind } from './ProgressDialog';
 import { AMOUNTS, CONDIMENTS, COOKING, DRINKS, MEAL_TYPES, condimentLabel, defaultCategory, summaryOf, whenText } from './options';
 
 const MEAL_ICONS = { breakfast: Sunrise, lunch: Sun, dinner: Moon, snack: Apple } as const;
@@ -49,6 +50,7 @@ export function LogMealPage() {
   const [textError, setTextError] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [announce, setAnnounce] = useState('');
+  const [progress, setProgress] = useState<ProgressKind | null>(null);
 
   const recent = useRecentMeals();
   const latestDraft = useLatestDraft();
@@ -130,6 +132,7 @@ export function LogMealPage() {
       textRef.current?.focus();
       return;
     }
+    setProgress(analyse ? 'analyse' : 'save');
     try {
       const m = await persist('saved');
       if (analyse) {
@@ -139,6 +142,7 @@ export function LogMealPage() {
         navigate('/patient/dashboard');
       }
     } catch (err) {
+      setProgress(null);
       showServerError(err);
     }
   };
@@ -392,6 +396,8 @@ export function LogMealPage() {
           </div>
         </div>
       </div>
+
+      <ProgressDialog kind={progress} title={progress === 'save' ? 'Saving your meal' : `Analysing your ${mealWord}`} />
 
       <ConfirmDialog
         open={confirmDiscard}

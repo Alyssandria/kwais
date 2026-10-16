@@ -90,6 +90,14 @@ describe('DashboardPage', () => {
     expect(within(table).getByRole('cell', { name: '2060' })).toBeInTheDocument();
   });
 
+  it('shows live data without the sample notice', () => {
+    query = { data: { ...buildSampleDashboard(), isSample: false, sampleInsights: false }, isPending: false, isError: false };
+    renderPage();
+    expect(screen.queryByText(/fictional sample data/i)).not.toBeInTheDocument();
+    const ai = screen.getByRole('region', { name: /suggestions from your recent meals/i });
+    expect(within(ai).getByText('AI-generated')).toBeInTheDocument();
+  });
+
   it('shows "no score yet" when nothing has been scored', () => {
     const d = buildSampleDashboard();
     d.today.averageScore = null;
@@ -102,6 +110,6 @@ describe('DashboardPage', () => {
   it('labels AI suggestions', () => {
     renderPage();
     const ai = screen.getByRole('region', { name: /suggestions from your recent meals/i });
-    expect(within(ai).getByText(/AI-generated · sample text/)).toBeInTheDocument();
+    expect(within(ai).getByText('Sample text, not AI')).toBeInTheDocument();
   });
 });

@@ -107,7 +107,7 @@ The work is split into sections so each can be reviewed and committed on its own
 | 5 | Onboarding, profile, targets, lab results | ✅ |
 | 6 | Meal logging and nutrition engine | ✅ |
 | 7 | Gemini layer (parsing + structured analysis) | ✅ |
-| 8 | Live dashboard, history, analytics, reminders | |
+| 8 | Live dashboard, history, analytics, reminders | ✅ |
 | 9 | Hardening: privacy requests, audit, tests, accessibility | |
 
 ## Data and privacy notes

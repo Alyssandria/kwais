@@ -217,13 +217,19 @@ describe('MealPage', () => {
     expect(within(q).getByRole('button', { name: 'Copy questions' })).toBeInTheDocument();
   });
 
-  it('offers analysis for a meal saved without it', async () => {
+  it('offers analysis for a meal saved without it, with progress while it runs', async () => {
     query = { data: meal({ status: 'saved', analysis: null }), isPending: false, isError: false };
-    analyse.mockResolvedValue(meal());
+    let finish!: (m: Meal) => void;
+    analyse.mockReturnValue(new Promise<Meal>((r) => (finish = r)));
     renderPage();
     expect(screen.getByText('Saved · not analysed')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Analyse now' }));
     expect(analyse).toHaveBeenCalledWith('m1');
+    expect(within(screen.getByRole('dialog', { name: 'Analysing your lunch' })).getByText('Reading what you ate')).toBeInTheDocument();
+
+    finish(meal());
+    expect(await screen.findByText('Analysis ready')).toBeInTheDocument();
+    expect(screen.queryByRole('dialog', { name: 'Analysing your lunch' })).not.toBeInTheDocument();
   });
 
   it('says when a meal does not exist', () => {

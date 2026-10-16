@@ -154,3 +154,14 @@ analyse meal ─► AI consent? ── no ──► rules parser → engine → 
 | `AI_PROVIDER=mock` writes rule-based sample text labelled "Sample text, not AI" | Offline development without presenting rules as AI |
 | `pnpm ai:eval` runs 20 sample meals through the configured provider | Repeatable check of parsing and validation for the thesis |
 
+## Section 8 decisions: dashboard, history, analytics, reminders
+
+| Decision | Why |
+| --- | --- |
+| Days are counted in the patient's own time zone (`patient_profiles.timezone`) | A meal at 11 pm belongs to that day, not the next UTC day |
+| Daily totals add up analysed meals only; meals saved without analysis count as logged days | No nutrient number exists unless the engine produced it |
+| Dashboard and analytics are built by pure functions (`buildDashboard`, `buildAnalytics`) from meal rows | Tested without a database; the same numbers feed both pages |
+| Analytics ranges are fixed at 7, 30 or 90 days | Bounded queries; enough for trends in the thesis |
+| Insights on the dashboard reuse each meal's stored AI observations, labelled "Sample text, not AI" when they came from the mock | No extra AI calls just to render the dashboard |
+| Reminders: a scheduler in the API process checks every 5 minutes and creates one in-app reminder per day, only with `reminders` consent, after the patient's chosen time, and only if nothing was logged that day | Respects consent; never nags twice; no email or SMS in v0 |
+

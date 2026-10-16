@@ -98,6 +98,30 @@ describe('LogMealPage', () => {
     expect(await screen.findByText('Meal page')).toBeInTheDocument();
   });
 
+  it('shows each step while the meal is analysed, then opens it', async () => {
+    let finish!: (m: Meal) => void;
+    create.mockReturnValue(new Promise<Meal>((r) => (finish = r)));
+    renderPage();
+    await userEvent.type(foodBox(), '1 tasa kanin');
+    await userEvent.click(screen.getByRole('button', { name: /save and analyse/i }));
+
+    const dialog = screen.getByRole('dialog', { name: /^Analysing your/ });
+    expect(within(dialog).getByText('Saving your meal')).toBeInTheDocument();
+    expect(within(dialog).getByText('Matching each food to the food tables')).toBeInTheDocument();
+
+    finish(saved({ id: 'm9', status: 'analysed' }));
+    expect(await screen.findByText('Meal page')).toBeInTheDocument();
+  });
+
+  it('closes the progress dialog and explains when saving fails', async () => {
+    create.mockRejectedValue(new Error('x'));
+    renderPage();
+    await userEvent.type(foodBox(), '1 tasa kanin');
+    await userEvent.click(screen.getByRole('button', { name: /save and analyse/i }));
+    expect(await screen.findByText('Not saved')).toBeInTheDocument();
+    expect(screen.queryByRole('dialog', { name: /^Analysing your/ })).not.toBeInTheDocument();
+  });
+
   it('can save without analysis', async () => {
     create.mockResolvedValue(saved());
     renderPage();

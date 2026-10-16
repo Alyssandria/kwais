@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import type { NutrientKey } from '@/lib/nutrition';
 
@@ -126,6 +126,24 @@ export function useMeal(id: string | undefined) {
   });
 }
 
+const refreshSummaries = (qc: ReturnType<typeof useQueryClient>) => {
+  void qc.invalidateQueries({ queryKey: mealKeys.all });
+  void qc.invalidateQueries({ queryKey: ['dashboard'] });
+  void qc.invalidateQueries({ queryKey: ['analytics'] });
+};
+
+export const HISTORY_PAGE = 20;
+
+export function useMealHistory(filters: { status?: MealStatus; category?: MealCategory }) {
+  return useInfiniteQuery({
+    queryKey: mealKeys.list({ history: true, ...filters }),
+    initialPageParam: undefined as string | undefined,
+    queryFn: ({ pageParam }) =>
+      unwrap<Meal[]>(api.get('/meals', { params: { ...filters, limit: HISTORY_PAGE, before: pageParam } })),
+    getNextPageParam: (last) => (last.length === HISTORY_PAGE ? last[last.length - 1]!.eatenAt : undefined),
+  });
+}
+
 export function useRecentMeals() {
   return useQuery({ queryKey: mealKeys.recent, queryFn: () => unwrap<RecentMeal[]>(api.get('/meals/recent')) });
 }
@@ -143,7 +161,7 @@ export function useCreateMeal() {
     mutationFn: (input: MealInput) => unwrap<Meal>(api.post('/meals', input)),
     onSuccess: (m) => {
       qc.setQueryData(mealKeys.one(m.id), m);
-      void qc.invalidateQueries({ queryKey: mealKeys.all });
+      refreshSummaries(qc);
     },
   });
 }
@@ -154,7 +172,7 @@ export function useUpdateMeal() {
     mutationFn: ({ id, input }: { id: string; input: Partial<MealInput> }) => unwrap<Meal>(api.patch(`/meals/${id}`, input)),
     onSuccess: (m) => {
       qc.setQueryData(mealKeys.one(m.id), m);
-      void qc.invalidateQueries({ queryKey: mealKeys.all });
+      refreshSummaries(qc);
     },
   });
 }
@@ -163,7 +181,10 @@ export function useAnalyseMeal() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => unwrap<Meal>(api.post(`/meals/${id}/analyse`)),
-    onSuccess: (m) => qc.setQueryData(mealKeys.one(m.id), m),
+    onSuccess: (m) => {
+      qc.setQueryData(mealKeys.one(m.id), m);
+      refreshSummaries(qc);
+    },
   });
 }
 
@@ -171,6 +192,6 @@ export function useDeleteMeal() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => api.delete(`/meals/${id}`),
-    onSuccess: () => qc.invalidateQueries({ queryKey: mealKeys.all }),
+    onSuccess: () => refreshSummaries(qc),
   });
 }

@@ -1,13 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
-import { buildSampleDashboard } from './sampleDashboard';
+import { api } from '@/lib/api';
 import type { PatientDashboard } from './types';
 
 export function useDashboard() {
   return useQuery({
     queryKey: ['dashboard', 'patient'],
-    queryFn: async (): Promise<PatientDashboard> => {
-      await new Promise((r) => setTimeout(r, 400));
-      return buildSampleDashboard();
-    },
+    queryFn: () => api.get<{ data: PatientDashboard }>('/dashboard/patient').then((r) => r.data.data),
   });
 }

@@ -133,10 +133,14 @@ export function InsightsCard({ insights, isSample }: { insights: Insight[]; isSa
         <h2 id="insights-title" className="text-base font-bold">
           Suggestions from your recent meals
         </h2>
-        <Badge tone="ai">
-          <Sparkles className="size-3" aria-hidden />
-          AI-generated{isSample ? ' · sample text' : ''}
-        </Badge>
+        {isSample ? (
+          <Badge>Sample text, not AI</Badge>
+        ) : (
+          <Badge tone="ai">
+            <Sparkles className="size-3" aria-hidden />
+            AI-generated
+          </Badge>
+        )}
       </div>
       <div className="grid gap-3 md:grid-cols-3">
         {insights.map((i) => (

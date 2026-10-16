@@ -21,3 +21,10 @@ export function localDateTime(at: Date, timeZone: string): string {
   const time = new Intl.DateTimeFormat('en-GB', { timeZone, hour: '2-digit', minute: '2-digit', hour12: false }).format(at);
   return `${localDate(at, timeZone)} ${time}`;
 }
+
+export function lastLocalDays(now: Date, timeZone: string, count: number): { dates: string[]; start: Date } {
+  const todayStart = localDayStart(now, timeZone);
+  const dates: string[] = [];
+  for (let i = count - 1; i >= 0; i--) dates.push(localDate(new Date(todayStart.getTime() - i * 86_400_000 + 12 * 3_600_000), timeZone));
+  return { dates, start: localDayStart(new Date(todayStart.getTime() - (count - 1) * 86_400_000 + 12 * 3_600_000), timeZone) };
+}

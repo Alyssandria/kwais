@@ -44,6 +44,7 @@ export function buildSampleDashboard(): PatientDashboard {
 
   return {
     isSample: true,
+    sampleInsights: true,
     generatedAt: new Date().toISOString(),
     today: {
       date: iso(daysAgo(0)),

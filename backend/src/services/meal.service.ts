@@ -217,7 +217,7 @@ const normalise = (s: string) => s.trim().toLowerCase().replace(/\s+/g, ' ');
 
 export const MealService = {
   async list(patientId: string, q: MealListParams): Promise<MealView[]> {
-    const rows = await MealModel.list(patientId, { status: q.status, limit: q.limit, before: q.before ? new Date(q.before) : undefined });
+    const rows = await MealModel.list(patientId, { status: q.status, category: q.category, limit: q.limit, before: q.before ? new Date(q.before) : undefined });
     return rows.map(toMealView);
   },
 

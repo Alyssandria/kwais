@@ -2,6 +2,7 @@ import type { NutrientKey } from '@/lib/nutrition';
 
 export interface PatientDashboard {
   isSample: boolean;
+  sampleInsights: boolean;
   generatedAt: string;
   today: {
     date: string;

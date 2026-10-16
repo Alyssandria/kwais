@@ -16,6 +16,9 @@ import { ProfilePage } from '@/features/profile/ProfilePage';
 import { LabsPage } from '@/features/labs/LabsPage';
 import { LogMealPage } from '@/features/meals/LogMealPage';
 import { MealPage } from '@/features/meals/MealPage';
+import { HistoryPage } from '@/features/meals/HistoryPage';
+import { AnalyticsPage } from '@/features/analytics/AnalyticsPage';
+import { NotificationsPage } from '@/features/notifications/NotificationsPage';
 import { ComponentGallery } from '@/pages/dev/ComponentGallery';
 import { StatusPage } from '@/pages/dev/StatusPage';
 
@@ -46,12 +49,12 @@ const patientRoutes: RouteObject = {
   children: [
     { index: true, element: <Navigate to="dashboard" replace /> },
     { path: 'dashboard', element: <DashboardPage /> },
-    { path: 'meals', element: <ComingSoonPage title="Meal history" section={8} /> },
+    { path: 'meals', element: <HistoryPage /> },
     { path: 'meals/new', element: <LogMealPage /> },
     { path: 'meals/:id', element: <MealPage /> },
-    { path: 'analytics', element: <ComingSoonPage title="Analytics" section={8} /> },
+    { path: 'analytics', element: <AnalyticsPage /> },
     { path: 'labs', element: <LabsPage /> },
-    { path: 'notifications', element: <ComingSoonPage title="Notifications" section={8} /> },
+    { path: 'notifications', element: <NotificationsPage /> },
     { path: 'profile', element: <ProfilePage /> },
     { path: 'settings', element: <ComingSoonPage title="Settings" section={9} /> },
   ],
