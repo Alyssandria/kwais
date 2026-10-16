@@ -2,8 +2,6 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import type { NutrientKey } from '@/lib/nutrition';
 
-/** Shapes returned by the backend (see backend/src/services/*.service.ts). */
-
 export type ValueSource = 'patient_entered' | 'clinician_verified';
 export type CkdStage = '1' | '2' | '3a' | '3b' | '4' | '5' | 'not_sure';
 export type Dialysis = 'none' | 'hemodialysis' | 'peritoneal' | 'unknown';
@@ -95,8 +93,6 @@ export const keys = {
   consents: ['consents'] as const,
 };
 
-// ─── Profile ─────────────────────────────────────────────────────────────────
-
 export function useProfile() {
   return useQuery({ queryKey: keys.profile, queryFn: () => unwrap<Profile>(api.get('/patients/me/profile')) });
 }
@@ -116,8 +112,6 @@ export function useCompleteOnboarding() {
     onSuccess: (p) => qc.setQueryData(keys.profile, p),
   });
 }
-
-// ─── Targets ─────────────────────────────────────────────────────────────────
 
 export function useTargets() {
   return useQuery({ queryKey: keys.targets, queryFn: () => unwrap<Target[]>(api.get('/patients/me/targets')) });
@@ -139,8 +133,6 @@ export function useRemoveTarget() {
     onSuccess: () => qc.invalidateQueries({ queryKey: keys.targets }),
   });
 }
-
-// ─── Labs ────────────────────────────────────────────────────────────────────
 
 export function useLabs() {
   return useQuery({ queryKey: keys.labs, queryFn: () => unwrap<Lab[]>(api.get('/labs')) });
@@ -169,8 +161,6 @@ export function useDeleteLab() {
     onSuccess: () => qc.invalidateQueries({ queryKey: keys.labs }),
   });
 }
-
-// ─── Consents ────────────────────────────────────────────────────────────────
 
 export function useConsents() {
   return useQuery({ queryKey: keys.consents, queryFn: () => unwrap<Consents>(api.get('/patients/me/consents')) });

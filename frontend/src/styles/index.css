@@ -1,28 +1,20 @@
 @import "tailwindcss";
 
-/*
- * K-WAIS design tokens (Tailwind v4 @theme).
- * Every colour, font, radius and shadow used in components comes from here,
- * e.g. bg-primary, text-ink, rounded-card, shadow-card.
- */
 @theme {
-  /* Brand */
   --color-primary: #087f8c;
   --color-primary-dark: #075e68;
   --color-primary-deep: #0b3b40;
   --color-primary-soft: #e8f5f1;
   --color-primary-line: #bfe3df;
-  --color-accent: #fdba74;          /* apricot: primary actions, selected nav */
+  --color-accent: #fdba74;
   --color-accent-strong: #fb923c;
 
-  /* Surfaces and text */
-  --color-canvas: #f4f8f7;          /* page background */
+  --color-canvas: #f4f8f7;
   --color-surface: #ffffff;
-  --color-ink: #172b36;             /* main text */
-  --color-muted: #64748b;           /* secondary text */
-  --color-line: #e2e8f0;            /* borders */
+  --color-ink: #172b36;
+  --color-muted: #64748b;
+  --color-line: #e2e8f0;
 
-  /* Nutrients: one hue each, used wherever that nutrient appears */
   --color-sodium: #0369a1;
   --color-sodium-soft: #e0f2fe;
   --color-potassium: #b45309;
@@ -32,7 +24,6 @@
   --color-protein: #be123c;
   --color-protein-soft: #ffe4e6;
 
-  /* Status (always paired with an icon and a text label) */
   --color-good: #047857;
   --color-good-soft: #ecfdf5;
   --color-warn: #92400e;
@@ -45,14 +36,12 @@
   --color-ai: #5b21b6;
   --color-ai-soft: #f5f3ff;
 
-  /* Type */
   --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
 
-  /* Shape */
-  --radius-field: 0.625rem;   /* 10px inputs */
-  --radius-card: 0.875rem;    /* 14px cards */
-  --radius-panel: 1.25rem;    /* 20px panels */
-  --radius-hero: 1.5rem;      /* 24px teal bands */
+  --radius-field: 0.625rem;
+  --radius-card: 0.875rem;
+  --radius-panel: 1.25rem;
+  --radius-hero: 1.5rem;
 
   --shadow-card: 0 1px 2px rgb(15 23 42 / 0.05);
   --shadow-pop: 0 8px 24px rgb(15 23 42 / 0.12);
@@ -68,7 +57,7 @@
     font-size: 14px;
     line-height: 1.5;
   }
-  /* Visible keyboard focus everywhere */
+
   :focus-visible {
     outline: 2px solid var(--color-primary-dark);
     outline-offset: 2px;

@@ -1,21 +1,21 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import request from 'supertest';
 
-vi.mock('../models/patient-profile.model.js', () => ({
+vi.mock('../../src/models/patient-profile.model.js', () => ({
   PatientProfileModel: { findIdByUserId: vi.fn(), findById: vi.fn(), update: vi.fn() },
 }));
-vi.mock('../services/lab.service.js', () => ({
+vi.mock('../../src/services/lab.service.js', () => ({
   LabService: { list: vi.fn(), create: vi.fn(), update: vi.fn(), remove: vi.fn() },
 }));
-vi.mock('../services/target.service.js', () => ({
+vi.mock('../../src/services/target.service.js', () => ({
   TargetService: { listActive: vi.fn(), set: vi.fn(), remove: vi.fn() },
 }));
 
-const { createApp } = await import('../app.js');
-const { signAccessToken } = await import('../lib/jwt.js');
-const { PatientProfileModel } = await import('../models/patient-profile.model.js');
-const { LabService } = await import('../services/lab.service.js');
-const { TargetService } = await import('../services/target.service.js');
+const { createApp } = await import('../../src/app.js');
+const { signAccessToken } = await import('../../src/lib/jwt.js');
+const { PatientProfileModel } = await import('../../src/models/patient-profile.model.js');
+const { LabService } = await import('../../src/services/lab.service.js');
+const { TargetService } = await import('../../src/services/target.service.js');
 
 const app = createApp();
 const token = (role: 'patient' | 'doctor', sub = 'user-1') =>

@@ -14,12 +14,6 @@ import {
   SEX_OPTIONS,
 } from './options';
 
-/**
- * Profile sections, each a self-contained form. Onboarding shows them one per step;
- * the profile page shows them as editable cards. `actions` lets the caller add buttons
- * such as Back or Skip next to the submit button.
- */
-
 interface SectionProps<T> {
   onSubmit: (value: T) => Promise<unknown>;
   submitLabel: string;
@@ -60,8 +54,6 @@ function Footer({ busy, submitLabel, actions, error }: { busy: boolean; submitLa
     </>
   );
 }
-
-// ─── About you ───────────────────────────────────────────────────────────────
 
 export function AboutYouSection({ profile, ...p }: SectionProps<ProfilePatch> & { profile: Profile }) {
   const [firstName, setFirstName] = useState(profile.firstName);
@@ -114,8 +106,6 @@ export function AboutYouSection({ profile, ...p }: SectionProps<ProfilePatch> & 
   );
 }
 
-// ─── Food and diet ───────────────────────────────────────────────────────────
-
 export function DietSection({ profile, ...p }: SectionProps<ProfilePatch> & { profile: Profile }) {
   const [restrictions, setRestrictions] = useState(profile.restrictions);
   const [allergies, setAllergies] = useState(profile.allergies);
@@ -143,8 +133,6 @@ export function DietSection({ profile, ...p }: SectionProps<ProfilePatch> & { pr
     </form>
   );
 }
-
-// ─── Kidney health ───────────────────────────────────────────────────────────
 
 export function KidneySection({ profile, ...p }: SectionProps<ProfilePatch> & { profile: Profile }) {
   const [stage, setStage] = useState<CkdStage | null>(profile.ckdStage?.value ?? null);
@@ -179,8 +167,6 @@ export function KidneySection({ profile, ...p }: SectionProps<ProfilePatch> & { 
     </form>
   );
 }
-
-// ─── Daily targets ───────────────────────────────────────────────────────────
 
 export type TargetChanges = Partial<Record<NutrientKey, number | null>>;
 
@@ -238,8 +224,6 @@ export function TargetsSection({ targets, ...p }: SectionProps<TargetChanges> & 
     </form>
   );
 }
-
-// ─── Preferences and consent ─────────────────────────────────────────────────
 
 export interface PreferenceValues {
   aiProcessing: boolean;

@@ -16,7 +16,6 @@ export const RefreshTokenModel = {
     return prisma.refreshToken.update({ where: { id }, data: { revokedAt: new Date() } });
   },
 
-  /** Revokes every token in a rotation chain (used when a stolen token is replayed). */
   revokeFamily(family: string) {
     return prisma.refreshToken.updateMany({ where: { family, revokedAt: null }, data: { revokedAt: new Date() } });
   },

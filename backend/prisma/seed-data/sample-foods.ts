@@ -1,19 +1,3 @@
-/**
- * SAMPLE FOOD DATA: APPROXIMATE VALUES FOR DEVELOPMENT ONLY
- *
- * These values are rounded figures typical of published food composition tables. They are
- * NOT copied from PhilFCT or USDA records and have not been checked against them. Every row
- * is stored with verified = false and sourceRef "sample:<ref>", so the app labels results
- * that use them as "Estimated" and lists the foods in the data notes.
- *
- * Before the study, replace or supplement them with real records (PhilFCT food IDs,
- * USDA FDC IDs) using `pnpm db:import-foods <file.csv>`; see prisma/seed-data/README.md.
- *
- * Values are per 100 g edible portion, cooked or as eaten unless the name says otherwise:
- *   [sodium mg, potassium mg, phosphorus mg, protein g]
- * Portions are grams for one household unit (tasa, sandok, piraso, mangkok, hiwa, baso, lata, pakete, serving).
- */
-
 export type Per100g = [sodium: number | null, potassium: number | null, phosphorus: number | null, protein: number | null];
 
 export interface SampleFood {
@@ -30,13 +14,11 @@ export interface SampleRecipe {
   name: string;
   localNames: string[];
   category: 'dish' | 'condiment';
-  /** Ingredient ref → grams in 100 g of the finished dish. Must add up to 100. */
   ingredients: Record<string, number>;
   portions?: Record<string, number>;
 }
 
 export const SAMPLE_FOODS: SampleFood[] = [
-  // Rice, bread, starches
   { ref: 'kanin', name: 'Kanin', localNames: ['rice', 'white rice', 'cooked rice', 'steamed rice', 'plain rice'], category: 'grain', per100g: [1, 35, 43, 2.7], portions: { tasa: 160, sandok: 80, mangkok: 200, serving: 160 } },
   { ref: 'sinangag', name: 'Sinangag', localNames: ['garlic rice', 'garlic fried rice', 'fried rice'], category: 'grain', per100g: [250, 40, 45, 3], portions: { tasa: 170, sandok: 85, serving: 170 } },
   { ref: 'brown-rice', name: 'Brown rice', localNames: ['pinawa', 'kanin na pinawa'], category: 'grain', per100g: [5, 79, 83, 2.6], portions: { tasa: 195, sandok: 95, serving: 195 } },
@@ -50,7 +32,6 @@ export const SAMPLE_FOODS: SampleFood[] = [
   { ref: 'mais', name: 'Mais', localNames: ['corn', 'boiled corn', 'nilagang mais'], category: 'starch', per100g: [1, 218, 77, 3.4], portions: { piraso: 90, tasa: 165, serving: 90 } },
   { ref: 'patatas', name: 'Patatas', localNames: ['potato', 'boiled potato'], category: 'starch', per100g: [5, 328, 40, 1.9], portions: { piraso: 150, tasa: 156, serving: 150 } },
 
-  // Fruit
   { ref: 'saging', name: 'Saging', localNames: ['banana', 'lakatan', 'latundan'], category: 'fruit', per100g: [1, 358, 22, 1.1], portions: { piraso: 100, serving: 100 } },
   { ref: 'saba', name: 'Saging na saba', localNames: ['saba', 'nilagang saba', 'boiled saba'], category: 'fruit', per100g: [4, 465, 28, 0.8], portions: { piraso: 90, serving: 90 } },
   { ref: 'mansanas', name: 'Mansanas', localNames: ['apple'], category: 'fruit', per100g: [1, 107, 11, 0.3], portions: { piraso: 180, hiwa: 20, serving: 180 } },
@@ -60,7 +41,6 @@ export const SAMPLE_FOODS: SampleFood[] = [
   { ref: 'dalandan', name: 'Dalandan', localNames: ['orange', 'dalanghita'], category: 'fruit', per100g: [0, 181, 14, 0.9], portions: { piraso: 130, serving: 130 } },
   { ref: 'calamansi', name: 'Calamansi', localNames: ['calamansi juice', 'kalamansi', 'calamondin'], category: 'fruit', per100g: [2, 104, 8, 0.4], portions: { piraso: 10 } },
 
-  // Eggs, meat, fish
   { ref: 'itlog-nilaga', name: 'Nilagang itlog', localNames: ['itlog', 'egg', 'boiled egg', 'hard boiled egg'], category: 'egg', per100g: [124, 126, 172, 12.6], portions: { piraso: 50, serving: 50 } },
   { ref: 'itlog-prito', name: 'Pritong itlog', localNames: ['fried egg', 'sunny side up', 'itlog na prito'], category: 'egg', per100g: [207, 152, 197, 13.6], portions: { piraso: 46, serving: 46 } },
   { ref: 'scrambled-egg', name: 'Scrambled egg', localNames: ['itlog na binati', 'binating itlog'], category: 'egg', per100g: [145, 138, 165, 10], portions: { piraso: 61, serving: 61, tasa: 220 } },
@@ -87,7 +67,6 @@ export const SAMPLE_FOODS: SampleFood[] = [
   { ref: 'hipon', name: 'Hipon', localNames: ['shrimp', 'prawns'], category: 'fish', per100g: [110, 170, 210, 24], portions: { piraso: 8, tasa: 145, serving: 80 } },
   { ref: 'tokwa', name: 'Tokwa', localNames: ['tofu', 'firm tofu'], category: 'legume', per100g: [12, 150, 190, 15], portions: { piraso: 85, serving: 85 } },
 
-  // Vegetables and legumes (boiled unless raw is usual)
   { ref: 'pechay', name: 'Pechay', localNames: ['bok choy', 'petsay'], category: 'vegetable', per100g: [34, 371, 29, 1.6], portions: { tasa: 170, serving: 85 } },
   { ref: 'kangkong', name: 'Kangkong', localNames: ['water spinach'], category: 'vegetable', per100g: [113, 284, 40, 2.1], portions: { tasa: 100, serving: 100 } },
   { ref: 'sitaw', name: 'Sitaw', localNames: ['string beans', 'yardlong beans'], category: 'vegetable', per100g: [4, 290, 57, 2.5], portions: { tasa: 105, serving: 105 } },
@@ -104,7 +83,6 @@ export const SAMPLE_FOODS: SampleFood[] = [
   { ref: 'bawang', name: 'Bawang', localNames: ['garlic'], category: 'vegetable', per100g: [17, 401, 153, 6.4], portions: { piraso: 3 } },
   { ref: 'monggo', name: 'Monggo', localNames: ['mung beans', 'boiled mung beans'], category: 'legume', per100g: [2, 266, 99, 7], portions: { tasa: 200, serving: 200 } },
 
-  // Drinks
   { ref: 'tubig', name: 'Tubig', localNames: ['water', 'drinking water'], category: 'drink', per100g: [2, 0, 0, 0], portions: { baso: 240, tasa: 240 } },
   { ref: 'kape', name: 'Kape', localNames: ['coffee', 'black coffee', 'brewed coffee'], category: 'drink', per100g: [2, 49, 3, 0.1], portions: { tasa: 240, baso: 240 } },
   { ref: 'kape-3in1', name: '3-in-1 coffee', localNames: ['coffee mix', 'kape 3 in 1', 'instant coffee mix'], category: 'drink', per100g: [40, 80, 40, 0.8], portions: { tasa: 200, baso: 200, pakete: 200 } },
@@ -115,7 +93,6 @@ export const SAMPLE_FOODS: SampleFood[] = [
   { ref: 'gatas', name: 'Gatas', localNames: ['milk', 'fresh milk', 'whole milk'], category: 'drink', per100g: [43, 150, 84, 3.2], portions: { baso: 245, tasa: 245 } },
   { ref: 'milk-tea', name: 'Milk tea', localNames: ['bubble tea', 'pearl milk tea', 'boba'], category: 'drink', per100g: [40, 120, 60, 1], portions: { baso: 400, serving: 400 } },
 
-  // Condiments and cooking fat
   { ref: 'toyo', name: 'Toyo', localNames: ['soy sauce'], category: 'condiment', per100g: [5500, 220, 125, 8] },
   { ref: 'patis', name: 'Patis', localNames: ['fish sauce'], category: 'condiment', per100g: [7850, 290, 7, 5] },
   { ref: 'bagoong', name: 'Bagoong alamang', localNames: ['bagoong', 'shrimp paste'], category: 'condiment', per100g: [5000, 500, 300, 15] },
@@ -129,7 +106,6 @@ export const SAMPLE_FOODS: SampleFood[] = [
   { ref: 'oyster-sauce', name: 'Oyster sauce', localNames: [], category: 'condiment', per100g: [2733, 54, 22, 1.4] },
   { ref: 'mantika', name: 'Mantika', localNames: ['cooking oil', 'vegetable oil'], category: 'fat', per100g: [0, 0, 0, 0], portions: { tbsp: 14 } },
 
-  // Snacks and international foods
   { ref: 'banana-cue', name: 'Banana cue', localNames: ['bananacue', 'banana q'], category: 'snack', per100g: [3, 400, 25, 1], portions: { piraso: 100, serving: 100 } },
   { ref: 'turon', name: 'Turon', localNames: ['banana turon'], category: 'snack', per100g: [60, 300, 30, 2], portions: { piraso: 80, serving: 80 } },
   { ref: 'crackers', name: 'Crackers', localNames: ['saltine crackers', 'biskwit'], category: 'snack', per100g: [1000, 130, 100, 9], portions: { pakete: 25, piraso: 3, serving: 25 } },
@@ -139,7 +115,6 @@ export const SAMPLE_FOODS: SampleFood[] = [
   { ref: 'pizza', name: 'Pizza', localNames: ['cheese pizza'], category: 'dish', per100g: [600, 170, 220, 11], portions: { hiwa: 107, serving: 107 } },
 ];
 
-/** Mixed Filipino dishes, broken into ingredients. Their values are always worked out from these. */
 export const SAMPLE_RECIPES: SampleRecipe[] = [
   {
     ref: 'adobong-manok', name: 'Adobong manok', localNames: ['adobo', 'chicken adobo'], category: 'dish',

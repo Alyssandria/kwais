@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseFoodCsv, splitCsv } from './food-csv.js';
+import { parseFoodCsv, splitCsv } from '../../../src/services/nutrition/food-csv.js';
 
 const HEADER = 'source,source_ref,name,local_names,category,sodium_mg,potassium_mg,phosphorus_mg,protein_g,verified,portions';
 

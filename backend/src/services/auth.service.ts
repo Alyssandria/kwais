@@ -10,7 +10,6 @@ import { UserModel, type PublicUser } from '../models/user.model.js';
 import { AuditService, type RequestMeta } from './audit.service.js';
 import { MailService } from './mail.service.js';
 
-/** Version of the privacy notice and terms the user agreed to. Bump when either changes. */
 export const POLICY_VERSION = '2026-10';
 
 const MAX_FAILED_LOGINS = 5;
@@ -26,12 +25,10 @@ export interface AuthUser {
   onboardingComplete: boolean;
 }
 
-/** What controllers receive after a successful sign-in, sign-up or refresh. */
 export interface Session {
   user: AuthUser;
   accessToken: string;
   accessTokenExpiresIn: number;
-  /** Raw refresh token: the controller puts it in an httpOnly cookie and never in the body. */
   refreshToken: string;
   refreshTokenExpiresAt: Date;
 }
@@ -113,7 +110,7 @@ export const AuthService = {
     const invalid = new HttpError(401, 'invalid_credentials', 'Email or password is incorrect.');
 
     if (!creds) {
-      await verifyPassword(password, await getDummyHash()); // same timing as a real check
+      await verifyPassword(password, await getDummyHash());
       await AuditService.record('login_failed', 'user', meta);
       throw invalid;
     }
@@ -145,10 +142,6 @@ export const AuthService = {
     return issueSession(user);
   },
 
-  /**
-   * Rotates the refresh token. Presenting a token that was already rotated means it was
-   * copied: the whole chain is revoked and the user must sign in again.
-   */
   async refresh(rawToken: string | undefined, meta: RequestMeta): Promise<Session> {
     const expired = new HttpError(401, 'session_expired', 'Your session has ended. Please sign in again.');
     if (!rawToken) throw expired;
@@ -156,6 +149,7 @@ export const AuthService = {
     const stored = await RefreshTokenModel.findByHash(sha256(rawToken));
     if (!stored) throw expired;
 
+    // A rotated token came back: treat it as stolen and end the whole chain.
     if (stored.revokedAt) {
       await RefreshTokenModel.revokeFamily(stored.family);
       await AuditService.record('access_denied', 'refresh_token', meta, { actorId: stored.userId, resourceId: stored.id });
@@ -176,7 +170,6 @@ export const AuthService = {
     if (stored) await RefreshTokenModel.revokeFamily(stored.family);
   },
 
-  /** Always succeeds from the caller's point of view, so it never reveals whether an email is registered. */
   async forgotPassword(emailRaw: string, meta: RequestMeta): Promise<void> {
     const creds = await UserModel.findCredentialsByEmail(normaliseEmail(emailRaw));
     if (!creds || creds.status !== 'active') return;
@@ -200,7 +193,7 @@ export const AuthService = {
 
     await UserModel.updatePassword(reset.userId, await hashPassword(newPassword));
     await PasswordResetModel.invalidateAllForUser(reset.userId);
-    await RefreshTokenModel.revokeAllForUser(reset.userId); // sign out every device
+    await RefreshTokenModel.revokeAllForUser(reset.userId);
     await AuditService.record('update', 'password', meta, { actorId: reset.userId, resourceId: reset.userId });
   },
 

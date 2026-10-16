@@ -1,6 +1,3 @@
-// K-WAIS v0 data model (patient portal).
-// Doctor-portal tables (assignments, clinical reviews, reports) arrive in v1.
-
 generator client {
   provider        = "prisma-client-js"
   previewFeatures = ["postgresqlExtensions"]
@@ -25,7 +22,6 @@ enum UserStatus {
   pending_deletion
 }
 
-/// Who supplied a clinical value. Nothing is ever inferred by the app.
 enum ValueSource {
   patient_entered
   clinician_verified
@@ -61,7 +57,7 @@ enum MealCategory {
 
 enum MealStatus {
   draft
-  saved     // saved without AI analysis
+  saved
   analysed
 }
 
@@ -157,7 +153,7 @@ model RefreshToken {
   id         String    @id @default(uuid()) @db.Uuid
   userId     String    @map("user_id") @db.Uuid
   tokenHash  String    @unique @map("token_hash")
-  family     String    @db.Uuid // rotation chain; reuse of a revoked token revokes the family
+  family     String    @db.Uuid // rotation chain
   expiresAt  DateTime  @map("expires_at")
   revokedAt  DateTime? @map("revoked_at")
   createdAt  DateTime  @default(now()) @map("created_at")
@@ -188,15 +184,15 @@ model PasswordReset {
 model PatientProfile {
   id                 String         @id @default(uuid()) @db.Uuid
   userId             String         @unique @map("user_id") @db.Uuid
-  patientCode        String         @unique @map("patient_code") // e.g. KW-000123, shared with a doctor in v1
+  patientCode        String         @unique @map("patient_code") // KW-000123
   firstName          String         @map("first_name")
   lastName           String         @map("last_name")
-  birthYear          Int?           @map("birth_year") // year only (data minimisation)
+  birthYear          Int?           @map("birth_year")
   sex                String?
   dietaryPreferences String[]       @default([]) @map("dietary_preferences")
   allergies          String[]       @default([])
-  restrictions       String[]       @default([]) // as given by the patient's care team
-  ckdStage           String?        @map("ckd_stage") // as stated by the patient; never inferred
+  restrictions       String[]       @default([])
+  ckdStage           String?        @map("ckd_stage")
   ckdStageSource     ValueSource?   @map("ckd_stage_source")
   dialysisStatus     DialysisStatus @default(unknown) @map("dialysis_status")
   onboardingStep     Int            @default(0) @map("onboarding_step")
@@ -225,7 +221,7 @@ model NutritionTarget {
   source        ValueSource @default(patient_entered)
   note          String?
   effectiveFrom DateTime    @default(now()) @map("effective_from")
-  effectiveTo   DateTime?   @map("effective_to") // targets are ended, never edited in place
+  effectiveTo   DateTime?   @map("effective_to")
   createdAt     DateTime    @default(now()) @map("created_at")
 
   patient PatientProfile @relation(fields: [patientId], references: [id], onDelete: Cascade)
@@ -234,8 +230,6 @@ model NutritionTarget {
   @@map("nutrition_targets")
 }
 
-/// Values and range bounds are AES-256-GCM ciphertext (Section 5).
-/// Encryption protects the data at rest; it does not take it outside the Data Privacy Act.
 model LabResult {
   id          String      @id @default(uuid()) @db.Uuid
   patientId   String      @map("patient_id") @db.Uuid
@@ -260,7 +254,7 @@ model LabResult {
 
 // ─── Food composition ────────────────────────────────────────────────────────
 
-/// Per-100 g edible portion. Null = not reported by the source, never zero-filled.
+// per 100 g; null = not reported by the source
 model FoodItem {
   id           String     @id @default(uuid()) @db.Uuid
   name         String
@@ -296,7 +290,6 @@ model FoodPortion {
   @@map("food_portions")
 }
 
-/// Breaks a mixed dish (adobo, sinigang, pinakbet) into ingredients.
 model RecipeIngredient {
   id                 String  @id @default(uuid()) @db.Uuid
   recipeId           String  @map("recipe_id") @db.Uuid
@@ -317,7 +310,7 @@ model Meal {
   patientId      String       @map("patient_id") @db.Uuid
   eatenAt        DateTime     @map("eaten_at")
   category       MealCategory
-  rawText        String       @map("raw_text") // exactly what the patient typed
+  rawText        String       @map("raw_text")
   drinks         String[]     @default([])
   cookingMethods String[]     @default([]) @map("cooking_methods")
   notes          String?
@@ -339,7 +332,7 @@ model Meal {
 model MealCondiment {
   id     String          @id @default(uuid()) @db.Uuid
   mealId String          @map("meal_id") @db.Uuid
-  name   String // toyo, patis, bagoong…
+  name   String
   amount CondimentAmount
 
   meal Meal @relation(fields: [mealId], references: [id], onDelete: Cascade)
@@ -348,12 +341,11 @@ model MealCondiment {
   @@map("meal_condiments")
 }
 
-/// Structured items produced when a meal is analysed (Gemini parse → dataset match).
 model MealItem {
   id              String    @id @default(uuid()) @db.Uuid
   mealId          String    @map("meal_id") @db.Uuid
   foodItemId      String?   @map("food_item_id") @db.Uuid
-  label           String // as parsed from the patient's text
+  label           String
   quantity        Decimal   @db.Decimal(8, 2)
   unit            String
   grams           Decimal?  @db.Decimal(8, 2)
@@ -368,7 +360,6 @@ model MealItem {
   @@map("meal_items")
 }
 
-/// Immutable. Re-analysis creates a new version.
 model MealAnalysis {
   id             String   @id @default(uuid()) @db.Uuid
   mealId         String   @map("meal_id") @db.Uuid
@@ -379,10 +370,10 @@ model MealAnalysis {
   model          String?
   totals         Json // { sodium: { value, unit, source } … }
   itemBreakdown  Json     @map("item_breakdown")
-  inputsSnapshot Json     @map("inputs_snapshot") // exactly what was sent to the AI
-  score          Int?     @db.SmallInt // 1–10, null when there is no target or lab range to judge against
+  inputsSnapshot Json     @map("inputs_snapshot")
+  score          Int?     @db.SmallInt // 1–10
   scoreBand      String?  @map("score_band")
-  aiOutput       Json?    @map("ai_output") // schema-validated
+  aiOutput       Json?    @map("ai_output")
   aiStatus       AiStatus @map("ai_status")
   createdAt      DateTime @default(now()) @map("created_at")
 
@@ -412,7 +403,6 @@ model Notification {
   @@map("notifications")
 }
 
-/// Append-only: a change of mind is a new row.
 model ConsentRecord {
   id            String      @id @default(uuid()) @db.Uuid
   userId        String      @map("user_id") @db.Uuid
@@ -441,7 +431,6 @@ model DataRequest {
   @@map("data_requests")
 }
 
-/// Append-only. No foreign keys so records survive account anonymisation.
 model AuditLog {
   id           String      @id @default(uuid()) @db.Uuid
   actorId      String?     @map("actor_id") @db.Uuid

@@ -3,10 +3,6 @@ import { Check, Plus, X } from 'lucide-react';
 import { cn } from '@/lib/cn';
 import { Chip } from './Toggles';
 
-/**
- * Pick from suggestions or type your own. Selected values show as removable chips.
- * Used for allergies, care-team restrictions and dietary preferences.
- */
 export function TagPicker({
   label,
   hint,
@@ -107,7 +103,6 @@ export function TagPicker({
   );
 }
 
-/** One choice from a short list, shown as large tappable cards (radio semantics). */
 export function RadioCards<T extends string>({
   legend,
   hint,

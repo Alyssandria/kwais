@@ -1,6 +1,5 @@
 import '@testing-library/jest-dom/vitest';
 
-// jsdom does not implement <dialog>.showModal()/close(); give it the minimal behaviour tests need.
 if (typeof HTMLDialogElement !== 'undefined' && !HTMLDialogElement.prototype.showModal) {
   HTMLDialogElement.prototype.showModal = function showModal(this: HTMLDialogElement) {
     this.setAttribute('open', '');
@@ -11,7 +10,6 @@ if (typeof HTMLDialogElement !== 'undefined' && !HTMLDialogElement.prototype.sho
   };
 }
 
-// jsdom has no ResizeObserver; Recharts' ResponsiveContainer needs one.
 if (typeof globalThis.ResizeObserver === 'undefined') {
   globalThis.ResizeObserver = class {
     observe() {}

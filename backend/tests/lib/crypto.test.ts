@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { hashPassword, verifyPassword } from './password.js';
-import { signAccessToken, TokenError, verifyAccessToken } from './jwt.js';
-import { generatePatientCode, randomToken, sha256 } from './tokens.js';
+import { hashPassword, verifyPassword } from '../../src/lib/password.js';
+import { signAccessToken, TokenError, verifyAccessToken } from '../../src/lib/jwt.js';
+import { generatePatientCode, randomToken, sha256 } from '../../src/lib/tokens.js';
 
 const SECRET = 'test-secret-that-is-long-enough-for-hs256-123';
 

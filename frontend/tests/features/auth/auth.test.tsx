@@ -15,7 +15,7 @@ vi.mock('@/features/auth/AuthProvider', () => ({
 
 const { LoginPage } = await import('@/pages/auth/LoginPage');
 const { RegisterPage } = await import('@/pages/auth/RegisterPage');
-const { RequireAuth, safeNext } = await import('./guards');
+const { RequireAuth, safeNext } = await import('@/features/auth/guards');
 
 const maria: AuthUser = {
   id: 'u1', email: 'maria@example.com', role: 'patient', firstName: 'Maria', lastName: 'Santos',

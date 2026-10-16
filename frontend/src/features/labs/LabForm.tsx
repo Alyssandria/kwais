@@ -8,7 +8,6 @@ import { LAB_TEST_OPTIONS } from '@/features/profile/options';
 const today = () => new Date().toISOString().slice(0, 10);
 const num = (s: string) => (s.trim() === '' ? null : Number(s));
 
-/** Mirrors backend LabCreateSchema so mistakes show before saving. */
 const labSchema = z
   .object({
     test: z.string(),

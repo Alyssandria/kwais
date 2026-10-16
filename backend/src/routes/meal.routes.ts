@@ -7,10 +7,6 @@ import { requirePatient } from '../middleware/require-patient.js';
 import { validateBody } from '../middleware/validate.js';
 import { MealCreateSchema, MealUpdateSchema } from '../schemas/meal.schemas.js';
 
-/**
- * Analysing is the expensive step (and calls Gemini from Section 7), so it has its own limit:
- * 30 per hour per patient. Saving without analysis is not limited here.
- */
 const analyseLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
   limit: 30,
@@ -25,14 +21,12 @@ const analyseLimiter = rateLimit({
   },
 });
 
-/** True for POST /:id/analyse, and for create/update bodies that ask for analysis. */
 function wantsAnalysis(req: Request): boolean {
   if (req.path.endsWith('/analyse')) return true;
   const body = req.body as { analyse?: unknown } | undefined;
   return body?.analyse === true;
 }
 
-/** /meals/* — the signed-in patient's own meals. */
 export const mealRoutes = Router();
 mealRoutes.use(requirePatient);
 mealRoutes.get('/', MealController.list);
@@ -43,6 +37,5 @@ mealRoutes.patch('/:id', analyseLimiter, validateBody(MealUpdateSchema), MealCon
 mealRoutes.post('/:id/analyse', analyseLimiter, MealController.analyse);
 mealRoutes.delete('/:id', MealController.remove);
 
-/** /foods — search the food tables. Not patient data, but still signed-in only. */
 export const foodRoutes = Router();
 foodRoutes.get('/', authenticate, FoodController.search);

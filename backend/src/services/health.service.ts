@@ -1,11 +1,6 @@
 import { HealthModel } from '../models/health.model.js';
 import { HttpError } from '../lib/http-error.js';
 
-/**
- * Service layer: business logic. Uses models for data, throws HttpError for
- * expected failures, and knows nothing about req/res.
- */
-
 export interface ApiStatus {
   status: 'ok';
   service: string;

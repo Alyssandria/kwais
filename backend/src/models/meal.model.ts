@@ -84,12 +84,10 @@ export const MealModel = {
     });
   },
 
-  /** Scoped by patient, and deleted meals are never found. */
   findOwned(patientId: string, id: string): Promise<MealRecord | null> {
     return prisma.meal.findFirst({ where: { id, patientId, ...live }, select: mealSelect });
   },
 
-  /** Newest first. `before` pages through older meals by eaten time. */
   list(patientId: string, opts: { status?: MealStatus; limit: number; before?: Date }): Promise<MealRecord[]> {
     return prisma.meal.findMany({
       where: {
@@ -104,7 +102,6 @@ export const MealModel = {
     });
   },
 
-  /** Recently saved meals (not drafts), newest first, for "Log it again". */
   recentSaved(patientId: string, take: number): Promise<MealRecord[]> {
     return prisma.meal.findMany({
       where: { patientId, ...live, status: { in: ['saved', 'analysed'] } },
@@ -114,7 +111,6 @@ export const MealModel = {
     });
   },
 
-  /** Updates a meal; when `condiments` is given, it replaces the whole list. */
   update(id: string, meal: Partial<MealData>, condiments?: CondimentData[]): Promise<MealRecord> {
     return prisma.$transaction(async (tx) => {
       if (condiments) {
@@ -125,15 +121,10 @@ export const MealModel = {
     });
   },
 
-  /** Hidden from the patient straight away; removed for good by the deletion-request job (Section 9). */
   async softDelete(id: string): Promise<void> {
     await prisma.meal.update({ where: { id }, data: { deletedAt: new Date() }, select: { id: true } });
   },
 
-  /**
-   * Stores a new analysis version with the items it was built from, and marks the meal analysed.
-   * Earlier versions are kept unchanged; only the meal's current items are replaced.
-   */
   saveAnalysis(mealId: string, patientId: string, analysis: AnalysisData, items: MealItemData[]): Promise<AnalysisRecord> {
     return prisma.$transaction(async (tx) => {
       const last = await tx.mealAnalysis.aggregate({ where: { mealId }, _max: { version: true } });

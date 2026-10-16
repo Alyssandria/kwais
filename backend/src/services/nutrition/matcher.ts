@@ -1,18 +1,9 @@
 import type { Catalog, CatalogFood, FoodMatch } from './types.js';
 
-/**
- * Finds the food composition record for a food phrase.
- * Matching is by name and local names (English, Tagalog, regional), so "kanin", "rice" and
- * "white rice" can all reach the same record. The more specific record wins:
- * "inihaw na manok" matches the grilled-chicken record, not plain chicken.
- */
-
 export const MATCH_THRESHOLD = 0.5;
 
-/** Words that carry no meaning for matching. */
 const STOPWORDS = new Set(['na', 'ng', 'ang', 'mga', 'sa', 'a', 'an', 'the', 'of', 'with', 'ni', 'nang', 'and', 'at']);
 
-/** Inflections that mean the same cooking method. */
 const SAME_WORD: Record<string, string> = {
   pritong: 'prito', piniritong: 'prito', pinirito: 'prito', fried: 'prito',
   inihaw: 'inihaw', grilled: 'inihaw', ihaw: 'inihaw',
@@ -22,7 +13,6 @@ const SAME_WORD: Record<string, string> = {
   tinolang: 'tinola',
 };
 
-/** Order of preference when two records match equally well. */
 const SOURCE_RANK: Record<CatalogFood['source'], number> = { PH_FCT: 0, USDA_FDC: 1, recipe: 2, custom: 3 };
 
 export function normalizeTokens(text: string): string[] {
@@ -37,13 +27,7 @@ export function normalizeTokens(text: string): string[] {
     .map((w) => SAME_WORD[w] ?? (w.length > 3 && w.endsWith('s') && !w.endsWith('ss') ? w.slice(0, -1) : w));
 }
 
-/**
- * How well a candidate name fits the phrase, 0–1.
- *   1.0         same words
- *   0.75–1.0    every word of the name is in the phrase ("manok" in "inihaw na manok")
- *   0.5–0.8     every word of the phrase is in the name ("manok" vs "inihaw na manok")
- *   up to 0.6   partial overlap
- */
+// 1 same words · 0.75–1 name ⊂ phrase · 0.5–0.8 phrase ⊂ name · ≤ 0.6 partial overlap
 export function nameScore(phrase: string[], name: string[]): number {
   if (phrase.length === 0 || name.length === 0) return 0;
   const P = new Set(phrase);
@@ -75,7 +59,6 @@ function index(catalog: Catalog): Indexed[] {
   return idx;
 }
 
-/** Best record for the phrase, or null when nothing reaches the threshold. Never guesses beyond that. */
 export function matchFood(phrase: string, catalog: Catalog): FoodMatch | null {
   const words = normalizeTokens(phrase);
   if (words.length === 0) return null;

@@ -1,6 +1,5 @@
 import { cn } from '@/lib/cn';
 
-/** K-WAIS mark (kidney curve on an apricot tile) plus wordmark. */
 export function Logo({ tone = 'dark', showTagline = true }: { tone?: 'dark' | 'light'; showTagline?: boolean }) {
   const onDark = tone === 'dark';
   return (

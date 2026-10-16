@@ -11,11 +11,6 @@ function FullPageLoader() {
   );
 }
 
-/**
- * Lets a page render only for a signed-in user with the right role.
- * Signed-out visitors go to /login and come back afterwards (?next=).
- * This is a convenience for the UI; the API enforces access on every request.
- */
 export function RequireAuth({ role, children }: { role: 'patient' | 'doctor'; children: ReactNode }) {
   const { status, user } = useAuth();
   const location = useLocation();
@@ -29,7 +24,6 @@ export function RequireAuth({ role, children }: { role: 'patient' | 'doctor'; ch
   return <>{children}</>;
 }
 
-/** Sign-in and sign-up pages: already signed-in users are sent to their home. */
 export function RedirectIfSignedIn({ children }: { children: ReactNode }) {
   const { status, user } = useAuth();
   if (status === 'loading') return <FullPageLoader />;
@@ -37,7 +31,6 @@ export function RedirectIfSignedIn({ children }: { children: ReactNode }) {
   return <>{children}</>;
 }
 
-/** Only follow ?next= links that stay inside the app. */
 export function safeNext(next: string | null, fallback: string): string {
   if (!next) return fallback;
   try {

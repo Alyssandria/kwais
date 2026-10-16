@@ -1,7 +1,5 @@
 import type { CkdStage, Dialysis, LabTest, Sex } from './api';
 
-/** Choices shown in onboarding and on the profile page. Free text is always allowed too. */
-
 export const RESTRICTION_SUGGESTIONS = [
   'Low-salt diet',
   'Low-potassium diet',
@@ -41,7 +39,6 @@ export const SEX_OPTIONS: { value: Sex; label: string }[] = [
 
 export const ckdLabel = (v: CkdStage) => CKD_STAGE_OPTIONS.find((o) => o.value === v)?.label ?? v;
 
-/** Lab tests with the units most often printed on Philippine lab slips. */
 export const LAB_TEST_OPTIONS: { value: LabTest; label: string; units: string[] }[] = [
   { value: 'potassium', label: 'Potassium', units: ['mmol/L', 'mEq/L'] },
   { value: 'phosphorus', label: 'Phosphorus', units: ['mmol/L', 'mg/dL'] },

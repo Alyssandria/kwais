@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-vi.mock('../models/user.model.js', () => ({
+vi.mock('../../src/models/user.model.js', () => ({
   UserModel: {
     findCredentialsByEmail: vi.fn(),
     findCredentialsById: vi.fn(),
@@ -13,7 +13,7 @@ vi.mock('../models/user.model.js', () => ({
     updatePassword: vi.fn(),
   },
 }));
-vi.mock('../models/refresh-token.model.js', () => ({
+vi.mock('../../src/models/refresh-token.model.js', () => ({
   RefreshTokenModel: {
     create: vi.fn(),
     findByHash: vi.fn(),
@@ -22,18 +22,18 @@ vi.mock('../models/refresh-token.model.js', () => ({
     revokeAllForUser: vi.fn(),
   },
 }));
-vi.mock('../models/password-reset.model.js', () => ({
+vi.mock('../../src/models/password-reset.model.js', () => ({
   PasswordResetModel: { create: vi.fn(), findByHash: vi.fn(), markUsed: vi.fn(), invalidateAllForUser: vi.fn() },
 }));
-vi.mock('../models/audit.model.js', () => ({ AuditModel: { create: vi.fn() } }));
+vi.mock('../../src/models/audit.model.js', () => ({ AuditModel: { create: vi.fn() } }));
 
-const { AuthService } = await import('./auth.service.js');
-const { UserModel } = await import('../models/user.model.js');
-const { RefreshTokenModel } = await import('../models/refresh-token.model.js');
-const { PasswordResetModel } = await import('../models/password-reset.model.js');
-const { hashPassword } = await import('../lib/password.js');
-const { verifyAccessToken } = await import('../lib/jwt.js');
-const { sha256 } = await import('../lib/tokens.js');
+const { AuthService } = await import('../../src/services/auth.service.js');
+const { UserModel } = await import('../../src/models/user.model.js');
+const { RefreshTokenModel } = await import('../../src/models/refresh-token.model.js');
+const { PasswordResetModel } = await import('../../src/models/password-reset.model.js');
+const { hashPassword } = await import('../../src/lib/password.js');
+const { verifyAccessToken } = await import('../../src/lib/jwt.js');
+const { sha256 } = await import('../../src/lib/tokens.js');
 
 const meta = { ipHash: 'abc', userAgent: 'vitest' };
 const publicUser = {

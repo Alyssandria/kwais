@@ -5,12 +5,6 @@ import { SideNav } from './SideNav';
 import { Topbar, type ShellUser } from './Topbar';
 import type { NavItem } from './nav';
 
-/**
- * Signed-in layout.
- *   ≥ 1024 px   fixed dark-teal sidebar + top bar
- *   < 1024 px   top bar with a menu button that opens a drawer
- *   < 768 px    plus a bottom tab bar and a floating Add-a-meal button
- */
 export function AppShell({
   nav,
   user,

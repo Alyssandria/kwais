@@ -1,11 +1,6 @@
 import { buildCatalog } from '../../src/services/nutrition/catalog.js';
 import type { CatalogFood, FoodSourceKind } from '../../src/services/nutrition/types.js';
 
-/**
- * A small food catalog with round numbers, so engine results can be checked by hand.
- * These values are for tests only. They are not real food composition data.
- */
-
 type Row = [na: number | null, k: number | null, p: number | null, protein: number | null];
 
 function food(

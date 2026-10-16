@@ -24,12 +24,6 @@ const MEAL_ICONS = { breakfast: Sunrise, lunch: Sun, dinner: Moon, snack: Apple 
 
 const toggle = (list: string[], v: string) => (list.includes(v) ? list.filter((x) => x !== v) : [...list, v]);
 
-/**
- * Log a meal: the patient types what they ate in their own words, then taps condiments, drinks
- * and cooking methods. Nothing is parsed or shown back as "found foods" here; "Check before
- * saving" reads back exactly what will be stored. With "Analyse with AI" on, saving opens the
- * meal's analysis; off, the meal is just added to the log.
- */
 export function LogMealPage() {
   const navigate = useNavigate();
   const toast = useToast();
@@ -74,7 +68,6 @@ export function LogMealPage() {
     setTextError(null);
   };
 
-  // Opening /patient/meals/new?draft=<id> continues that draft.
   const loadedDraft = useRef<string | null>(null);
   useEffect(() => {
     const d = draftFromUrl.data;
@@ -123,7 +116,6 @@ export function LogMealPage() {
       const m = await persist('draft');
       setDraftId(m.id);
       setDraftSavedAt(new Date());
-      // Keep the draft in the address so a reload continues it, without reloading over what was typed.
       loadedDraft.current = m.id;
       if (!params.get('draft')) setParams({ draft: m.id }, { replace: true });
     } catch (err) {

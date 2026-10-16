@@ -4,10 +4,6 @@ import { authRoutes } from './auth.routes.js';
 import { foodRoutes, mealRoutes } from './meal.routes.js';
 import { labRoutes, patientMeRoutes } from './patient.routes.js';
 
-/**
- * Mounts every route file under /api/v1.
- * Later sections add: /analytics, /dashboard, /notifications …
- */
 export const apiRoutes = Router();
 
 apiRoutes.use('/health', healthRoutes);

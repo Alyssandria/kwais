@@ -14,16 +14,11 @@ export const NUTRIENTS: Record<
 
 export const NUTRIENT_KEYS: NutrientKey[] = ['sodium', 'potassium', 'phosphorus', 'protein'];
 
-/** Share of a daily maximum, rounded. Null when there is no target to compare with. */
 export function percentOfTarget(value: number, dailyMax: number | null | undefined): number | null {
   if (dailyMax == null || dailyMax <= 0) return null;
   return Math.round((value / dailyMax) * 100);
 }
 
-/**
- * Status of a daily total against a target the patient or clinician supplied.
- * ≥ 80 % approaching, > 100 % above. No target → 'none' (estimate only, never judged).
- */
 export function targetStatus(pct: number | null): StatusKind {
   if (pct == null) return 'none';
   if (pct > 100) return 'above';
@@ -44,10 +39,6 @@ export function targetStatusText(pct: number | null): string {
   }
 }
 
-/**
- * Lab value against the reference range printed on the patient's own slip.
- * K-WAIS never supplies its own range. A missing bound is simply not checked.
- */
 export function labStatus(value: number, refLow: number | null, refHigh: number | null): StatusKind {
   if (refHigh != null && value > refHigh) return 'above';
   if (refLow != null && value < refLow) return 'below';

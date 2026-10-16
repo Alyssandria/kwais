@@ -13,12 +13,9 @@ import {
 export interface NavItem {
   to: string;
   label: string;
-  /** Short label for the phone bottom bar. */
   short?: string;
   icon: LucideIcon;
-  /** Shown in the phone bottom bar (max 4). */
   mobile?: boolean;
-  /** Match only this exact path, not its children. */
   end?: boolean;
 }
 

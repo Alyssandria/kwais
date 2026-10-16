@@ -17,7 +17,6 @@ const labSelect = {
   updatedAt: true,
 } satisfies Prisma.LabResultSelect;
 
-/** Row as stored: values are ciphertext. Only the lab service decrypts them. */
 export type EncryptedLab = Prisma.LabResultGetPayload<{ select: typeof labSelect }>;
 
 export interface EncryptedLabInput {
@@ -34,7 +33,6 @@ export interface EncryptedLabInput {
 }
 
 export const LabModel = {
-  /** Newest collection date first. Always scoped to one patient. */
   list(patientId: string, test?: LabTest): Promise<EncryptedLab[]> {
     return prisma.labResult.findMany({
       where: { patientId, ...(test ? { test } : {}) },
@@ -43,7 +41,6 @@ export const LabModel = {
     });
   },
 
-  /** Scoped by patient too, so another patient's id simply isn't found. */
   findOwned(patientId: string, id: string): Promise<EncryptedLab | null> {
     return prisma.labResult.findFirst({ where: { id, patientId }, select: labSelect });
   },

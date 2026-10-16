@@ -1,7 +1,6 @@
 import type { HTMLAttributes, ReactNode } from 'react';
 import { cn } from '@/lib/cn';
 
-/** White card with a hairline border. `padding` none | sm | md | lg. */
 export interface CardProps extends HTMLAttributes<HTMLElement> {
   as?: 'div' | 'section' | 'article';
   padding?: 'none' | 'sm' | 'md' | 'lg';
@@ -20,7 +19,6 @@ export function Card({ as: Tag = 'div', padding = 'md', tone = 'surface', classN
   return <Tag className={cn('rounded-card border shadow-card', tones[tone], pad[padding], className)} {...rest} />;
 }
 
-/** Card heading row: title (+ optional subtitle) on the left, an action on the right. */
 export function CardHeader({
   title,
   subtitle,
@@ -48,10 +46,6 @@ export function CardHeader({
   );
 }
 
-/**
- * The deep-teal band that opens each main screen, with decorative circles
- * and an apricot dot. Put the page title and the main action inside.
- */
 export function HeroBand({ className, children }: { className?: string; children: ReactNode }) {
   return (
     <section className={cn('relative overflow-hidden rounded-hero bg-primary-dark p-6 text-white sm:p-7', className)}>
@@ -63,7 +57,6 @@ export function HeroBand({ className, children }: { className?: string; children
   );
 }
 
-/** Title block used at the top of pages without a hero band. */
 export function PageHeader({
   title,
   description,

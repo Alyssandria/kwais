@@ -1,11 +1,3 @@
-/**
- * Imports food composition records from a CSV file:
- *   pnpm db:import-foods path/to/foods.csv
- *
- * The whole file is checked first; nothing is written if any row has a problem.
- * Rows are matched on (source, source_ref), so re-importing a corrected file updates in place.
- * Format: see src/services/nutrition/food-csv.ts and prisma/seed-data/README.md.
- */
 import { readFile } from 'node:fs/promises';
 import { prisma } from '../src/config/db.js';
 import { FoodModel } from '../src/models/food.model.js';

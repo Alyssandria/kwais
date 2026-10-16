@@ -1,7 +1,6 @@
 import type { ConsentType, Prisma } from '@prisma/client';
 import { prisma } from '../config/db.js';
 
-/** Fields the auth flow needs, including the password hash. Never returned to clients. */
 const credentialsSelect = {
   id: true,
   email: true,
@@ -12,7 +11,6 @@ const credentialsSelect = {
   lockedUntil: true,
 } satisfies Prisma.UserSelect;
 
-/** Fields safe to send to the signed-in user. */
 const publicSelect = {
   id: true,
   email: true,
@@ -58,7 +56,6 @@ export const UserModel = {
     return prisma.patientProfile.count({ where: { patientCode: code } }).then((n) => n > 0);
   },
 
-  /** Creates the user, their patient profile and their consent records in one transaction. */
   createPatient(input: NewPatient): Promise<PublicUser> {
     return prisma.user.create({
       data: {

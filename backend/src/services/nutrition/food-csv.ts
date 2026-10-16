@@ -1,15 +1,5 @@
 import { CANONICAL_UNITS } from './units.js';
 
-/**
- * Reads food composition records from CSV so real PhilFCT and USDA data can replace the
- * sample values. One row per food; values per 100 g edible portion; blank = not reported.
- *
- *   source,source_ref,name,local_names,category,sodium_mg,potassium_mg,phosphorus_mg,protein_g,verified,portions
- *   PH_FCT,D173,"Spinach, Philippine, leaves",alugbati|spinach,vegetable,16,557,25,2.7,true,tasa=30
- *
- * local_names and portions are separated by "|"; a portion is unit=grams with a unit from units.ts.
- */
-
 export const FOOD_CSV_COLUMNS = [
   'source', 'source_ref', 'name', 'local_names', 'category',
   'sodium_mg', 'potassium_mg', 'phosphorus_mg', 'protein_g', 'verified', 'portions',
@@ -31,7 +21,6 @@ export interface FoodCsvRow {
   portions: { unit: string; grams: number }[];
 }
 
-/** Splits CSV text into rows of fields. Handles quoted fields, "" escapes, and CRLF. */
 export function splitCsv(text: string): string[][] {
   const rows: string[][] = [];
   let row: string[] = [];
@@ -64,7 +53,6 @@ export function splitCsv(text: string): string[][] {
 
 const MAX_PER_100G = { sodiumMg: 40000, potassiumMg: 10000, phosphorusMg: 5000, proteinG: 100 } as const;
 
-/** Parses and checks every row. Returns all problems at once, with line numbers, rather than stopping at the first. */
 export function parseFoodCsv(text: string): { rows: FoodCsvRow[]; errors: string[] } {
   const [header, ...lines] = splitCsv(text.replace(/^﻿/, ''));
   const errors: string[] = [];

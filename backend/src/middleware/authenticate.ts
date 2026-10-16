@@ -4,7 +4,6 @@ import { env } from '../config/env.js';
 import { HttpError } from '../lib/http-error.js';
 import { TokenError, verifyAccessToken } from '../lib/jwt.js';
 
-/** Requires `Authorization: Bearer <access token>`. Sets req.auth. */
 export const authenticate: RequestHandler = (req, _res, next) => {
   const header = req.get('authorization');
   const token = header?.startsWith('Bearer ') ? header.slice(7) : undefined;
@@ -22,7 +21,6 @@ export const authenticate: RequestHandler = (req, _res, next) => {
   }
 };
 
-/** Allows only the listed roles. Use after authenticate. */
 export function requireRole(...roles: Role[]): RequestHandler {
   return (req, _res, next) => {
     if (!req.auth) return next(HttpError.unauthorized());

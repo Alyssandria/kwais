@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { testCatalog } from '../../test/fixtures/food-catalog.js';
-import type { AnalysisRecord, MealRecord } from '../models/meal.model.js';
+import { testCatalog } from '../fixtures/food-catalog.js';
+import type { AnalysisRecord, MealRecord } from '../../src/models/meal.model.js';
 
-vi.mock('../models/meal.model.js', () => ({
+vi.mock('../../src/models/meal.model.js', () => ({
   MealModel: {
     create: vi.fn(),
     findOwned: vi.fn(),
@@ -13,13 +13,13 @@ vi.mock('../models/meal.model.js', () => ({
     saveAnalysis: vi.fn(),
   },
 }));
-vi.mock('./food.service.js', () => ({ FoodService: { catalog: vi.fn() } }));
-vi.mock('../models/audit.model.js', () => ({ AuditModel: { create: vi.fn() } }));
+vi.mock('../../src/services/food.service.js', () => ({ FoodService: { catalog: vi.fn() } }));
+vi.mock('../../src/models/audit.model.js', () => ({ AuditModel: { create: vi.fn() } }));
 
-const { MealService } = await import('./meal.service.js');
-const { MealModel } = await import('../models/meal.model.js');
-const { FoodService } = await import('./food.service.js');
-const { AuditModel } = await import('../models/audit.model.js');
+const { MealService } = await import('../../src/services/meal.service.js');
+const { MealModel } = await import('../../src/models/meal.model.js');
+const { FoodService } = await import('../../src/services/food.service.js');
+const { AuditModel } = await import('../../src/models/audit.model.js');
 
 const meta = { ipHash: 'h', userAgent: 'vitest' };
 const at = new Date('2026-10-16T04:30:00Z');
@@ -88,7 +88,6 @@ describe('MealService.create', () => {
 
     const [mealId, patientId, analysis, items] = vi.mocked(MealModel.saveAnalysis).mock.calls[0]!;
     expect([mealId, patientId]).toEqual(['meal-1', 'patient-1']);
-    // kanin 160 g → 3.2 mg; patis 1 tsp (5 g × 8000/100) → 400 mg; tubig → 0
     expect((analysis.totals as { sodium: { value: number } }).sodium.value).toBeCloseTo(403.2);
     expect(analysis).toMatchObject({ score: null, scoreBand: null, aiOutput: null, aiStatus: 'unavailable', model: null });
     expect(analysis.inputsSnapshot).toMatchObject({ parser: 'rules@1', sentToAi: null });

@@ -1,8 +1,3 @@
-/**
- * An error with an HTTP status and a stable machine-readable code.
- * Throw it from any route or service; the error handler formats it as
- * { error: { code, message, details? } }.
- */
 export class HttpError extends Error {
   constructor(
     public readonly status: number,

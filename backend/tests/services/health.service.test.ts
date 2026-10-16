@@ -1,9 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { HealthService } from './health.service.js';
-import { HealthModel } from '../models/health.model.js';
-import { HttpError } from '../lib/http-error.js';
+import { HealthService } from '../../src/services/health.service.js';
+import { HealthModel } from '../../src/models/health.model.js';
+import { HttpError } from '../../src/lib/http-error.js';
 
-/** Services are tested with the model mocked, so no database is needed. */
 describe('HealthService', () => {
   afterEach(() => vi.restoreAllMocks());
 

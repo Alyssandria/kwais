@@ -1,26 +1,14 @@
 import axios, { AxiosError, type AxiosRequestConfig, type InternalAxiosRequestConfig } from 'axios';
 
-/**
- * One Axios instance for the whole app.
- *
- * Session handling:
- * - The access token lives only in memory (never localStorage), set by the auth provider.
- * - The refresh token is an httpOnly cookie the browser sends to /auth/* automatically.
- * - On a 401 `token_expired`, the request is retried once after a silent refresh.
- *   Concurrent 401s share one refresh call.
- */
 export const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL ?? '/api/v1',
   withCredentials: true,
   timeout: 30_000,
 });
 
-/** Shape every API error follows: { error: { code, message, details? } } */
 export interface ApiErrorBody {
   error: { code: string; message: string; details?: { path: string; message: string }[] | unknown };
 }
-
-// ─── Token plumbing ──────────────────────────────────────────────────────────
 
 let accessToken: string | null = null;
 let refreshInFlight: Promise<string | null> | null = null;
@@ -47,13 +35,11 @@ export function setAccessToken(token: string | null) {
   accessToken = token;
 }
 
-/** The auth provider registers these so the API layer can tell it about refreshes and logouts. */
 export function setSessionListeners(listeners: { onLost: () => void; onRefreshed: (d: SessionPayload) => void }) {
   onSessionLost = listeners.onLost;
   onTokenRefreshed = listeners.onRefreshed;
 }
 
-/** Calls /auth/refresh once even if many requests ask at the same time. */
 export function refreshSession(): Promise<string | null> {
   refreshInFlight ??= api
     .post<{ data: SessionPayload }>('/auth/refresh', undefined, { _skipAuthRetry: true } as AxiosRequestConfig)
@@ -101,9 +87,6 @@ api.interceptors.response.use(
   },
 );
 
-// ─── Errors ──────────────────────────────────────────────────────────────────
-
-/** Turns any thrown value into a sentence safe to show a patient. */
 export function errorMessage(err: unknown): string {
   if (err instanceof AxiosError) {
     const body = err.response?.data as ApiErrorBody | undefined;
@@ -114,7 +97,6 @@ export function errorMessage(err: unknown): string {
   return 'Something went wrong. Please try again.';
 }
 
-/** Field-level messages from a 400 validation_failed response, keyed by field path. */
 export function fieldErrors(err: unknown): Record<string, string> {
   if (!(err instanceof AxiosError)) return {};
   const body = err.response?.data as ApiErrorBody | undefined;

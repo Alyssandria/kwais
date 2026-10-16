@@ -1,10 +1,5 @@
 import { z } from 'zod';
 
-/**
- * Request bodies for meals. Condiments, drinks and cooking methods are fixed keys that match the
- * chips on the Log a meal screen; the frontend shows the labels (Toyo-mansi, Buko juice, Prito…).
- */
-
 export const CONDIMENT_KEYS = [
   'toyo', 'toyo_mansi', 'patis', 'bagoong', 'suka', 'asin',
   'ketchup', 'banana_ketchup', 'sarsa', 'mayonnaise', 'sili', 'oyster_sauce',
@@ -14,7 +9,6 @@ export const DRINK_KEYS = ['tubig', 'kape', 'tsaa', 'softdrinks', 'juice', 'gata
 export const COOKING_KEYS = ['prito', 'inihaw', 'nilaga', 'ginisa', 'steamed', 'adobo', 'hilaw'] as const;
 export const MEAL_CATEGORIES = ['breakfast', 'lunch', 'dinner', 'snack'] as const;
 
-/** How far back a meal can be logged, and a small allowance for clock differences. */
 export const MAX_BACKDATE_DAYS = 7;
 const CLOCK_SKEW_MS = 5 * 60 * 1000;
 
@@ -49,10 +43,6 @@ const fields = {
 const needsText = (m: { status: string; rawText?: string }) => m.status === 'draft' || (m.rawText?.length ?? 0) >= 2;
 const textMessage = { message: 'Tell us what you ate', path: ['rawText'] };
 
-/**
- * Create. A draft can be saved with almost nothing filled in; a saved meal needs the food text.
- * `analyse` runs the nutrition estimate straight away (only for saved meals).
- */
 export const MealCreateSchema = z
   .object({
     ...fields,
@@ -66,10 +56,6 @@ export const MealCreateSchema = z
   .strict()
   .refine(needsText, textMessage);
 
-/**
- * Update a draft, or finish it: send status "saved" (and analyse: true to estimate it).
- * Saved meals are not edited in place; their analyses must keep matching what was eaten.
- */
 export const MealUpdateSchema = z
   .object({
     ...fields,

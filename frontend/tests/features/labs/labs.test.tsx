@@ -13,7 +13,7 @@ vi.mock('@/features/profile/api', () => ({
   useDeleteLab: () => ({ mutateAsync: vi.fn(), isPending: false }),
 }));
 
-const { LabsPage } = await import('./LabsPage');
+const { LabsPage } = await import('@/features/labs/LabsPage');
 
 const lab = (over: Partial<Lab>): Lab => ({
   id: 'l1',
@@ -61,7 +61,7 @@ describe('LabsPage', () => {
 
     const detail = screen.getByRole('region', { name: 'Potassium' });
     expect(within(detail).getByText(/Above slip range ·/)).toBeInTheDocument();
-    expect(within(detail).getAllByRole('row')).toHaveLength(3); // header + 2 results
+    expect(within(detail).getAllByRole('row')).toHaveLength(3);
   });
 
   it('validates a new result before saving', async () => {

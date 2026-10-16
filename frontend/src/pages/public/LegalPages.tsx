@@ -1,11 +1,6 @@
 import type { ReactNode } from 'react';
 import { Notice } from '@/components/ui';
 
-/**
- * Draft legal texts for the capstone. Items in [brackets] must be filled in, and the texts
- * should be reviewed by the school's data protection officer or a lawyer before real users sign up.
- */
-
 function LegalShell({ title, updated, children }: { title: string; updated: string; children: ReactNode }) {
   return (
     <article className="mx-auto max-w-3xl px-4 py-14 sm:px-6">

@@ -3,12 +3,10 @@ import { CircleAlert, Info, Loader2, TriangleAlert, type LucideIcon } from 'luci
 import { cn } from '@/lib/cn';
 import { Button } from './Button';
 
-/** Grey placeholder block while data loads. Size it with className (h-*, w-*). */
 export function Skeleton({ className }: { className?: string }) {
   return <div aria-hidden className={cn('animate-pulse rounded-field bg-[#e8eef0]', className)} />;
 }
 
-/** Wraps skeletons so screen readers hear one "Loading" instead of nothing. */
 export function LoadingRegion({ label = 'Loading', children }: { label?: string; children: ReactNode }) {
   return (
     <div role="status" aria-live="polite" aria-busy="true">
@@ -27,7 +25,6 @@ export function Spinner({ label = 'Loading', className }: { label?: string; clas
   );
 }
 
-/** Nothing here yet: one icon, one sentence, at most one action. */
 export function EmptyState({
   icon: Icon,
   title,
@@ -55,7 +52,6 @@ export function EmptyState({
   );
 }
 
-/** Something failed: say what, and offer Retry when it makes sense. */
 export function ErrorState({
   title = 'We couldn’t load this',
   message,
@@ -85,7 +81,6 @@ export function ErrorState({
   );
 }
 
-/** Inline notice. Use `info` for sample-data banners, `warn` for data-quality notes. */
 export function Notice({
   tone = 'info',
   title,

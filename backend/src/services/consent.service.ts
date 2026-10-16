@@ -7,7 +7,6 @@ import { POLICY_VERSION } from './auth.service.js';
 export type ConsentState = Record<ConsentType, { granted: boolean; policyVersion: string; at: string } | null>;
 
 export const ConsentService = {
-  /** Latest decision per consent type; null means the person was never asked. */
   async current(userId: string): Promise<ConsentState> {
     const state: ConsentState = { terms: null, health_data: null, ai_processing: null, reminders: null };
     for (const r of await ConsentModel.listForUser(userId)) {
@@ -22,7 +21,6 @@ export const ConsentService = {
     return ConsentService.current(userId);
   },
 
-  /** Used before any AI call (Section 7): AI analysis needs a current, granted ai_processing consent. */
   async hasAiConsent(userId: string): Promise<boolean> {
     return (await ConsentService.current(userId)).ai_processing?.granted === true;
   },

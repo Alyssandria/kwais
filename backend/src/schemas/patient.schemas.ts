@@ -1,14 +1,11 @@
 import { z } from 'zod';
 
-/** Request bodies for the patient's own profile, targets, lab results and consents. */
-
 const shortList = (label: string) =>
   z
     .array(z.string().trim().min(1).max(60, `Each ${label} must be 60 characters or fewer`))
     .max(30, `Add at most 30 ${label}s`)
     .transform((xs) => [...new Set(xs)]);
 
-/** CKD stage exactly as the patient's doctor told them. K-WAIS never derives one. */
 export const CKD_STAGES = ['1', '2', '3a', '3b', '4', '5', 'not_sure'] as const;
 
 const thisYear = new Date().getFullYear();
@@ -100,7 +97,6 @@ export const LabUpdateSchema = z
   .refine(rangeOrder, { path: ['refHigh'], message: 'The high end of the range must be above the low end' });
 
 export const ConsentChangeSchema = z.object({
-  /** terms and health_data are withdrawn through account deletion (Section 9). */
   consentType: z.enum(['ai_processing', 'reminders']),
   granted: z.boolean(),
 });

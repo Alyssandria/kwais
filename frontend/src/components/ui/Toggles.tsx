@@ -2,7 +2,6 @@ import { forwardRef, useId, type InputHTMLAttributes, type ReactNode } from 'rea
 import { Check, Plus } from 'lucide-react';
 import { cn } from '@/lib/cn';
 
-/** Checkbox with its label to the right. Spread react-hook-form register() onto it. */
 export interface CheckboxProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'type'> {
   label: ReactNode;
   description?: ReactNode;
@@ -38,7 +37,6 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(function Che
   );
 });
 
-/** On/off switch. Controlled: pass checked + onChange(next). */
 export interface SwitchProps {
   checked: boolean;
   onChange: (next: boolean) => void;
@@ -86,7 +84,6 @@ export function Switch({ checked, onChange, label, description, disabled, tone =
   );
 }
 
-/** Pill that toggles on and off, e.g. condiments and drinks. Shows ✓ when on, + when off. */
 export interface ChipProps {
   selected: boolean;
   onToggle: () => void;
@@ -115,7 +112,6 @@ export function Chip({ selected, onToggle, children, disabled }: ChipProps) {
   );
 }
 
-/** One-of-many choice shown as joined buttons, e.g. condiment amount: Konti · 1 tsp · 1 tbsp · Marami. */
 export interface SegmentedProps<T extends string> {
   label: string;
   value: T;

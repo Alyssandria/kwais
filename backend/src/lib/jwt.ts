@@ -1,17 +1,11 @@
 import { createHmac, timingSafeEqual } from 'node:crypto';
 
-/**
- * Minimal JWT (HS256) using Node's built-in HMAC, used only for short-lived access tokens.
- * Verifies: header alg, signature (constant-time), issuer, audience, expiry, not-before.
- * Refresh tokens are NOT JWTs: they are random strings stored hashed in the database.
- */
-
 const ISSUER = 'kwais-api';
 const AUDIENCE = 'kwais-web';
 const CLOCK_SKEW_S = 30;
 
 export interface AccessClaims {
-  sub: string; // user id
+  sub: string;
   role: 'patient' | 'doctor';
 }
 

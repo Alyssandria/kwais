@@ -3,10 +3,6 @@ import { X } from 'lucide-react';
 import { cn } from '@/lib/cn';
 import { Button, IconButton } from './Button';
 
-/**
- * Accessible modal built on the native <dialog> element:
- * the browser traps focus, Esc closes it, and focus returns to the opener on close.
- */
 export interface ModalProps {
   open: boolean;
   onClose: () => void;
@@ -40,7 +36,6 @@ export function Modal({ open, onClose, title, description, children, footer, siz
         onClose();
       }}
       onClick={(e) => {
-        // Click on the backdrop (the dialog element itself, outside its content) closes.
         if (e.target === ref.current) onClose();
       }}
       className={cn(
@@ -73,7 +68,6 @@ export function Modal({ open, onClose, title, description, children, footer, siz
   );
 }
 
-/** Asks before a destructive or irreversible action. */
 export interface ConfirmDialogProps {
   open: boolean;
   title: string;

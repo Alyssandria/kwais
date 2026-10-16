@@ -10,7 +10,6 @@ import {
   TargetSchema,
 } from '../schemas/patient.schemas.js';
 
-/** /patients/me/* — the signed-in patient's own profile, targets and consents. */
 export const patientMeRoutes = Router();
 patientMeRoutes.use(requirePatient);
 patientMeRoutes.get('/profile', ProfileController.get);
@@ -22,7 +21,6 @@ patientMeRoutes.delete('/targets/:nutrient', TargetController.remove);
 patientMeRoutes.get('/consents', ConsentController.current);
 patientMeRoutes.post('/consents', validateBody(ConsentChangeSchema), ConsentController.change);
 
-/** /labs/* — the signed-in patient's own lab results (values encrypted at rest). */
 export const labRoutes = Router();
 labRoutes.use(requirePatient);
 labRoutes.get('/', LabController.list);

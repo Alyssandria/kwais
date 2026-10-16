@@ -1,7 +1,6 @@
 import { cn } from '@/lib/cn';
 import { NUTRIENTS, type NutrientKey } from '@/lib/nutrition';
 
-/** Icon paths from the approved designs: salt shaker, banana, bottle, droplet. */
 const PATHS: Record<NutrientKey, string> = {
   sodium: 'M8 9h8l-1 12H9zM9 9l1-5h4l1 5M11 6.5h.01M13 6.5h.01',
   potassium: 'M5 13c2 5 10 6 15-3M5 13c4 1 9 0 12-5M17 8l1.5-3',
@@ -9,7 +8,6 @@ const PATHS: Record<NutrientKey, string> = {
   protein: 'M12 3c4 0 7 6 7 11a7 7 0 0 1-14 0c0-5 3-11 7-11z',
 };
 
-/** Coloured tile with the nutrient's icon. Decorative: the nutrient name is always written next to it. */
 export function NutrientIcon({ nutrient, size = 'md' }: { nutrient: NutrientKey; size?: 'sm' | 'md' }) {
   return (
     <span

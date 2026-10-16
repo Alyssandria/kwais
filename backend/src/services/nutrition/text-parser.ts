@@ -1,25 +1,12 @@
 import type { ParsedItem } from './types.js';
 import { parseAmountToken, toUnit } from './units.js';
 
-/**
- * Rule-based reader for meal text, e.g.
- *   "1 tasa kanin, isang hita ng inihaw na manok, kalahating tasa pinakbet"
- * becomes three items with amounts and units.
- *
- * Gemini does this job when it is available (Section 7). This parser is the offline fallback and
- * the mock provider: it handles common English, Tagalog and Taglish phrasing, and leaves anything
- * it cannot read for the matcher to report as "not counted" instead of guessing.
- */
-
 export const PARSER_VERSION = 'rules@1';
 
-/** Splits on commas, semicolons, new lines, "+", and the words and / at / saka / tsaka / with / &. */
 const SPLIT = /[,;\n]+|\s\+\s|\s(?:and|at|saka|tsaka|with|&)\s/i;
 
-/** Linking words between an amount, a unit and the food: "isang tasa NG kanin", "half a cup OF rice". */
 const LINKERS = new Set(['na', 'ng', 'of', 'a', 'an', 'ang', 'mga', 'nang']);
 
-/** Preparation words. Kept in the label (they help matching) and also recorded as the preparation. */
 const PREPARATION: Record<string, string> = {
   prito: 'fried', pritong: 'fried', piniritong: 'fried', pinirito: 'fried', fried: 'fried',
   inihaw: 'grilled', grilled: 'grilled', ihaw: 'grilled',
@@ -39,7 +26,6 @@ function tokens(chunk: string): string[] {
     .filter(Boolean);
 }
 
-/** Reads an amount at position i: "1", "1 1/2", "1½", "isang", "kalahating". Returns [value, next index]. */
 function readAmount(t: string[], i: number): [number, number] | null {
   const tok = t[i];
   if (!tok) return null;
@@ -73,7 +59,6 @@ function parseChunk(chunk: string): ParsedItem | 'preparation' | null {
   let quantity: number | null = null;
   let unit: string | null = null;
 
-  // Leading amount and unit: "1 tasa kanin", "isang hita ng manok", "half a cup of rice", "200 g tilapia", "200g tilapia".
   const glued = /^(\d+(?:\.\d+)?)([a-z]+)$/i.exec(t[0]!);
   if (glued && toUnit(glued[2]!)) {
     quantity = Number(glued[1]);
@@ -90,7 +75,6 @@ function parseChunk(chunk: string): ParsedItem | 'preparation' | null {
         i++;
       }
     } else if (toUnit(t[0]!) && t.length > 1) {
-      // "tasa kanin" with no number means one.
       quantity = 1;
       unit = toUnit(t[0]!);
       i = 1;
@@ -99,7 +83,6 @@ function parseChunk(chunk: string): ParsedItem | 'preparation' | null {
   i = skipLinkers(t, i);
   let words = t.slice(i);
 
-  // Trailing amount: "kanin 1 tasa", "kanin (2 cups)".
   if (quantity == null && words.length >= 2) {
     const last = words[words.length - 1]!;
     const lastUnit = toUnit(last);
@@ -127,14 +110,12 @@ function parseChunk(chunk: string): ParsedItem | 'preparation' | null {
   };
 }
 
-/** Reads the patient's meal text into items. Never invents foods; unreadable text yields fewer items. */
 export function parseMealText(text: string): ParsedItem[] {
   const items: ParsedItem[] = [];
   for (const chunk of text.split(SPLIT)) {
     const r = parseChunk(chunk);
     if (r === null) continue;
     if (r === 'preparation') {
-      // "1 mansanas, hiniwa": the second part describes the first item.
       const prev = items[items.length - 1];
       if (prev && !prev.preparation) prev.preparation = preparationOf(tokens(chunk));
       continue;

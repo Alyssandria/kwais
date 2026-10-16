@@ -3,7 +3,6 @@ import { cn } from '@/lib/cn';
 import type { NavItem } from './nav';
 import { Logo } from './Logo';
 
-/** Dark-teal navigation used as the desktop sidebar and inside the mobile drawer. */
 export function SideNav({ items, onNavigate }: { items: NavItem[]; onNavigate?: () => void }) {
   return (
     <div className="flex h-full flex-col gap-6 bg-primary-deep px-4 py-6">

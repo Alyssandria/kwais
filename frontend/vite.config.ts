@@ -13,7 +13,6 @@ export default defineConfig({
   },
   server: {
     port: 5173,
-    // In development, /api calls go to the Express server so cookies stay same-origin.
     proxy: {
       '/api': {
         target: 'http://localhost:4000',
@@ -24,7 +23,7 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'jsdom',
-    setupFiles: ['./src/test/setup.ts'],
+    setupFiles: ['./tests/setup.ts'],
     css: false,
   },
 });

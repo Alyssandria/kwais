@@ -1,8 +1,8 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
-import { AppShell } from './AppShell';
-import { patientNav } from './nav';
+import { AppShell } from '@/components/layout/AppShell';
+import { patientNav } from '@/components/layout/nav';
 
 const onSignOut = vi.fn();
 

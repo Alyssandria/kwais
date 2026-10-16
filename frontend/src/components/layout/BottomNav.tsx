@@ -3,10 +3,6 @@ import { Plus } from 'lucide-react';
 import { cn } from '@/lib/cn';
 import type { NavItem } from './nav';
 
-/**
- * Phone-only bottom tab bar (< 768 px) with the apricot Add-a-meal button floating above it.
- * The button hides on the Add-a-meal screen itself, where the save bar takes its place.
- */
 export function BottomNav({ items, addTo }: { items: NavItem[]; addTo: string }) {
   const tabs = items.filter((i) => i.mobile).slice(0, 4);
   const { pathname } = useLocation();

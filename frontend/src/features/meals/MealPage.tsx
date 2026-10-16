@@ -212,7 +212,6 @@ function AnalysisSection({ meal, onReanalyse, reanalysing }: { meal: Meal & { an
   );
 }
 
-/** One meal: what was logged and, once analysed, the nutrient estimate with every source shown. */
 export function MealPage() {
   const { id } = useParams();
   const navigate = useNavigate();

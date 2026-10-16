@@ -1,7 +1,5 @@
 import { z } from 'zod';
 
-/** Request body shapes for /auth. The frontend mirrors these rules in its forms. */
-
 const email = z.string().trim().toLowerCase().email('Enter a valid email address').max(254);
 
 export const passwordRule = z

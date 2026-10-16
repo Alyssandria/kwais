@@ -24,7 +24,6 @@ import { LabFormModal } from './LabForm';
 const shortDate = (iso: string) =>
   new Date(`${iso}T12:00:00`).toLocaleDateString('en-PH', { day: 'numeric', month: 'short', year: 'numeric' });
 
-/** Groups results by test (custom "other" tests by their name), newest first inside each group. */
 function groupLabs(labs: Lab[]) {
   const groups = new Map<string, Lab[]>();
   for (const l of labs) {

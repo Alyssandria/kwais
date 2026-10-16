@@ -3,12 +3,12 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { AxiosError, type AxiosResponse } from 'axios';
 import { ToastProvider } from '@/components/ui';
-import type { Meal, MealAnalysis } from './api';
+import type { Meal, MealAnalysis } from '@/features/meals/api';
 
 const analyse = vi.fn();
 let query: { data?: Meal; isPending: boolean; isError: boolean; error?: unknown } = { isPending: true, isError: false };
 
-vi.mock('./api', () => ({
+vi.mock('@/features/meals/api', () => ({
   useMeal: () => ({ ...query, refetch: vi.fn() }),
   useAnalyseMeal: () => ({ mutateAsync: analyse, isPending: false }),
   useDeleteMeal: () => ({ mutateAsync: vi.fn(), isPending: false }),
@@ -17,7 +17,7 @@ vi.mock('@/features/profile/api', () => ({
   useTargets: () => ({ data: [{ nutrient: 'sodium', dailyMax: 2000, unit: 'mg', source: 'patient_entered', note: null, since: '' }] }),
 }));
 
-const { MealPage } = await import('./MealPage');
+const { MealPage } = await import('@/features/meals/MealPage');
 
 const none = { value: null, source: 'missing' as const };
 const analysis: MealAnalysis = {

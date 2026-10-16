@@ -7,7 +7,6 @@ import { env } from './config/env.js';
 import { apiRoutes } from './routes/index.js';
 import { errorHandler, notFoundHandler } from './middleware/error-handler.js';
 
-/** Builds the Express app without listening, so tests can import it. */
 export function createApp() {
   const app = express();
 

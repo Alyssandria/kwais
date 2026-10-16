@@ -9,12 +9,6 @@ import {
 import { CircleAlert } from 'lucide-react';
 import { cn } from '@/lib/cn';
 
-/**
- * Label + control + hint + error, wired for screen readers:
- * the control gets aria-describedby for the hint and error, and aria-invalid when there is an error.
- * Works with react-hook-form: spread register('name') onto Input/Textarea/Select.
- */
-
 interface FieldShellProps {
   label: string;
   hint?: ReactNode;

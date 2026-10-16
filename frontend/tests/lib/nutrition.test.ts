@@ -1,4 +1,4 @@
-import { labStatus, percentOfTarget, rangeText, targetStatus, targetStatusText } from './nutrition';
+import { labStatus, percentOfTarget, rangeText, targetStatus, targetStatusText } from '@/lib/nutrition';
 
 describe('targets', () => {
   it('never judges a nutrient without a target', () => {
@@ -8,10 +8,10 @@ describe('targets', () => {
   });
 
   it('bands percentages', () => {
-    expect(targetStatus(percentOfTarget(1135, 2000))).toBe('within'); // 57 %
-    expect(targetStatus(percentOfTarget(44, 50))).toBe('near'); // 88 %
-    expect(targetStatus(percentOfTarget(2000, 2000))).toBe('near'); // exactly at target
-    expect(targetStatus(percentOfTarget(2060, 2000))).toBe('above'); // 103 %
+    expect(targetStatus(percentOfTarget(1135, 2000))).toBe('within');
+    expect(targetStatus(percentOfTarget(44, 50))).toBe('near');
+    expect(targetStatus(percentOfTarget(2000, 2000))).toBe('near');
+    expect(targetStatus(percentOfTarget(2060, 2000))).toBe('above');
   });
 });
 

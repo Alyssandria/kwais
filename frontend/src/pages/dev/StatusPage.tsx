@@ -9,10 +9,6 @@ interface Health {
   time: string;
 }
 
-/**
- * Development-only status page (/dev/status): checks that the web app,
- * the API proxy and the database are wired up.
- */
 export function StatusPage() {
   const apiHealth = useQuery({
     queryKey: ['health'],

@@ -53,12 +53,10 @@ export interface FoodUpsert {
 const dec = (n: number | null) => (n == null ? null : new Prisma.Decimal(n));
 
 export const FoodModel = {
-  /** Every food with its portions and recipe ingredients. A few thousand rows at most. */
   loadAll(): Promise<FoodRow[]> {
     return prisma.foodItem.findMany({ select: catalogSelect, orderBy: { name: 'asc' } });
   },
 
-  /** Name or local-name search, case-insensitive. */
   search(q: string, limit: number): Promise<FoodSearchRow[]> {
     return prisma.foodItem.findMany({
       where: {
@@ -70,7 +68,6 @@ export const FoodModel = {
     });
   },
 
-  /** Inserts or updates one food by (source, sourceRef) and replaces its portions. Returns its id. */
   async upsert(f: FoodUpsert): Promise<string> {
     const data = {
       name: f.name,
@@ -99,7 +96,6 @@ export const FoodModel = {
     });
   },
 
-  /** Replaces a recipe's ingredient list. */
   async setRecipe(recipeId: string, ingredients: { ingredientId: string; gramsPer100g: number }[]): Promise<void> {
     await prisma.$transaction([
       prisma.recipeIngredient.deleteMany({ where: { recipeId } }),

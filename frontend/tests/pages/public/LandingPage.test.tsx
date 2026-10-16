@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { LandingPage } from './LandingPage';
+import { LandingPage } from '@/pages/public/LandingPage';
 
 describe('LandingPage', () => {
   it('leads with sign-up and the decision-support statement', () => {

@@ -1,10 +1,5 @@
 import type { CondimentAmount, MealCategory, MealCondiment } from './api';
 
-/**
- * The choices on the Log a meal screen. Keys match backend/src/schemas/meal.schemas.ts;
- * labels are what patients see, in the words they use.
- */
-
 export const MEAL_TYPES: { value: MealCategory; label: string; hint: string }[] = [
   { value: 'breakfast', label: 'Breakfast', hint: 'Almusal' },
   { value: 'lunch', label: 'Lunch', hint: 'Tanghalian' },
@@ -62,7 +57,6 @@ export const drinkLabel = labelIn(DRINKS);
 export const cookingLabel = labelIn(COOKING);
 export const mealLabel = (c: MealCategory) => MEAL_TYPES.find((m) => m.value === c)!.label;
 
-/** A sensible meal for the time of day; the patient can change it. */
 export function defaultCategory(d: Date): MealCategory {
   const h = d.getHours();
   if (h >= 4 && h < 10) return 'breakfast';
@@ -80,10 +74,6 @@ export interface MealForm {
   notes: string;
 }
 
-/**
- * The read-back in "Check before saving": exactly what will be stored, in one line.
- * e.g. "1 tasa kanin; with Toyo-mansi (konti), Bagoong (1 tsp); drinks: tubig; cooked: inihaw."
- */
 export function summaryOf(f: MealForm): string {
   const parts: string[] = [];
   if (f.rawText.trim()) parts.push(f.rawText.trim());
@@ -96,7 +86,6 @@ export function summaryOf(f: MealForm): string {
   return parts.length ? `${parts.join('; ')}.` : 'Nothing entered yet.';
 }
 
-/** "Breakfast · today, 7:15 AM" / "Dinner · yesterday, 7:30 PM" / "Lunch · Mon 12 Oct, 12:10 PM" */
 export function whenText(category: MealCategory, iso: string, now = new Date()): string {
   const d = new Date(iso);
   const time = d.toLocaleTimeString('en-PH', { hour: 'numeric', minute: '2-digit' });

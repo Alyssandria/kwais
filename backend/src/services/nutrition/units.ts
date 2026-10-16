@@ -1,9 +1,3 @@
-/**
- * Household units and amounts in English, Tagalog and Taglish.
- * Every spelling maps to one canonical unit; grams always come from the food's own portions,
- * except for standard spoons, which are the same for every food.
- */
-
 const UNIT_SYNONYMS: Record<string, string[]> = {
   g: ['g', 'gm', 'gms', 'gr', 'gram', 'grams', 'gramo'],
   ml: ['ml', 'mL', 'milliliter', 'milliliters', 'millilitre', 'millilitres'],
@@ -29,13 +23,8 @@ for (const [canonical, words] of Object.entries(UNIT_SYNONYMS)) {
   for (const w of words) UNIT_LOOKUP.set(w.toLowerCase(), canonical);
 }
 
-/** Every canonical unit K-WAIS understands. */
 export const CANONICAL_UNITS = Object.keys(UNIT_SYNONYMS);
 
-/**
- * Canonical unit for a word, or null. Accepts the Tagalog linker suffix:
- * "tasang" (tasa + ng), "basong", "pirasong".
- */
 export function toUnit(word: string): string | null {
   const w = word.toLowerCase();
   const direct = UNIT_LOOKUP.get(w);
@@ -44,10 +33,8 @@ export function toUnit(word: string): string | null {
   return null;
 }
 
-/** Standard measures that weigh the same for any food (water-like density). */
 export const STANDARD_GRAMS: Record<string, number> = { g: 1, ml: 1, tbsp: 15, tsp: 5 };
 
-/** Drinks served by the cup or glass default to 240 g when the food has no portion of its own. */
 export const DRINK_GLASS_GRAMS = 240;
 
 const NUMBER_WORDS: Record<string, number> = {
@@ -63,7 +50,6 @@ const NUMBER_WORDS: Record<string, number> = {
 
 const UNICODE_FRACTIONS: Record<string, number> = { '½': 0.5, '¼': 0.25, '¾': 0.75, '⅓': 1 / 3, '⅔': 2 / 3 };
 
-/** Parses "2", "1.5", "1/2", "½", "isang", "kalahating". Returns null for anything else. */
 export function parseAmountToken(token: string): number | null {
   const t = token.toLowerCase();
   if (t in UNICODE_FRACTIONS) return UNICODE_FRACTIONS[t]!;

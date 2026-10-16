@@ -18,10 +18,6 @@ const STEPS = [
   { title: 'AI and reminders', intro: 'Choose how K-WAIS helps you. You can change these any time.' },
 ] as const;
 
-/**
- * Five short steps after sign-up. Every step saves as you go, every step after the first
- * can be skipped, and nothing is inferred from the answers.
- */
 export function OnboardingPage() {
   const navigate = useNavigate();
   const { refreshUser } = useAuth();

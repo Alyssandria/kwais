@@ -5,14 +5,6 @@ import { cn } from '@/lib/cn';
 export type ButtonVariant = 'accent' | 'primary' | 'secondary' | 'ghost' | 'danger' | 'onDark';
 export type ButtonSize = 'sm' | 'md' | 'lg';
 
-/**
- * accent    apricot — the one main action on a screen (Add a meal, Save)
- * primary   teal — confirming actions inside panels
- * secondary white with a border — alternatives (Cancel, Edit)
- * ghost     text only — low-emphasis actions
- * danger    destructive actions, always behind a ConfirmDialog
- * onDark    outline for use on the teal hero band
- */
 const variants: Record<ButtonVariant, string> = {
   accent: 'bg-accent text-ink font-extrabold hover:bg-[#fca85a] shadow-card',
   primary: 'bg-primary text-white font-semibold hover:bg-primary-dark',
@@ -64,7 +56,6 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
   );
 });
 
-/** Square button for a single icon. `label` is required so screen readers can name it. */
 export interface IconButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'children'> {
   label: string;
   icon: ReactNode;

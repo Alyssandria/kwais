@@ -1,9 +1,3 @@
-/**
- * Loads the sample food tables. Runs with `pnpm db:seed`, and automatically after `pnpm db:reset`.
- * Safe to run again: rows are matched on (source, sourceRef) and updated in place.
- *
- * The values are approximate sample data, stored as unverified. See seed-data/sample-foods.ts.
- */
 import { prisma } from '../src/config/db.js';
 import { FoodModel } from '../src/models/food.model.js';
 import { SAMPLE_FOODS, SAMPLE_RECIPES, type SampleFood } from './seed-data/sample-foods.js';
@@ -45,7 +39,6 @@ async function seedRecipes(ids: Map<string, string>): Promise<void> {
       source: 'recipe',
       sourceRef: sampleRef(r.ref),
       verified: false,
-      // A recipe's values are always worked out from its ingredients, never stored.
       sodiumMg: null,
       potassiumMg: null,
       phosphorusMg: null,

@@ -1,6 +1,6 @@
 import { randomBytes } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
-import { decryptField, encryptField, FieldCryptoError, parseKey } from './field-crypto.js';
+import { decryptField, encryptField, FieldCryptoError, parseKey } from '../../src/lib/field-crypto.js';
 
 const k1 = parseKey(randomBytes(32).toString('base64'), 1);
 const k2 = parseKey(randomBytes(32).toString('base64'), 2);

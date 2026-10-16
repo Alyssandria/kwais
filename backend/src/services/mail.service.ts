@@ -1,11 +1,5 @@
 import { env } from '../config/env.js';
 
-/**
- * Outgoing email. In v0 there is no mail server: messages are printed to the backend
- * console so password reset works in development. Swap `deliver` for an SMTP or
- * email-API client before real users sign up.
- */
-
 interface Message {
   to: string;
   subject: string;
@@ -14,7 +8,6 @@ interface Message {
 
 async function deliver(msg: Message): Promise<void> {
   if (env.NODE_ENV === 'test') return;
-  // eslint-disable-next-line no-console
   console.log(
     ['', '──── Email (development: not actually sent) ────', `To:      ${msg.to}`, `Subject: ${msg.subject}`, '', msg.text, '────────────────────────────────────────────────', ''].join('\n'),
   );

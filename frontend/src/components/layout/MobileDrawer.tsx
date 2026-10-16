@@ -3,10 +3,6 @@ import { X } from 'lucide-react';
 import { SideNav } from './SideNav';
 import type { NavItem } from './nav';
 
-/**
- * Slide-in navigation for screens narrower than 1024 px.
- * Native <dialog>: focus is trapped while open, Esc closes it, focus returns to the menu button.
- */
 export function MobileDrawer({ open, onClose, items }: { open: boolean; onClose: () => void; items: NavItem[] }) {
   const ref = useRef<HTMLDialogElement>(null);
 

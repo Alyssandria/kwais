@@ -1,4 +1,4 @@
-import { defaultCategory, summaryOf, whenText } from './options';
+import { defaultCategory, summaryOf, whenText } from '@/features/meals/options';
 
 const at = (h: number, m = 0) => new Date(2026, 9, 16, h, m);
 

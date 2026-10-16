@@ -18,16 +18,11 @@ interface AuthContextValue {
   login: (values: LoginValues) => Promise<AuthUser>;
   register: (values: RegisterValues) => Promise<AuthUser>;
   logout: () => Promise<void>;
-  /** Re-reads the signed-in user (e.g. after onboarding is completed). */
   refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-/**
- * Holds the signed-in user. On first load it tries the refresh cookie, so a page reload
- * keeps you signed in without storing tokens in the browser.
- */
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<Status>('loading');
   const [user, setUser] = useState<AuthUser | null>(null);
@@ -51,7 +46,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setSessionListeners({ onLost: clearSession, onRefreshed: applySession });
   }, [applySession, clearSession]);
 
-  // Restore the session once on startup (StrictMode runs effects twice in development).
   useEffect(() => {
     if (started.current) return;
     started.current = true;
@@ -111,7 +105,6 @@ export function useAuth(): AuthContextValue {
   return ctx;
 }
 
-/** Where each role lands after signing in. */
 export function homeFor(user: AuthUser): string {
   return user.role === 'doctor' ? '/doctor/dashboard' : '/patient/dashboard';
 }

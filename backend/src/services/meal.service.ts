@@ -8,8 +8,6 @@ import { estimateMeal } from './nutrition/engine.js';
 import { PARSER_VERSION } from './nutrition/text-parser.js';
 import type { DataNote, ItemResult, MealInput, NutrientKey, NutrientTotal } from './nutrition/types.js';
 
-/** Shapes returned to the frontend. */
-
 export interface AnalysisView {
   id: string;
   version: number;
@@ -18,7 +16,6 @@ export interface AnalysisView {
   totals: Record<NutrientKey, NutrientTotal>;
   items: ItemResult[];
   notes: DataNote[];
-  /** 1–10 from the AI analysis (Section 7); null when there is nothing supplied to judge against or no AI result. */
   score: number | null;
   scoreBand: string | null;
   ai: { status: 'ok' | 'unavailable' | 'mock'; output: unknown };
@@ -49,7 +46,6 @@ export interface RecentMeal {
   cookingMethods: string[];
 }
 
-/** Stored in meal_analyses.item_breakdown. */
 interface StoredBreakdown {
   items: ItemResult[];
   notes: DataNote[];
@@ -91,10 +87,6 @@ export function toMealView(m: MealRecord): MealView {
 
 const json = (v: unknown) => v as Prisma.InputJsonValue;
 
-/**
- * Runs the nutrition engine on what the patient saved and stores the result as a new version.
- * Section 7 adds the Gemini steps around this; when AI is off or unavailable, this is the result.
- */
 async function analyse(meal: MealRecord, patientId: string): Promise<void> {
   const input: MealInput = {
     rawText: meal.rawText,
@@ -114,7 +106,6 @@ async function analyse(meal: MealRecord, patientId: string): Promise<void> {
       model: null,
       totals: json(result.totals),
       itemBreakdown: json(breakdown),
-      // Exactly what any AI step received. Nothing yet: the rule-based parser read the text.
       inputsSnapshot: json({ parser: PARSER_VERSION, meal: input, sentToAi: null }),
       score: null,
       scoreBand: null,
@@ -152,7 +143,6 @@ export const MealService = {
     return toMealView(await ownedOrNotFound(patientId, id));
   },
 
-  /** Distinct recent meals for "Log it again": same text counts once, newest wins. */
   async recent(patientId: string, limit = 5): Promise<RecentMeal[]> {
     const rows = await MealModel.recentSaved(patientId, 30);
     const seen = new Set<string>();
@@ -197,10 +187,6 @@ export const MealService = {
     return toMealView(meal);
   },
 
-  /**
-   * Edits a draft, or finishes it with status "saved". Saved meals are not edited in place,
-   * because their analyses must keep describing exactly what was logged.
-   */
   async update(patientId: string, id: string, body: MealUpdate, actorId: string, meta: RequestMeta): Promise<MealView> {
     const current = await ownedOrNotFound(patientId, id);
     if (current.status !== 'draft') {
@@ -229,7 +215,6 @@ export const MealService = {
     return toMealView(meal);
   },
 
-  /** Estimates (or re-estimates) a saved meal. Each run is a new version; earlier ones are kept. */
   async analyse(patientId: string, id: string, actorId: string, meta: RequestMeta): Promise<MealView> {
     const meal = await ownedOrNotFound(patientId, id);
     if (meal.status === 'draft') throw HttpError.conflict('Save the meal before analysing it');

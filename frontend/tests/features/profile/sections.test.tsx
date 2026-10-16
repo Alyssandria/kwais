@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import type { Profile, Target } from './api';
-import { DietSection, KidneySection, TargetsSection } from './sections';
+import type { Profile, Target } from '@/features/profile/api';
+import { DietSection, KidneySection, TargetsSection } from '@/features/profile/sections';
 
 const profile: Profile = {
   patientCode: 'KW-000123',

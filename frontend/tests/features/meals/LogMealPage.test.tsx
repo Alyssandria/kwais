@@ -2,14 +2,14 @@ import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { ToastProvider } from '@/components/ui';
-import type { Meal, RecentMeal } from './api';
+import type { Meal, RecentMeal } from '@/features/meals/api';
 
 const create = vi.fn();
 const update = vi.fn();
 let recent: RecentMeal[] = [];
 let latestDraft: Meal | null = null;
 
-vi.mock('./api', () => ({
+vi.mock('@/features/meals/api', () => ({
   useRecentMeals: () => ({ data: recent }),
   useLatestDraft: () => ({ data: latestDraft }),
   useMeal: () => ({ data: undefined }),
@@ -18,7 +18,7 @@ vi.mock('./api', () => ({
   useDeleteMeal: () => ({ mutateAsync: vi.fn(), isPending: false }),
 }));
 
-const { LogMealPage } = await import('./LogMealPage');
+const { LogMealPage } = await import('@/features/meals/LogMealPage');
 
 const saved = (over: Partial<Meal> = {}): Meal => ({
   id: 'm1',

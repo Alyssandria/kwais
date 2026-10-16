@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { parseMealText } from './text-parser.js';
-import { parseAmountToken, toUnit } from './units.js';
+import { parseMealText } from '../../../src/services/nutrition/text-parser.js';
+import { parseAmountToken, toUnit } from '../../../src/services/nutrition/units.js';
 
 describe('amounts and units', () => {
   it.each([

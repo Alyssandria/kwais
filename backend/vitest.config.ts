@@ -3,7 +3,7 @@ import { defineConfig } from 'vitest/config';
 export default defineConfig({
   test: {
     environment: 'node',
-    include: ['src/**/*.test.ts', 'test/**/*.test.ts'],
+    include: ['tests/**/*.test.ts'],
     env: {
       NODE_ENV: 'test',
       JWT_ACCESS_SECRET: 'test-access-secret-0123456789abcdef0123456789',

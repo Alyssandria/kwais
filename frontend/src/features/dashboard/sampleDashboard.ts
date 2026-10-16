@@ -1,12 +1,6 @@
 import type { NutrientKey } from '@/lib/nutrition';
 import type { DaySummary, PatientDashboard } from './types';
 
-/**
- * Fictional sample data for "Maria Santos" (not a real patient), used until Section 8
- * connects the dashboard to the API. Dates are built relative to today so the screen
- * always looks current. Numbers match the approved design mock-ups.
- */
-
 const iso = (d: Date) => d.toISOString().slice(0, 10);
 
 function daysAgo(n: number, h = 12, m = 0): Date {

@@ -2,8 +2,6 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import type { NutrientKey } from '@/lib/nutrition';
 
-/** Shapes returned by the backend (see backend/src/services/meal.service.ts). */
-
 export type MealCategory = 'breakfast' | 'lunch' | 'dinner' | 'snack';
 export type MealStatus = 'draft' | 'saved' | 'analysed';
 export type CondimentAmount = 'konti' | 'tsp' | 'tbsp' | 'marami';
@@ -111,7 +109,6 @@ export function useRecentMeals() {
   return useQuery({ queryKey: mealKeys.recent, queryFn: () => unwrap<RecentMeal[]>(api.get('/meals/recent')) });
 }
 
-/** The newest unfinished draft, if any. */
 export function useLatestDraft() {
   return useQuery({
     queryKey: mealKeys.list({ status: 'draft', limit: 1 }),

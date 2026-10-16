@@ -1,8 +1,8 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
-import { buildSampleDashboard } from './sampleDashboard';
-import type { PatientDashboard } from './types';
+import { buildSampleDashboard } from '@/features/dashboard/sampleDashboard';
+import type { PatientDashboard } from '@/features/dashboard/types';
 
 const refetch = vi.fn();
 let query: { data?: PatientDashboard; isPending: boolean; isError: boolean; error?: unknown } = {
@@ -10,12 +10,12 @@ let query: { data?: PatientDashboard; isPending: boolean; isError: boolean; erro
   isError: false,
 };
 
-vi.mock('./useDashboard', () => ({ useDashboard: () => ({ ...query, refetch }) }));
+vi.mock('@/features/dashboard/useDashboard', () => ({ useDashboard: () => ({ ...query, refetch }) }));
 vi.mock('@/features/auth/AuthProvider', () => ({
   useAuth: () => ({ user: { firstName: 'Maria', onboardingComplete: true } }),
 }));
 
-const { DashboardPage } = await import('./DashboardPage');
+const { DashboardPage } = await import('@/features/dashboard/DashboardPage');
 
 function renderPage() {
   return render(
@@ -84,7 +84,6 @@ describe('DashboardPage', () => {
     const sodiumBtn = screen.getByRole('button', { name: 'Sodium', pressed: false });
     await userEvent.click(sodiumBtn);
     expect(screen.getByRole('button', { name: 'Sodium', pressed: true })).toBeInTheDocument();
-    // The chart is announced by its summary, and its hidden data table switches too.
     expect(screen.getByRole('img', { name: /^Sodium over the last 7 days:/ })).toBeInTheDocument();
     const table = screen.getByRole('table', { name: 'Estimated sodium per day, mg' });
     expect(within(table).getByRole('columnheader', { name: 'Sodium' })).toBeInTheDocument();

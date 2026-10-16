@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { NotFoundPage } from './NotFoundPage';
+import { NotFoundPage } from '@/pages/public/NotFoundPage';
 
 describe('NotFoundPage', () => {
   it('explains the problem and links home', () => {

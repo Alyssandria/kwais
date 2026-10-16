@@ -16,10 +16,6 @@ import { Badge, ProgressBar, StatusLabel } from '@/components/ui';
 import { ScoreRing } from '@/components/domain/ScoreRing';
 import { btn } from './PublicLayout';
 
-/**
- * Public landing page. Rules from the brief: no invented endorsements, testimonials,
- * clinical outcomes, user counts or certifications. Previews are labelled as sample data.
- */
 export function LandingPage() {
   return (
     <>
@@ -74,7 +70,6 @@ function Hero() {
   );
 }
 
-/** Static illustration built from real components, clearly labelled as sample data. */
 function HeroPreview() {
   return (
     <figure className="relative">

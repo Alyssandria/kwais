@@ -1,29 +1,28 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Prisma } from '@prisma/client';
 
-vi.mock('../models/lab.model.js', () => ({
+vi.mock('../../src/models/lab.model.js', () => ({
   LabModel: { list: vi.fn(), findOwned: vi.fn(), create: vi.fn(), update: vi.fn(), delete: vi.fn() },
 }));
-vi.mock('../models/target.model.js', () => ({
+vi.mock('../../src/models/target.model.js', () => ({
   TargetModel: { listActive: vi.fn(), replace: vi.fn(), end: vi.fn() },
 }));
-vi.mock('../models/patient-profile.model.js', () => ({
+vi.mock('../../src/models/patient-profile.model.js', () => ({
   PatientProfileModel: { findIdByUserId: vi.fn(), findById: vi.fn(), update: vi.fn() },
 }));
-vi.mock('../models/audit.model.js', () => ({ AuditModel: { create: vi.fn() } }));
+vi.mock('../../src/models/audit.model.js', () => ({ AuditModel: { create: vi.fn() } }));
 
-const { LabService } = await import('./lab.service.js');
-const { TargetService } = await import('./target.service.js');
-const { ProfileService } = await import('./profile.service.js');
-const { LabModel } = await import('../models/lab.model.js');
-const { TargetModel } = await import('../models/target.model.js');
-const { PatientProfileModel } = await import('../models/patient-profile.model.js');
-const { AuditModel } = await import('../models/audit.model.js');
+const { LabService } = await import('../../src/services/lab.service.js');
+const { TargetService } = await import('../../src/services/target.service.js');
+const { ProfileService } = await import('../../src/services/profile.service.js');
+const { LabModel } = await import('../../src/models/lab.model.js');
+const { TargetModel } = await import('../../src/models/target.model.js');
+const { PatientProfileModel } = await import('../../src/models/patient-profile.model.js');
+const { AuditModel } = await import('../../src/models/audit.model.js');
 
 const meta = { ipHash: 'h', userAgent: 'vitest' };
 beforeEach(() => vi.clearAllMocks());
 
-/** Makes LabModel.create/update echo what they were given, like the database would. */
 function echoRows() {
   vi.mocked(LabModel.create).mockImplementation(async (_pid, data) => ({
     id: 'lab-1',

@@ -25,17 +25,12 @@ function toView(t: TargetRecord): TargetView {
 }
 
 export const TargetService = {
-  /** Current daily maximums, one per nutrient at most. */
   async listActive(patientId: string): Promise<TargetView[]> {
     const rows = await TargetModel.listActive(patientId);
     const seen = new Set<Nutrient>();
     return rows.filter((r) => r.dailyMax != null && !seen.has(r.nutrient) && seen.add(r.nutrient)).map(toView);
   },
 
-  /**
-   * Sets the patient's own daily maximum for a nutrient. Units are fixed (mg, or g for protein),
-   * so a number can never be stored in the wrong unit. K-WAIS never suggests a value.
-   */
   async set(patientId: string, nutrient: Nutrient, body: TargetBody, actorId: string, meta: RequestMeta): Promise<TargetView> {
     const limit = NUTRIENT_LIMITS[nutrient];
     if (body.dailyMax > limit.max) {

@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import request from 'supertest';
 
-vi.mock('../services/auth.service.js', () => ({
+vi.mock('../../src/services/auth.service.js', () => ({
   AuthService: {
     register: vi.fn(),
     login: vi.fn(),
@@ -13,9 +13,9 @@ vi.mock('../services/auth.service.js', () => ({
   },
 }));
 
-const { createApp } = await import('../app.js');
-const { AuthService } = await import('../services/auth.service.js');
-const { signAccessToken } = await import('../lib/jwt.js');
+const { createApp } = await import('../../src/app.js');
+const { AuthService } = await import('../../src/services/auth.service.js');
+const { signAccessToken } = await import('../../src/lib/jwt.js');
 
 const app = createApp();
 const user = {

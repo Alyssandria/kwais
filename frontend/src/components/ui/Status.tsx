@@ -2,7 +2,6 @@ import type { ReactNode } from 'react';
 import { ArrowDown, ArrowUp, Check, CircleDot, Database, Minus, Sparkles, EqualApproximately } from 'lucide-react';
 import { cn } from '@/lib/cn';
 
-/** Small neutral or tinted label. Status meaning must come from StatusLabel, not colour alone. */
 export function Badge({
   children,
   tone = 'neutral',
@@ -28,14 +27,6 @@ export function Badge({
   );
 }
 
-/**
- * Nutrient or lab status: always icon + words + colour.
- *   within   ✓ green   (within a target or slip range the user supplied)
- *   near     ● amber   (≥ 80 % of a target)
- *   above    ▲ red
- *   below    ▼ red     (below a slip range)
- *   none     –  grey   (no target: estimate only)
- */
 export type StatusKind = 'within' | 'near' | 'above' | 'below' | 'none';
 
 export function StatusLabel({ kind, children, className }: { kind: StatusKind; children: ReactNode; className?: string }) {
@@ -55,13 +46,6 @@ export function StatusLabel({ kind, children, className }: { kind: StatusKind; c
   );
 }
 
-/**
- * Where a number came from. Shown next to every nutrient value.
- *   verified  from the food composition dataset (PhilFCT / USDA)
- *   estimated from a recipe or a guessed amount
- *   missing   no data for this food
- *   ai        text written by the AI from computed numbers
- */
 export type Provenance = 'verified' | 'estimated' | 'missing' | 'ai';
 
 export function SourceTag({ kind, detail }: { kind: Provenance; detail?: string }) {
@@ -81,7 +65,6 @@ export function SourceTag({ kind, detail }: { kind: Provenance; detail?: string 
   );
 }
 
-/** Horizontal bar. `value` 0–100 (clamped). Pass `label` for screen readers. */
 export function ProgressBar({
   value,
   label,
@@ -109,7 +92,6 @@ export function ProgressBar({
   );
 }
 
-/** Dashed bar shown when there is no target to compare against. */
 export function NoTargetBar() {
   return (
     <div

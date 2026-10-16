@@ -4,7 +4,6 @@ import { Chip } from '@/components/ui';
 import { cn } from '@/lib/cn';
 import { startOfDay } from './options';
 
-/** White card with a tinted icon tile, a title and a hint, for each group of chips. */
 export function ChipSection({
   id,
   icon,
@@ -40,7 +39,6 @@ export function ChipSection({
   );
 }
 
-/** A row of on/off chips for a list of string keys. */
 export function ChipGroup({
   label,
   options,
@@ -66,10 +64,6 @@ export function ChipGroup({
 const DAYS_BACK = 7;
 const pad = (n: number) => String(n).padStart(2, '0');
 
-/**
- * "Today · 12:40 PM ▾" chip on the hero. Opens a day list (today and the 6 days before)
- * and a time field. Times later than now are refused, matching the server rule.
- */
 export function WhenPicker({ value, onChange, now = new Date() }: { value: Date; onChange: (d: Date) => void; now?: Date }) {
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);

@@ -1,7 +1,5 @@
 import { z } from 'zod';
 
-/** Mirrors backend/src/schemas/auth.schemas.ts so users see the same rules before submitting. */
-
 const email = z.string().trim().min(1, 'Enter your email').email('Enter a valid email address').max(254);
 
 export const passwordRule = z

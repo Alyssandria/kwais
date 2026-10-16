@@ -6,7 +6,6 @@ import { LabModel, type EncryptedLab, type EncryptedLabInput } from '../models/l
 import { LAB_TESTS, type LabCreate, type LabUpdate } from '../schemas/patient.schemas.js';
 import { AuditService, type RequestMeta } from './audit.service.js';
 
-/** A lab result as the patient sees it: decrypted, with a display label. */
 export interface LabView {
   id: string;
   test: LabTest;
@@ -21,7 +20,6 @@ export interface LabView {
   createdAt: string;
 }
 
-/** Encryption context: binds each ciphertext to one patient and one column. */
 const ctx = (patientId: string, field: 'value' | 'ref_low' | 'ref_high') => `lab:${patientId}:${field}`;
 
 const enc = (patientId: string, field: 'value' | 'ref_low' | 'ref_high', n: number) =>
@@ -73,7 +71,6 @@ export const LabService = {
     return toView(patientId, row);
   },
 
-  /** Any edit by the patient re-encrypts with the current key and marks the row patient_entered. */
   async update(patientId: string, id: string, body: LabUpdate, actorId: string, meta: RequestMeta): Promise<LabView> {
     const existing = await LabModel.findOwned(patientId, id);
     if (!existing) throw HttpError.notFound('Lab result not found');

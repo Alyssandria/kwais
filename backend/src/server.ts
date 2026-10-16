@@ -5,12 +5,10 @@ import { prisma } from './config/db.js';
 const app = createApp();
 
 const server = app.listen(env.PORT, () => {
-  // eslint-disable-next-line no-console
   console.log(`K-WAIS API listening on http://localhost:${env.PORT}/api/v1`);
 });
 
 async function shutdown(signal: string) {
-  // eslint-disable-next-line no-console
   console.log(`${signal} received, shutting down`);
   server.close(async () => {
     await prisma.$disconnect();

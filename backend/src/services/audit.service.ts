@@ -4,7 +4,6 @@ import { AuditModel } from '../models/audit.model.js';
 import { hashIp } from '../lib/tokens.js';
 import { env } from '../config/env.js';
 
-/** Request details worth recording, without storing the raw IP address. */
 export interface RequestMeta {
   ipHash?: string;
   userAgent?: string;
@@ -18,10 +17,6 @@ export function requestMeta(req: Request): RequestMeta {
 }
 
 export const AuditService = {
-  /**
-   * Records an audit event. Never throws: a logging failure must not block the user,
-   * but it is reported to the server log.
-   */
   async record(
     action: AuditAction,
     resourceType: string,
@@ -31,7 +26,6 @@ export const AuditService = {
     try {
       await AuditModel.create({ action, resourceType, ...meta, ...opts });
     } catch (err) {
-      // eslint-disable-next-line no-console
       console.error('Audit log write failed', err);
     }
   },

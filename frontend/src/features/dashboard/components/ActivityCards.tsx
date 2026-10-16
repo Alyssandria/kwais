@@ -13,7 +13,6 @@ const SHADES = [
   { bg: '#075e68', fg: '#ffffff' },
 ];
 
-/** 4-week calendar of meals logged per day, with the count written in each cell. */
 export function ConsistencyCard({ days }: { days: PatientDashboard['consistency'] }) {
   const logged = days.filter((d) => d.meals > 0).length;
   const weekdays = days.slice(0, 7).map((d) => new Date(`${d.date}T12:00:00`).toLocaleDateString('en-PH', { weekday: 'short' }));

@@ -13,7 +13,6 @@ const userIdOf = (req: Request) => {
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-/** A malformed id is just a meal that doesn't exist. */
 function mealId(req: Request): string {
   const id = String(req.params.id);
   if (!UUID.test(id)) throw HttpError.notFound('Meal not found');

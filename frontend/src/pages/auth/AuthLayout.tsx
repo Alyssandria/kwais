@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import { Check } from 'lucide-react';
 import { Logo } from '@/components/layout/Logo';
 
-/** Two-panel layout for sign-in and sign-up: teal story panel on wide screens, form card everywhere. */
 export function AuthLayout({ title, subtitle, children }: { title: string; subtitle?: ReactNode; children: ReactNode }) {
   return (
     <div className="flex min-h-screen bg-canvas">

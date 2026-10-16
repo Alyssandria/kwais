@@ -16,7 +16,6 @@ const targetSelect = {
 export type TargetRecord = Prisma.NutritionTargetGetPayload<{ select: typeof targetSelect }>;
 
 export const TargetModel = {
-  /** Targets in force now: started, and not yet ended. */
   listActive(patientId: string, now = new Date()): Promise<TargetRecord[]> {
     return prisma.nutritionTarget.findMany({
       where: { patientId, effectiveFrom: { lte: now }, OR: [{ effectiveTo: null }, { effectiveTo: { gt: now } }] },
@@ -25,10 +24,6 @@ export const TargetModel = {
     });
   },
 
-  /**
-   * Ends any active target for the nutrient and starts the new one, in one transaction.
-   * Targets are never edited in place, so past analyses keep the target that applied then.
-   */
   replace(
     patientId: string,
     data: { nutrient: Nutrient; dailyMax: number; unit: string; source: ValueSource; note?: string | null },
@@ -54,7 +49,6 @@ export const TargetModel = {
     });
   },
 
-  /** Ends the active target for a nutrient (the history stays). Returns how many were ended. */
   async end(patientId: string, nutrient: Nutrient, now = new Date()): Promise<number> {
     const r = await prisma.nutritionTarget.updateMany({
       where: { patientId, nutrient, OR: [{ effectiveTo: null }, { effectiveTo: { gt: now } }] },

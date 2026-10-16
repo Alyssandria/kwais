@@ -3,7 +3,6 @@ import { AppShell } from '@/components/layout/AppShell';
 import { patientNav } from '@/components/layout/nav';
 import { useAuth } from '@/features/auth/AuthProvider';
 
-/** Wraps every /patient/* page in the app shell with the signed-in user. */
 export function PatientLayout() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();

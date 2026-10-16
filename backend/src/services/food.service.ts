@@ -2,7 +2,6 @@ import { FoodModel, type FoodRow, type FoodSearchRow } from '../models/food.mode
 import { buildCatalog } from './nutrition/catalog.js';
 import type { Catalog, CatalogFood, NutrientKey } from './nutrition/types.js';
 
-/** The food catalog is read on every analysis, so it is kept in memory and refreshed every few minutes. */
 const CATALOG_TTL_MS = 5 * 60 * 1000;
 let cached: { catalog: Catalog; at: number } | null = null;
 
@@ -33,7 +32,6 @@ export interface FoodView {
   source: FoodSearchRow['source'];
   sourceRef: string;
   verified: boolean;
-  /** Per 100 g edible portion. Null = not reported by the source. Recipes are worked out from ingredients. */
   per100g: Record<NutrientKey, number | null>;
   portions: { unit: string; grams: number }[];
 }
@@ -47,12 +45,10 @@ export const FoodService = {
     return catalog;
   },
 
-  /** Forget the cached catalog, e.g. after a seed or import. */
   invalidate() {
     cached = null;
   },
 
-  /** Search the food tables by English or local name. Recipe values come from the catalog. */
   async search(q: string, limit = 20): Promise<FoodView[]> {
     const term = q.trim();
     if (term.length < 2) return [];

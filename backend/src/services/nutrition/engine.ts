@@ -18,20 +18,8 @@ import {
 } from './types.js';
 import { DRINK_GLASS_GRAMS, STANDARD_GRAMS } from './units.js';
 
-/**
- * The nutrition engine: meal input + food catalog → per-item and total sodium, potassium,
- * phosphorus (mg) and protein (g), each tagged with where the number came from.
- *
- * Every number here is arithmetic on dataset values: grams × value per 100 g ÷ 100.
- * The AI never produces a nutrient number. Bump ENGINE_VERSION whenever a rule below changes,
- * so stored analyses can be traced to the rules that produced them.
- */
 export const ENGINE_VERSION = 'nutrition-engine@1';
 
-/**
- * Condiment amounts in grams. Spoons are standard measures; "konti" (a little) and
- * "marami" (a lot) are assumptions, so those amounts are marked as guessed.
- */
 export const CONDIMENT_GRAMS: Record<CondimentAmount, { grams: number; guessed: boolean; label: string }> = {
   konti: { grams: 2.5, guessed: true, label: 'konti (about ½ tsp)' },
   tsp: { grams: 5, guessed: false, label: '1 tsp' },
@@ -39,11 +27,6 @@ export const CONDIMENT_GRAMS: Record<CondimentAmount, { grams: number; guessed: 
   marami: { grams: 30, guessed: true, label: 'marami (about 2 tbsp)' },
 };
 
-/**
- * What each condiment and drink chip means, as a phrase for the matcher.
- * Matching by name (not by a fixed record id) keeps working when the sample data is replaced
- * with real PhilFCT or USDA records that carry the same names.
- */
 export const CONDIMENT_FOODS: Record<string, string> = {
   toyo: 'toyo',
   toyo_mansi: 'toyo mansi',
@@ -75,7 +58,6 @@ const round1 = (n: number) => Math.round(n * 10) / 10;
 const emptyNutrients = (): Record<NutrientKey, NutrientValue> =>
   Object.fromEntries(NUTRIENT_KEYS.map((n) => [n, { value: null, source: 'missing' }])) as Record<NutrientKey, NutrientValue>;
 
-/** Grams for a parsed amount, from the food's own portions first. */
 function gramsFor(
   food: CatalogFood,
   item: ParsedItem,
@@ -90,14 +72,12 @@ function gramsFor(
       : { grams: null, unit: 'serving', guessed: true, noPortion: true };
   }
 
-  // A count with no unit ("2 pandesal") means pieces.
   const unit = item.unit ?? 'piraso';
   const own = food.portions[unit];
   if (own != null) return { grams: q * own, unit, guessed: false, noPortion: false };
   if (STANDARD_GRAMS[unit] != null) return { grams: q * STANDARD_GRAMS[unit]!, unit, guessed: false, noPortion: false };
   if (isDrink && (unit === 'baso' || unit === 'tasa')) return { grams: q * DRINK_GLASS_GRAMS, unit, guessed: true, noPortion: false };
 
-  // We know the food but not how much one of that unit weighs: fall back to servings, and say so.
   const serving = food.portions.serving;
   return serving != null
     ? { grams: q * serving, unit, guessed: true, noPortion: true }
@@ -119,7 +99,6 @@ function toMatch(food: CatalogFood, confidence: number): FoodMatch {
   return { foodId: food.id, name: food.name, source: food.source, sourceRef: food.sourceRef, verified: food.verified, confidence };
 }
 
-/** Runs the whole meal. Pure: same input and catalog, same result. */
 export function estimateMeal(input: MealInput, catalog: Catalog): EngineResult {
   const items: ItemResult[] = [];
   const unmatched: string[] = [];
@@ -127,7 +106,6 @@ export function estimateMeal(input: MealInput, catalog: Catalog): EngineResult {
   const noPortion: string[] = [];
   const unverified = new Set<string>();
 
-  // 1. Foods typed by the patient.
   for (const p of parseMealText(input.rawText)) {
     const match = matchFood(p.label, catalog);
     const food = match ? catalog.byId.get(match.foodId) : undefined;
@@ -163,7 +141,6 @@ export function estimateMeal(input: MealInput, catalog: Catalog): EngineResult {
     });
   }
 
-  // 2. Condiments, at the amount the patient picked.
   for (const c of input.condiments) {
     const phrase = CONDIMENT_FOODS[c.name] ?? c.name.replace(/_/g, ' ');
     const match = matchFood(phrase, catalog);
@@ -189,7 +166,6 @@ export function estimateMeal(input: MealInput, catalog: Catalog): EngineResult {
     });
   }
 
-  // 3. Drinks: one glass each. The form does not ask for size, so the amount is always an assumption.
   for (const d of input.drinks) {
     const phrase = DRINK_FOODS[d] ?? d.replace(/_/g, ' ');
     const match = matchFood(phrase, catalog);
@@ -215,7 +191,6 @@ export function estimateMeal(input: MealInput, catalog: Catalog): EngineResult {
     });
   }
 
-  // 4. Totals. A total is "complete" only when every item could be counted for that nutrient.
   const totals = {} as Record<NutrientKey, NutrientTotal>;
   const notes: DataNote[] = [];
   for (const n of NUTRIENT_KEYS) {

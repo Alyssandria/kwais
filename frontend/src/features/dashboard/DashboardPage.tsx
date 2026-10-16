@@ -10,11 +10,6 @@ import { NutrientCard, TodayScoreCard } from './components/TodayCards';
 import { WelcomeHero } from './components/WelcomeHero';
 import { useDashboard } from './useDashboard';
 
-/**
- * Patient home. Layout (from the approved design):
- *   hero → today at a glance (score + 4 nutrients) → breakdown + 7-day trend
- *   → lab results → consistency + recent meals → AI suggestions → disclaimer
- */
 export function DashboardPage() {
   const { user } = useAuth();
   const { data, isPending, isError, error, refetch } = useDashboard();

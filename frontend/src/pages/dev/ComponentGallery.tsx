@@ -33,10 +33,6 @@ import {
 import { Breadcrumbs } from '@/components/layout/Breadcrumbs';
 import { Logo } from '@/components/layout/Logo';
 
-/**
- * Development-only page listing every UI primitive in each state.
- * Open http://localhost:5173/dev/components. Not included in production builds' routes.
- */
 export function ComponentGallery() {
   const toast = useToast();
   const [modal, setModal] = useState(false);

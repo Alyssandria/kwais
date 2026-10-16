@@ -1,10 +1,5 @@
 import { NUTRIENT_KEYS, type Catalog, type CatalogFood, type NutrientKey } from './types.js';
 
-/**
- * Builds the in-memory catalog the engine reads, and works out per-100 g values for recipes
- * from their ingredients. A recipe's own stored values are ignored: its numbers always come
- * from the ingredient records, so correcting an ingredient corrects every dish that uses it.
- */
 export function buildCatalog(foods: CatalogFood[]): Catalog {
   const byId = new Map(foods.map((f) => [f.id, { ...f, per100g: { ...f.per100g } }]));
   const resolved = new Set<string>();
@@ -22,7 +17,6 @@ export function buildCatalog(foods: CatalogFood[]): Catalog {
       const p = resolve(part, trail);
       for (const n of NUTRIENT_KEYS) {
         const v = p.per100g[n];
-        // An ingredient without a value makes the dish's value unknown, not lower.
         per100g[n] = v == null || per100g[n] == null ? null : per100g[n]! + (v * ing.gramsPer100g) / 100;
       }
     }

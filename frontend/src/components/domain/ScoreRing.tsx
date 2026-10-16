@@ -15,7 +15,6 @@ const BAND = {
   attention: { label: 'Needs attention', stroke: '#b91c1c', text: 'text-bad', icon: TriangleAlert },
 } as const;
 
-/** 1–10 meal score as a ring, with the band shown as icon + words (never colour alone). */
 export function ScoreRing({ score, size = 96, showBand = true }: { score: number; size?: number; showBand?: boolean }) {
   const band = BAND[bandFor(score)];
   const r = 50;

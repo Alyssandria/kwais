@@ -16,7 +16,6 @@ export const PasswordResetModel = {
     return prisma.passwordReset.update({ where: { id }, data: { usedAt: new Date() } });
   },
 
-  /** A new request or a successful reset invalidates every older link. */
   invalidateAllForUser(userId: string) {
     return prisma.passwordReset.updateMany({ where: { userId, usedAt: null }, data: { usedAt: new Date() } });
   },

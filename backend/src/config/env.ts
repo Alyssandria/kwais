@@ -1,10 +1,5 @@
 import { z } from 'zod';
 
-/**
- * Validated environment. The server refuses to start with a clear message
- * when a required variable is missing or malformed.
- * Variables for later sections are optional here and tightened when used.
- */
 const EnvSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.coerce.number().int().positive().default(4000),
@@ -20,7 +15,6 @@ const EnvSchema = z.object({
     .string({ required_error: 'LAB_ENCRYPTION_KEY is required (see backend/.env.example)' })
     .refine((v) => Buffer.from(v, 'base64').length === 32, 'LAB_ENCRYPTION_KEY must be 32 random bytes, base64-encoded'),
   LAB_ENCRYPTION_KEY_VERSION: z.coerce.number().int().min(1).max(255).default(1),
-  /** Previous key, kept only while old rows are re-encrypted after a rotation. */
   LAB_ENCRYPTION_KEY_PREVIOUS: z.string().optional(),
   LAB_ENCRYPTION_KEY_PREVIOUS_VERSION: z.coerce.number().int().min(1).max(255).optional(),
 
@@ -45,7 +39,6 @@ function loadEnv(): Env {
     const issues = parsed.error.issues
       .map((i) => `  - ${i.path.join('.')}: ${i.message}`)
       .join('\n');
-    // eslint-disable-next-line no-console
     console.error(`Invalid environment configuration:\n${issues}`);
     process.exit(1);
   }

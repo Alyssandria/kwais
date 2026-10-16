@@ -36,7 +36,6 @@ const authRoutes: RouteObject[] = [
   { path: '/reset-password', element: <ResetPasswordPage /> },
 ];
 
-/** /patient/* — signed-in patients only. Pages are placeholders until their section lands. */
 const patientRoutes: RouteObject = {
   path: '/patient',
   element: (
@@ -58,7 +57,6 @@ const patientRoutes: RouteObject = {
   ],
 };
 
-/** Full-screen guided setup, signed-in patients only, outside the app shell. */
 const onboardingRoute: RouteObject = {
   path: '/patient/onboarding',
   element: (

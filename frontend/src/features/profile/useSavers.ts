@@ -10,7 +10,6 @@ import {
 } from './api';
 import type { PreferenceValues, TargetChanges } from './sections';
 
-/** Turns each section's form values into the right API calls. */
 export function useSavers() {
   const updateProfile = useUpdateProfile();
   const setTarget = useSetTarget();
@@ -27,7 +26,6 @@ export function useSavers() {
         try {
           await removeTarget.mutateAsync(n);
         } catch (err) {
-          // Clearing a target that was never set is fine.
           if (!(err instanceof AxiosError && err.response?.status === 404)) throw err;
         }
       } else {

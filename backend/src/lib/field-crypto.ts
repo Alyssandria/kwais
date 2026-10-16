@@ -1,18 +1,5 @@
 import { createCipheriv, createDecipheriv, randomBytes } from 'node:crypto';
 
-/**
- * Field-level encryption for lab results (AES-256-GCM).
- *
- * Stored blob: [1 byte key version][12 byte IV][16 byte auth tag][ciphertext]
- *
- * Each value is bound to its context (patient id + field name) as additional authenticated
- * data, so a ciphertext copied into another patient's row, or into another column, fails to
- * decrypt instead of showing the wrong value.
- *
- * This protects data at rest (database dumps, backups). It does not take the data outside the
- * Data Privacy Act: the application can still read it, so it remains personal information.
- */
-
 const IV_LEN = 12;
 const TAG_LEN = 16;
 
@@ -23,7 +10,6 @@ export interface FieldKey {
 
 export class FieldCryptoError extends Error {}
 
-/** Parses LAB_ENCRYPTION_KEY (base64, 32 bytes). */
 export function parseKey(base64: string, version: number): FieldKey {
   const key = Buffer.from(base64, 'base64');
   if (key.length !== 32) throw new FieldCryptoError('LAB_ENCRYPTION_KEY must be 32 bytes, base64-encoded');
@@ -38,10 +24,10 @@ export function encryptField(plain: string, context: string, k: FieldKey): Buffe
   const cipher = createCipheriv('aes-256-gcm', k.key, iv);
   cipher.setAAD(Buffer.from(context, 'utf8'));
   const ct = Buffer.concat([cipher.update(plain, 'utf8'), cipher.final()]);
+  // [key version][iv][auth tag][ciphertext]
   return Buffer.concat([Buffer.from([k.version]), iv, cipher.getAuthTag(), ct]);
 }
 
-/** `keys` lets old rows keep decrypting after a key rotation. */
 export function decryptField(blob: Uint8Array, context: string, keys: FieldKey[]): string {
   const buf = Buffer.from(blob);
   if (buf.length < 1 + IV_LEN + TAG_LEN) throw new FieldCryptoError('Encrypted value is too short');

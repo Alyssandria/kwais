@@ -21,10 +21,6 @@ const ToastContext = createContext<ToastApi | null>(null);
 
 const DURATION_MS = 5000;
 
-/**
- * Short confirmations that appear bottom-right (bottom-centre on phones) and fade after 5 s.
- * Announced to screen readers through a polite live region; errors use role="alert".
- */
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<ToastItem[]>([]);
   const nextId = useRef(1);

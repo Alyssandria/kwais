@@ -46,11 +46,6 @@ export const ProfileService = {
     return toProfileView(p);
   },
 
-  /**
-   * Applies the patient's own edits. Anything clinical the patient types is recorded as
-   * patient_entered; a stage a clinician verified becomes patient_entered again if the patient
-   * changes it. Nothing is ever inferred from other fields.
-   */
   async update(patientId: string, changes: ProfileUpdate, actorId: string, meta: RequestMeta): Promise<ProfileView> {
     const current = await PatientProfileModel.findById(patientId);
     if (!current) throw HttpError.notFound('Profile not found');

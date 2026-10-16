@@ -22,7 +22,6 @@ const MEAL_COLORS: Record<MealCategory, string> = {
 };
 const MEAL_LABEL: Record<MealCategory, string> = { breakfast: 'Breakfast', lunch: 'Lunch', dinner: 'Dinner', snack: 'Snack' };
 
-/** Share of each nutrient by meal: one stacked bar per nutrient. */
 export function MealBreakdownCard({ byMeal }: { byMeal: PatientDashboard['today']['byMeal'] }) {
   if (byMeal.length === 0) {
     return (
@@ -83,7 +82,6 @@ const SERIES: Record<Series, { label: string; color: string; unit: string; sub: 
 const dayLabel = (iso: string, isToday: boolean) =>
   isToday ? 'Today' : new Date(`${iso}T12:00:00`).toLocaleDateString('en-PH', { weekday: 'short' });
 
-/** 7-day line chart with a series picker and the patient's own target as a dashed line. */
 export function WeekTrendCard({ week, targets }: { week: DaySummary[]; targets: Partial<Record<NutrientKey, number | null>> }) {
   const [series, setSeries] = useState<Series>('score');
   const meta = SERIES[series];

@@ -55,6 +55,8 @@ File naming: `<resource>.<layer>.ts`, e.g. `meal.model.ts`, `meal.service.ts`,
 - **Database naming:** snake_case tables and columns via Prisma `@map`; camelCase in TypeScript.
 - **Provenance:** clinical values carry `source` (`patient_entered` | `clinician_verified`);
   nutrient values carry `verified` | `estimated` | `missing` | `ai_text`.
+- **Tests:** in `backend/tests` and `frontend/tests`, mirroring the `src` folders.
+- **Comments:** only where the code is hard to read on its own; one short line, no narration.
 - **Immutability:** meal analyses are versioned, never edited; targets are ended, never edited.
 
 ## Section 1 decisions
@@ -114,7 +116,7 @@ Log a meal form ──► POST /meals { rawText, condiments, drinks, cookingMeth
 
 | Decision | Why |
 | --- | --- |
-| The engine (`services/nutrition/`) is pure: meal input + catalog in, numbers out; no database, no AI | Results can be reproduced by hand; 10 sample meals are checked against hand-worked totals in `engine.test.ts` |
+| The engine (`services/nutrition/`) is pure: meal input + catalog in, numbers out; no database, no AI | Results can be reproduced by hand; 10 sample meals are checked against hand-worked totals in `tests/services/nutrition/engine.test.ts` |
 | Every nutrient number is dataset arithmetic; the AI never produces one | Brief requirement; the AI (Section 7) only reads these numbers |
 | Each value and total carries a source: `verified`, `estimated` or `missing`; totals say whether they are `complete` | A total with an uncounted food is shown as "at least", never as the full amount |
 | Unknown foods are reported, not guessed; a match needs a score of 0.5 or more | A wrong match is worse than an honest gap |

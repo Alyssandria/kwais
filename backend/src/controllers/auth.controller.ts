@@ -5,7 +5,6 @@ import type { ForgotPasswordBody, LoginBody, RegisterBody, ResetPasswordBody } f
 import { requestMeta } from '../services/audit.service.js';
 import { AuthService, type Session } from '../services/auth.service.js';
 
-/** The refresh token lives only in this httpOnly cookie, scoped to the auth routes. */
 export const REFRESH_COOKIE = 'kwais_rt';
 
 const cookieBase: CookieOptions = {

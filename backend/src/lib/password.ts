@@ -1,12 +1,6 @@
 import { randomBytes, scrypt as scryptCb, timingSafeEqual, type ScryptOptions } from 'node:crypto';
 
-/**
- * Password hashing with Node's built-in scrypt (memory-hard, recommended by OWASP).
- * Stored format: scrypt$N$r$p$<salt base64>$<hash base64>, so parameters can be raised later
- * without breaking existing hashes.
- */
-
-const N = 2 ** 15; // CPU/memory cost
+const N = 2 ** 15;
 const R = 8;
 const P = 1;
 const KEY_LEN = 64;
@@ -38,7 +32,6 @@ export async function verifyPassword(password: string, stored: string): Promise<
   return key.length === expected.length && timingSafeEqual(key, expected);
 }
 
-/** A hash to compare against when the email is unknown, so login timing doesn't reveal which emails exist. */
 let dummyHash: Promise<string> | undefined;
 export function getDummyHash(): Promise<string> {
   dummyHash ??= hashPassword('not-a-real-password-' + randomBytes(8).toString('hex'));

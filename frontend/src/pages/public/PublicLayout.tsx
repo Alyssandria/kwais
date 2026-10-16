@@ -11,7 +11,6 @@ const sections = [
   { href: '/#faq', label: 'FAQ' },
 ];
 
-/** Header + footer for the landing page and the legal pages. */
 export function PublicLayout() {
   const [open, setOpen] = useState(false);
   const { status, user } = useAuth();
@@ -156,7 +155,6 @@ function FooterCol({ title, links }: { title: string; links: { to: string; label
   );
 }
 
-/** Link styled as a button (keeps <a> semantics for navigation). */
 export function btn(variant: 'accent' | 'secondary' | 'ghost' | 'onDark', full = false) {
   return cn(
     'inline-flex h-11 items-center justify-center rounded-card px-5 font-bold no-underline transition-colors',

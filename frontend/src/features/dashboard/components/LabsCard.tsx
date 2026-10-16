@@ -7,7 +7,6 @@ import type { LabSummary } from '../types';
 const shortDate = (iso: string) =>
   new Date(`${iso}T12:00:00`).toLocaleDateString('en-PH', { day: 'numeric', month: 'short', year: 'numeric' });
 
-/** Tiny trend line of past entries. Decorative extra: the latest value is always written out. */
 function Sparkline({ values, label }: { values: number[]; label: string }) {
   if (values.length < 2) return null;
   const min = Math.min(...values);

@@ -12,7 +12,6 @@ export interface AuditEntry {
   userAgent?: string | null;
 }
 
-/** Append-only. There is deliberately no update or delete here. */
 export const AuditModel = {
   create(entry: AuditEntry) {
     return prisma.auditLog.create({ data: entry, select: { id: true } });

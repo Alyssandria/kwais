@@ -13,7 +13,6 @@ import { env } from '../config/env.js';
 
 export const authRoutes = Router();
 
-/** Brute-force guard for credential endpoints: 10 attempts per 15 minutes per IP. */
 const credentialLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   limit: 10,
