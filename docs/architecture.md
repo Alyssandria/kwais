@@ -96,3 +96,33 @@ File naming: `<resource>.<layer>.ts`, e.g. `meal.model.ts`, `meal.service.ts`,
 | CKD stage is a fixed list including "not sure"; nothing derives it | Brief requirement: never infer or diagnose CKD stage |
 | Targets have fixed units per nutrient (mg, g for protein) and sanity limits; setting one ends the previous target | Numbers cannot land in the wrong unit, and past analyses keep the target that applied at the time |
 | AI processing and reminders are separate, append-only consent records | AI use needs its own explicit consent under the Data Privacy Act; the history of choices is kept |
+
+## Section 6 decisions: meal logging and the nutrition engine
+
+```
+Log a meal form ──► POST /meals { rawText, condiments, drinks, cookingMethods, status, analyse }
+                        │
+                        ├─ status draft  → stored, nothing else
+                        ├─ status saved, analyse off → stored, counts toward history
+                        └─ status saved, analyse on  → nutrition engine:
+                              parse text (rules@1; Gemini from Section 7)
+                              → match each phrase to food_items (name + local names)
+                              → grams from the food's own household portions
+                              → grams × value per 100 g ÷ 100, per item and in total
+                              → meal_analyses version n (immutable) + meal_items
+```
+
+| Decision | Why |
+| --- | --- |
+| The engine (`services/nutrition/`) is pure: meal input + catalog in, numbers out; no database, no AI | Results can be reproduced by hand; 10 sample meals are checked against hand-worked totals in `engine.test.ts` |
+| Every nutrient number is dataset arithmetic; the AI never produces one | Brief requirement; the AI (Section 7) only reads these numbers |
+| Each value and total carries a source: `verified`, `estimated` or `missing`; totals say whether they are `complete` | A total with an uncounted food is shown as "at least", never as the full amount |
+| Unknown foods are reported, not guessed; a match needs a score of 0.5 or more | A wrong match is worse than an honest gap |
+| Assumed amounts (no amount typed, "konti", "marami", drinks by the glass, a unit the food has no weight for) are flagged | The patient can see which numbers rest on assumptions and add amounts |
+| Condiments and drinks are fixed keys, matched to foods by name (not by record id) | Replacing the sample tables with real PhilFCT records keeps them working |
+| Recipes store ingredients only; dish values are always worked out from them | Fixing one ingredient fixes every dish that uses it |
+| Sample food data is stored as `verified = false`, `sourceRef = sample:*`; a CSV importer loads real records | No approximate number is ever labelled Verified |
+| Saved meals are not edited in place; drafts are. Analyses are versioned, never overwritten | Each analysis keeps describing exactly what was logged |
+| Analysing is limited to 30 per hour per patient | Protects the Gemini quota from Section 7 |
+| `inputs_snapshot` records the parser version and exactly what was sent to any AI (`null` for now) | Audit trail for the thesis: which inputs produced which output |
+

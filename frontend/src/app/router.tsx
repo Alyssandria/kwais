@@ -14,6 +14,8 @@ import { DashboardPage } from '@/features/dashboard/DashboardPage';
 import { OnboardingPage } from '@/features/profile/OnboardingPage';
 import { ProfilePage } from '@/features/profile/ProfilePage';
 import { LabsPage } from '@/features/labs/LabsPage';
+import { LogMealPage } from '@/features/meals/LogMealPage';
+import { MealPage } from '@/features/meals/MealPage';
 import { ComponentGallery } from '@/pages/dev/ComponentGallery';
 import { StatusPage } from '@/pages/dev/StatusPage';
 
@@ -46,8 +48,8 @@ const patientRoutes: RouteObject = {
     { index: true, element: <Navigate to="dashboard" replace /> },
     { path: 'dashboard', element: <DashboardPage /> },
     { path: 'meals', element: <ComingSoonPage title="Meal history" section={8} /> },
-    { path: 'meals/new', element: <ComingSoonPage title="Log a meal" section={6} /> },
-    { path: 'meals/:id', element: <ComingSoonPage title="Meal analysis" section={7} /> },
+    { path: 'meals/new', element: <LogMealPage /> },
+    { path: 'meals/:id', element: <MealPage /> },
     { path: 'analytics', element: <ComingSoonPage title="Analytics" section={8} /> },
     { path: 'labs', element: <LabsPage /> },
     { path: 'notifications', element: <ComingSoonPage title="Notifications" section={8} /> },

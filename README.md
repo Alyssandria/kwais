@@ -42,6 +42,7 @@ cd backend
 cp .env.example .env            # PowerShell: Copy-Item .env.example .env
 pnpm install
 pnpm db:migrate --name init     # creates prisma/migrations/ — commit that folder
+pnpm db:seed                    # sample food tables (approximate values, see below)
 pnpm dev                        # http://localhost:4000/api/v1/health
 
 # 3. Frontend (second terminal)
@@ -70,7 +71,9 @@ terminal running the backend (`pnpm dev`).
 | backend | `pnpm typecheck` | TypeScript check |
 | backend | `pnpm db:migrate --name <change>` | Create and apply a migration after editing `schema.prisma` |
 | backend | `pnpm db:studio` | Browse the database in Prisma Studio |
-| backend | `pnpm db:reset` | Drop and recreate the database (development only) |
+| backend | `pnpm db:reset` | Drop and recreate the database, then re-seed (development only) |
+| backend | `pnpm db:seed` | Load or refresh the sample food tables |
+| backend | `pnpm db:import-foods <file.csv>` | Import real PhilFCT / USDA records (checked first; nothing written on errors) |
 | frontend | `pnpm dev` | Web app with hot reload |
 | frontend | `pnpm build` | Type-check and production build |
 | frontend | `pnpm test` | Component tests (Vitest + Testing Library) |
@@ -101,7 +104,7 @@ The work is split into sections so each can be reviewed and committed on its own
 | 3 | Landing page and authentication | ✅ |
 | 4 | Patient dashboard (sample data) | ✅ |
 | 5 | Onboarding, profile, targets, lab results | ✅ |
-| 6 | Meal logging and nutrition engine | |
+| 6 | Meal logging and nutrition engine | ✅ |
 | 7 | Gemini layer (parsing + structured analysis) | |
 | 8 | Live dashboard, history, analytics, reminders | |
 | 9 | Hardening: privacy requests, audit, tests, accessibility | |
@@ -111,3 +114,6 @@ The work is split into sections so each can be reviewed and committed on its own
 - Health data is sensitive personal information under the Philippine Data Privacy Act of 2012
   (RA 10173). Encryption of lab values protects them at rest; it does not exempt them from the law.
 - All sample patients, meals and lab values in this repository are fictional.
+- **The seeded food values are approximate sample data**, not PhilFCT or USDA records. They are
+  stored as unverified, so every result that uses them is labelled *Estimated*. Replace them with
+  real records before the study: see `backend/prisma/seed-data/README.md`.
