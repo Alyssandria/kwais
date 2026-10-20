@@ -170,14 +170,14 @@ describe('MealPage', () => {
     expect(card).toHaveTextContent(/Your name and contact details are never sent/);
     await userEvent.click(within(card).getByRole('button', { name: 'Allow AI and analyse' }));
     expect(changeConsent).toHaveBeenCalledWith({ consentType: 'ai_processing', granted: true });
-    expect(analyse).toHaveBeenCalledWith('m1');
+    expect(analyse).toHaveBeenCalledWith(expect.objectContaining({ id: 'm1' }));
   });
 
   it('offers a retry when the AI failed, keeping the numbers', async () => {
     query.data = meal({ analysis: analysis({ score: null, ai: { status: 'unavailable', reason: 'ai_error', output: null, model: 'g', promptVersion: null } }) });
     renderPage();
     await userEvent.click(within(screen.getByRole('region', { name: /couldn’t run this time/ })).getByRole('button', { name: 'Try again' }));
-    expect(analyse).toHaveBeenCalledWith('m1');
+    expect(analyse).toHaveBeenCalledWith(expect.objectContaining({ id: 'm1' }));
     expect(screen.getByRole('article', { name: 'Sodium' })).toHaveTextContent('at least 403 mg');
   });
 
@@ -224,7 +224,7 @@ describe('MealPage', () => {
     renderPage();
     expect(screen.getByText('Saved · not analysed')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Analyse now' }));
-    expect(analyse).toHaveBeenCalledWith('m1');
+    expect(analyse).toHaveBeenCalledWith(expect.objectContaining({ id: 'm1' }));
     expect(within(screen.getByRole('dialog', { name: 'Analysing your lunch' })).getByText('Reading what you ate')).toBeInTheDocument();
 
     finish(meal());

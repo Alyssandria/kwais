@@ -37,7 +37,23 @@ export const MealController = {
     res.json({ data: await MealService.update(patientIdOf(req), mealId(req), req.body as MealUpdate, userIdOf(req), requestMeta(req)) });
   },
   async analyse(req: Request, res: Response) {
-    res.json({ data: await MealService.analyse(patientIdOf(req), mealId(req), userIdOf(req), requestMeta(req)) });
+    const args = [patientIdOf(req), mealId(req), userIdOf(req), requestMeta(req)] as const;
+    if (req.accepts(['json', 'application/x-ndjson']) !== 'application/x-ndjson') {
+      res.json({ data: await MealService.analyse(...args) });
+      return;
+    }
+    await MealService.get(args[0], args[1]);
+    res.status(200).set({ 'Content-Type': 'application/x-ndjson', 'Cache-Control': 'no-cache', 'X-Accel-Buffering': 'no' });
+    res.flushHeaders();
+    const send = (line: object) => res.write(`${JSON.stringify(line)}\n`);
+    try {
+      const meal = await MealService.analyse(...args, (step) => send({ step }));
+      send({ done: true, data: meal });
+    } catch (err) {
+      send({ error: err instanceof HttpError ? { code: err.code, message: err.message } : { code: 'internal', message: 'Something went wrong. Please try again.' } });
+      if (!(err instanceof HttpError)) console.error(err);
+    }
+    res.end();
   },
   async remove(req: Request, res: Response) {
     await MealService.remove(patientIdOf(req), mealId(req), userIdOf(req), requestMeta(req));

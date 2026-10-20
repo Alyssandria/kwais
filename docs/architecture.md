@@ -163,5 +163,6 @@ analyse meal ─► AI consent? ── no ──► rules parser → engine → 
 | Dashboard and analytics are built by pure functions (`buildDashboard`, `buildAnalytics`) from meal rows | Tested without a database; the same numbers feed both pages |
 | Analytics ranges are fixed at 7, 30 or 90 days | Bounded queries; enough for trends in the thesis |
 | Insights on the dashboard reuse each meal's stored AI observations, labelled "Sample text, not AI" when they came from the mock | No extra AI calls just to render the dashboard |
+| Analysis progress streams from `POST /meals/:id/analyse` as newline-delimited JSON (`{step}` lines, then `{done, data}` or `{error}`) when the request sends `Accept: application/x-ndjson` | The progress dialog shows the step the server is actually on, not a timer |
 | Reminders: a scheduler in the API process checks every 5 minutes and creates one in-app reminder per day, only with `reminders` consent, after the patient's chosen time, and only if nothing was logged that day | Respects consent; never nags twice; no email or SMS in v0 |
 

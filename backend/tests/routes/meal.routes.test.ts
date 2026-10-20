@@ -14,6 +14,7 @@ const { signAccessToken } = await import('../../src/lib/jwt.js');
 const { PatientProfileModel } = await import('../../src/models/patient-profile.model.js');
 const { MealService } = await import('../../src/services/meal.service.js');
 const { FoodService } = await import('../../src/services/food.service.js');
+const { HttpError } = await import('../../src/lib/http-error.js');
 
 const app = createApp();
 const auth = (role: 'patient' | 'doctor' = 'patient') =>
@@ -111,6 +112,37 @@ describe('other meal routes', () => {
     expect((await request(app).get('/api/v1/meals/recent').set('Authorization', auth())).status).toBe(200);
     expect((await request(app).delete(`/api/v1/meals/${MEAL_ID}`).set('Authorization', auth())).status).toBe(204);
     expect(MealService.remove).toHaveBeenCalledWith('patient-1', MEAL_ID, 'user-1', expect.any(Object));
+  });
+
+  it('streams each analysis step as a line of JSON when asked', async () => {
+    vi.mocked(MealService.get).mockResolvedValue({ id: MEAL_ID } as never);
+    vi.mocked(MealService.analyse).mockImplementation(async (_p, _id, _u, _m, onStep) => {
+      onStep?.('reading');
+      onStep?.('calculating');
+      return { id: MEAL_ID } as never;
+    });
+    const res = await request(app).post(`/api/v1/meals/${MEAL_ID}/analyse`).set('Authorization', auth()).set('Accept', 'application/x-ndjson');
+    expect(res.status).toBe(200);
+    expect(res.headers['content-type']).toMatch(/application\/x-ndjson/);
+    expect(res.text.trim().split('\n').map((l) => JSON.parse(l))).toEqual([
+      { step: 'reading' },
+      { step: 'calculating' },
+      { done: true, data: { id: MEAL_ID } },
+    ]);
+  });
+
+  it('ends the stream with the error when analysis fails', async () => {
+    vi.mocked(MealService.get).mockResolvedValue({ id: MEAL_ID } as never);
+    vi.mocked(MealService.analyse).mockRejectedValue(HttpError.conflict('Save the meal before analysing it'));
+    const res = await request(app).post(`/api/v1/meals/${MEAL_ID}/analyse`).set('Authorization', auth()).set('Accept', 'application/x-ndjson');
+    expect(res.text.trim().split('\n').map((l) => JSON.parse(l))).toEqual([{ error: { code: 'conflict', message: 'Save the meal before analysing it' } }]);
+  });
+
+  it('answers 404 before streaming when the meal is not theirs', async () => {
+    vi.mocked(MealService.get).mockRejectedValue(HttpError.notFound('Meal not found'));
+    const res = await request(app).post(`/api/v1/meals/${MEAL_ID}/analyse`).set('Authorization', auth()).set('Accept', 'application/x-ndjson');
+    expect(res.status).toBe(404);
+    expect(MealService.analyse).not.toHaveBeenCalled();
   });
 
   it('GET /foods searches for signed-in users', async () => {

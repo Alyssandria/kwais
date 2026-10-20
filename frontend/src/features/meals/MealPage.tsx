@@ -7,7 +7,7 @@ import { useChangeConsent } from '@/features/profile/api';
 import { errorMessage } from '@/lib/api';
 import { AnalysisFooter, Contribution, DataQuality, Insights, ItemsTable, NutrientTotals, ScoreCard } from './analysis';
 import { useAnalyseMeal, useDeleteMeal, useMeal, type Meal } from './api';
-import { ProgressDialog, type ProgressKind } from './ProgressDialog';
+import { ProgressDialog, type ProgressKind, type ProgressStep } from './ProgressDialog';
 import { amountLabel, condimentLabel, cookingLabel, drinkLabel, mealLabel, whenText } from './options';
 
 function StatusBadge({ status }: { status: Meal['status'] }) {
@@ -52,6 +52,7 @@ export function MealPage() {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const [progress, setProgress] = useState<ProgressKind | null>(null);
+  const [step, setStep] = useState<ProgressStep | null>(null);
 
   const back = (
     <Link to="/patient/dashboard" className="inline-flex min-h-11 items-center gap-2 font-semibold no-underline">
@@ -94,6 +95,7 @@ export function MealPage() {
   const withProgress = async (work: () => Promise<unknown>) => {
     setActionError(null);
     setProgress('reanalyse');
+    setStep('reading');
     try {
       await work();
       toast.success('Analysis ready');
@@ -104,12 +106,12 @@ export function MealPage() {
     }
   };
 
-  const runAnalysis = () => withProgress(() => analyseMeal.mutateAsync(m.id));
+  const runAnalysis = () => withProgress(() => analyseMeal.mutateAsync({ id: m.id, onStep: setStep }));
 
   const allowAiAndAnalyse = () =>
     withProgress(async () => {
       await changeConsent.mutateAsync({ consentType: 'ai_processing', granted: true });
-      await analyseMeal.mutateAsync(m.id);
+      await analyseMeal.mutateAsync({ id: m.id, onStep: setStep });
     });
 
   const remove = async () => {
@@ -182,7 +184,7 @@ export function MealPage() {
         </>
       )}
 
-      <ProgressDialog kind={progress} title={`Analysing your ${mealLabel(m.category).toLowerCase()}`} />
+      <ProgressDialog kind={progress} step={step} title={`Analysing your ${mealLabel(m.category).toLowerCase()}`} />
 
       <ConfirmDialog
         open={confirmDelete}

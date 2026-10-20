@@ -6,6 +6,7 @@ import type { Meal, RecentMeal } from '@/features/meals/api';
 
 const create = vi.fn();
 const update = vi.fn();
+const analyse = vi.fn();
 let recent: RecentMeal[] = [];
 let latestDraft: Meal | null = null;
 
@@ -15,6 +16,7 @@ vi.mock('@/features/meals/api', () => ({
   useMeal: () => ({ data: undefined }),
   useCreateMeal: () => ({ mutateAsync: create, isPending: false }),
   useUpdateMeal: () => ({ mutateAsync: update, isPending: false }),
+  useAnalyseMeal: () => ({ mutateAsync: analyse, isPending: false }),
   useDeleteMeal: () => ({ mutateAsync: vi.fn(), isPending: false }),
 }));
 
@@ -85,32 +87,51 @@ describe('LogMealPage', () => {
     expect(create).not.toHaveBeenCalled();
   });
 
-  it('saves and opens the analysis', async () => {
-    create.mockResolvedValue(saved({ id: 'm9', status: 'analysed' }));
+  it('saves the meal, then analyses it and opens the result', async () => {
+    create.mockResolvedValue(saved({ id: 'm9' }));
+    analyse.mockResolvedValue(saved({ id: 'm9', status: 'analysed' }));
     renderPage();
     await userEvent.type(foodBox(), '2 pandesal');
     await userEvent.click(within(screen.getByRole('group', { name: 'Drinks' })).getByRole('button', { name: /Kape/ }));
     await userEvent.click(screen.getByRole('button', { name: /save and analyse/i }));
 
     expect(create).toHaveBeenCalledWith(
-      expect.objectContaining({ rawText: '2 pandesal', drinks: ['kape'], condiments: [], status: 'saved', analyse: true, notes: null }),
+      expect.objectContaining({ rawText: '2 pandesal', drinks: ['kape'], condiments: [], status: 'saved', analyse: false, notes: null }),
     );
+    expect(analyse).toHaveBeenCalledWith({ id: 'm9', onStep: expect.any(Function) });
     expect(await screen.findByText('Meal page')).toBeInTheDocument();
   });
 
-  it('shows each step while the meal is analysed, then opens it', async () => {
+  it('shows each step the server reports while analysing', async () => {
     let finish!: (m: Meal) => void;
-    create.mockReturnValue(new Promise<Meal>((r) => (finish = r)));
+    create.mockResolvedValue(saved({ id: 'm9' }));
+    analyse.mockImplementation(({ onStep }: { onStep: (s: string) => void }) => {
+      onStep('reading');
+      onStep('calculating');
+      return new Promise<Meal>((r) => (finish = r));
+    });
     renderPage();
     await userEvent.type(foodBox(), '1 tasa kanin');
     await userEvent.click(screen.getByRole('button', { name: /save and analyse/i }));
 
-    const dialog = screen.getByRole('dialog', { name: /^Analysing your/ });
-    expect(within(dialog).getByText('Saving your meal')).toBeInTheDocument();
-    expect(within(dialog).getByText('Matching each food to the food tables')).toBeInTheDocument();
+    const dialog = await screen.findByRole('dialog', { name: /^Analysing your/ });
+    const items = within(dialog).getAllByRole('listitem');
+    expect(items[0]).toHaveTextContent('Saving your meal (done)');
+    expect(items[1]).toHaveTextContent('Reading what you ate (done)');
+    expect(items[2]).toHaveTextContent(/^Matching foods and working out nutrients$/);
 
     finish(saved({ id: 'm9', status: 'analysed' }));
     expect(await screen.findByText('Meal page')).toBeInTheDocument();
+  });
+
+  it('keeps the saved meal when only the analysis fails', async () => {
+    create.mockResolvedValue(saved({ id: 'm9' }));
+    analyse.mockRejectedValue(new Error('x'));
+    renderPage();
+    await userEvent.type(foodBox(), '1 tasa kanin');
+    await userEvent.click(screen.getByRole('button', { name: /save and analyse/i }));
+    expect(await screen.findByText('Meal page')).toBeInTheDocument();
+    expect(screen.getByText('Saved, but not analysed')).toBeInTheDocument();
   });
 
   it('closes the progress dialog and explains when saving fails', async () => {

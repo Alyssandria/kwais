@@ -10,6 +10,7 @@ import {
   useLatestDraft,
   useMeal,
   useRecentMeals,
+  useAnalyseMeal,
   useUpdateMeal,
   type Meal,
   type MealCategory,
@@ -18,7 +19,7 @@ import {
   type RecentMeal,
 } from './api';
 import { ChipGroup, ChipSection, WhenPicker } from './components';
-import { ProgressDialog, type ProgressKind } from './ProgressDialog';
+import { ProgressDialog, type ProgressKind, type ProgressStep } from './ProgressDialog';
 import { AMOUNTS, CONDIMENTS, COOKING, DRINKS, MEAL_TYPES, condimentLabel, defaultCategory, summaryOf, whenText } from './options';
 
 const MEAL_ICONS = { breakfast: Sunrise, lunch: Sun, dinner: Moon, snack: Apple } as const;
@@ -51,6 +52,7 @@ export function LogMealPage() {
   const [formError, setFormError] = useState<string | null>(null);
   const [announce, setAnnounce] = useState('');
   const [progress, setProgress] = useState<ProgressKind | null>(null);
+  const [step, setStep] = useState<ProgressStep | null>(null);
 
   const recent = useRecentMeals();
   const latestDraft = useLatestDraft();
@@ -58,6 +60,7 @@ export function LogMealPage() {
   const createMeal = useCreateMeal();
   const updateMeal = useUpdateMeal();
   const deleteMeal = useDeleteMeal();
+  const analyseMeal = useAnalyseMeal();
   const busy = createMeal.isPending || updateMeal.isPending;
 
   const fillFrom = (m: Pick<Meal, 'category' | 'rawText' | 'condiments' | 'drinks' | 'cookingMethods'> & { notes?: string | null }) => {
@@ -95,7 +98,7 @@ export function LogMealPage() {
     cookingMethods,
     notes: notes.trim() || null,
     status,
-    analyse: status === 'saved' && analyse,
+    analyse: false,
   });
 
   const persist = async (status: 'draft' | 'saved'): Promise<Meal> => {
@@ -133,17 +136,26 @@ export function LogMealPage() {
       return;
     }
     setProgress(analyse ? 'analyse' : 'save');
+    setStep('saving');
+    let saved: Meal;
     try {
-      const m = await persist('saved');
+      saved = await persist('saved');
+    } catch (err) {
+      setProgress(null);
+      showServerError(err);
+      return;
+    }
+    try {
       if (analyse) {
-        navigate(`/patient/meals/${m.id}`);
+        await analyseMeal.mutateAsync({ id: saved.id, onStep: setStep });
+        navigate(`/patient/meals/${saved.id}`);
       } else {
         toast.success('Meal saved', 'Added to your log without analysis. You can analyse it later.');
         navigate('/patient/dashboard');
       }
     } catch (err) {
-      setProgress(null);
-      showServerError(err);
+      toast.error('Saved, but not analysed', errorMessage(err));
+      navigate(`/patient/meals/${saved.id}`);
     }
   };
 
@@ -397,7 +409,7 @@ export function LogMealPage() {
         </div>
       </div>
 
-      <ProgressDialog kind={progress} title={progress === 'save' ? 'Saving your meal' : `Analysing your ${mealWord}`} />
+      <ProgressDialog kind={progress} step={step} title={progress === 'save' ? 'Saving your meal' : `Analysing your ${mealWord}`} />
 
       <ConfirmDialog
         open={confirmDiscard}

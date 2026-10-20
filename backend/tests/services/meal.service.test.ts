@@ -173,6 +173,20 @@ describe('MealService.create', () => {
   });
 });
 
+describe('MealService.analyse progress', () => {
+  it('reports each step, skipping scoring without AI consent', async () => {
+    vi.mocked(MealModel.findOwned).mockResolvedValue(mealRow());
+    const steps: string[] = [];
+    await MealService.analyse('patient-1', 'meal-1', 'user-1', meta, (s) => steps.push(s));
+    expect(steps).toEqual(['reading', 'calculating', 'storing']);
+
+    vi.mocked(ConsentService.hasAiConsent).mockResolvedValue(true);
+    steps.length = 0;
+    await MealService.analyse('patient-1', 'meal-1', 'user-1', meta, (s) => steps.push(s));
+    expect(steps).toEqual(['reading', 'calculating', 'scoring', 'storing']);
+  });
+});
+
 describe('MealService.update', () => {
   it('refuses to edit a saved meal', async () => {
     vi.mocked(MealModel.findOwned).mockResolvedValue(mealRow({ status: 'analysed' }));

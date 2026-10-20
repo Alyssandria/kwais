@@ -1,5 +1,5 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { api } from '@/lib/api';
+import { api, ApiError, streamLines } from '@/lib/api';
 import type { NutrientKey } from '@/lib/nutrition';
 
 export type MealCategory = 'breakfast' | 'lunch' | 'dinner' | 'snack';
@@ -177,10 +177,25 @@ export function useUpdateMeal() {
   });
 }
 
+export type AnalysisStep = 'reading' | 'calculating' | 'scoring' | 'storing';
+
+type AnalysisLine = { step: AnalysisStep } | { done: true; data: Meal } | { error: { code: string; message: string } };
+
+export async function analyseWithProgress(id: string, onStep: (step: AnalysisStep) => void): Promise<Meal> {
+  let meal: Meal | null = null;
+  await streamLines<AnalysisLine>(`/meals/${id}/analyse`, (line) => {
+    if ('step' in line) onStep(line.step);
+    else if ('error' in line) throw new ApiError(line.error.message, 500, line.error.code);
+    else meal = line.data;
+  });
+  if (!meal) throw new ApiError('The analysis didn’t finish. Please try again.', 500);
+  return meal;
+}
+
 export function useAnalyseMeal() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => unwrap<Meal>(api.post(`/meals/${id}/analyse`)),
+    mutationFn: ({ id, onStep }: { id: string; onStep?: (step: AnalysisStep) => void }) => analyseWithProgress(id, onStep ?? (() => undefined)),
     onSuccess: (m) => {
       qc.setQueryData(mealKeys.one(m.id), m);
       refreshSummaries(qc);

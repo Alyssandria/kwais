@@ -87,7 +87,58 @@ api.interceptors.response.use(
   },
 );
 
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    public readonly status: number,
+    public readonly code?: string,
+  ) {
+    super(message);
+    this.name = 'ApiError';
+  }
+}
+
+export async function streamLines<T>(path: string, onLine: (line: T) => void): Promise<void> {
+  const send = (token: string | null) =>
+    fetch(`${api.defaults.baseURL}${path}`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { Accept: 'application/x-ndjson', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+    });
+
+  let res = await send(accessToken);
+  if (res.status === 401) {
+    const token = await refreshSession();
+    if (!token) {
+      onSessionLost?.();
+      throw new ApiError('Your session ended. Please sign in again.', 401);
+    }
+    res = await send(token);
+  }
+  if (!res.ok || !res.body) {
+    const body = (await res.json().catch(() => undefined)) as ApiErrorBody | undefined;
+    throw new ApiError(body?.error?.message ?? 'Something went wrong. Please try again.', res.status, body?.error?.code);
+  }
+
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    let nl: number;
+    while ((nl = buffer.indexOf('\n')) >= 0) {
+      const line = buffer.slice(0, nl).trim();
+      buffer = buffer.slice(nl + 1);
+      if (line) onLine(JSON.parse(line) as T);
+    }
+  }
+  if (buffer.trim()) onLine(JSON.parse(buffer) as T);
+}
+
 export function errorMessage(err: unknown): string {
+  if (err instanceof ApiError) return err.message;
   if (err instanceof AxiosError) {
     const body = err.response?.data as ApiErrorBody | undefined;
     if (body?.error?.message) return body.error.message;

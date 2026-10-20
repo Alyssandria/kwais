@@ -138,7 +138,9 @@ async function dayContext(meal: MealRecord, patientId: string, timeZone: string)
   return { date: localDate(meal.eatenAt, timeZone), earlierMeals: earlier.length, totalsBeforeMeal: before };
 }
 
-async function analyse(meal: MealRecord, patientId: string, userId: string, meta: RequestMeta): Promise<void> {
+export type AnalysisStep = 'reading' | 'calculating' | 'scoring' | 'storing';
+
+async function analyse(meal: MealRecord, patientId: string, userId: string, meta: RequestMeta, onStep?: (step: AnalysisStep) => void): Promise<void> {
   const [aiAllowed, profile, targets, labs, catalog] = await Promise.all([
     ConsentService.hasAiConsent(userId),
     ProfileService.get(patientId),
@@ -153,7 +155,9 @@ async function analyse(meal: MealRecord, patientId: string, userId: string, meta
     cookingMethods: meal.cookingMethods,
   };
 
+  onStep?.('reading');
   const parsed = await AiService.parse(meal.rawText, aiAllowed);
+  onStep?.('calculating');
   const result = estimateMeal(mealInput, catalog, parsed.items);
   const day = await dayContext(meal, patientId, profile.timezone);
   const input = buildAnalysisInput({
@@ -164,6 +168,7 @@ async function analyse(meal: MealRecord, patientId: string, userId: string, meta
     targets,
     labs,
   });
+  if (aiAllowed) onStep?.('scoring');
   const ai = await AiService.analyse(input, aiAllowed);
   if (parsed.sentToAi || ai.sentToAi) {
     await AuditService.record('read', 'ai_processing', meta, { actorId: userId, actorRole: 'patient', resourceId: meal.id, patientId });
@@ -179,6 +184,7 @@ async function analyse(meal: MealRecord, patientId: string, userId: string, meta
     aiError: ai.error,
   };
 
+  onStep?.('storing');
   await MealModel.saveAnalysis(
     meal.id,
     patientId,
@@ -297,10 +303,10 @@ export const MealService = {
     return toMealView(meal);
   },
 
-  async analyse(patientId: string, id: string, actorId: string, meta: RequestMeta): Promise<MealView> {
+  async analyse(patientId: string, id: string, actorId: string, meta: RequestMeta, onStep?: (step: AnalysisStep) => void): Promise<MealView> {
     const meal = await ownedOrNotFound(patientId, id);
     if (meal.status === 'draft') throw HttpError.conflict('Save the meal before analysing it');
-    await analyse(meal, patientId, actorId, meta);
+    await analyse(meal, patientId, actorId, meta, onStep);
     await AuditService.record('create', 'meal_analysis', meta, { actorId, actorRole: 'patient', resourceId: id, patientId });
     return MealService.get(patientId, id);
   },

@@ -1,51 +1,43 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { Check, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/cn';
+import type { AnalysisStep } from './api';
 
 export type ProgressKind = 'analyse' | 'reanalyse' | 'save';
+export type ProgressStep = 'saving' | AnalysisStep;
 
-const STEPS: Record<ProgressKind, string[]> = {
-  analyse: [
-    'Saving your meal',
-    'Reading what you ate',
-    'Matching each food to the food tables',
-    'Working out sodium, potassium, phosphorus and protein',
-    'Checking against your targets and writing suggestions',
-  ],
-  reanalyse: [
-    'Reading what you ate',
-    'Matching each food to the food tables',
-    'Working out sodium, potassium, phosphorus and protein',
-    'Checking against your targets and writing suggestions',
-  ],
-  save: ['Saving your meal'],
+const LABELS: Record<ProgressStep, string> = {
+  saving: 'Saving your meal',
+  reading: 'Reading what you ate',
+  calculating: 'Matching foods and working out nutrients',
+  scoring: 'Checking against your targets and writing suggestions',
+  storing: 'Saving the analysis',
 };
 
-const STEP_MS = 1400;
+const STEPS: Record<ProgressKind, ProgressStep[]> = {
+  analyse: ['saving', 'reading', 'calculating', 'scoring', 'storing'],
+  reanalyse: ['reading', 'calculating', 'scoring', 'storing'],
+  save: ['saving'],
+};
+
 const SLOW_MS = 12_000;
 
-export function ProgressDialog({ kind, title }: { kind: ProgressKind | null; title: string }) {
+export function ProgressDialog({ kind, step, title }: { kind: ProgressKind | null; step: ProgressStep | null; title: string }) {
   const ref = useRef<HTMLDialogElement>(null);
   const titleId = useId();
-  const [step, setStep] = useState(0);
   const [slow, setSlow] = useState(false);
   const steps = kind ? STEPS[kind] : [];
+  const current = Math.max(0, step ? steps.indexOf(step) : 0);
 
   useEffect(() => {
     const dialog = ref.current;
     if (!dialog) return;
     if (kind && !dialog.open) dialog.showModal();
     if (!kind && dialog.open) dialog.close();
-    setStep(0);
     setSlow(false);
     if (!kind) return;
-    const last = STEPS[kind].length - 1;
-    const tick = window.setInterval(() => setStep((s) => Math.min(s + 1, last)), STEP_MS);
-    const slowTimer = window.setTimeout(() => setSlow(true), SLOW_MS);
-    return () => {
-      window.clearInterval(tick);
-      window.clearTimeout(slowTimer);
-    };
+    const timer = window.setTimeout(() => setSlow(true), SLOW_MS);
+    return () => window.clearTimeout(timer);
   }, [kind]);
 
   return (
@@ -73,10 +65,10 @@ export function ProgressDialog({ kind, title }: { kind: ProgressKind | null; tit
             </div>
           </div>
           <ol className="flex flex-col gap-3 px-6 py-5">
-            {steps.map((label, i) => {
-              const state = i < step ? 'done' : i === step ? 'current' : 'todo';
+            {steps.map((key, i) => {
+              const state = i < current ? 'done' : i === current ? 'current' : 'todo';
               return (
-                <li key={label} className={cn('flex items-center gap-3 text-[14px]', state === 'todo' && 'text-muted')}>
+                <li key={key} className={cn('flex items-center gap-3 text-[14px]', state === 'todo' && 'text-muted')}>
                   <span
                     aria-hidden
                     className={cn(
@@ -89,13 +81,16 @@ export function ProgressDialog({ kind, title }: { kind: ProgressKind | null; tit
                     {state === 'done' && <Check className="size-3.5" strokeWidth={3} />}
                     {state === 'current' && <Loader2 className="size-3.5 motion-safe:animate-spin" />}
                   </span>
-                  <span className={cn(state === 'current' && 'font-semibold')}>{label}</span>
+                  <span className={cn(state === 'current' && 'font-semibold')}>
+                    {LABELS[key]}
+                    {state === 'done' && <span className="sr-only"> (done)</span>}
+                  </span>
                 </li>
               );
             })}
           </ol>
           <p className="sr-only" aria-live="polite">
-            {steps[step]}
+            {steps[current] ? LABELS[steps[current]] : ''}
           </p>
           {slow && (
             <p role="status" className="mx-6 mb-5 rounded-field bg-canvas px-3.5 py-2.5 text-[13px] text-muted">
