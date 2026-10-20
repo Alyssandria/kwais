@@ -22,6 +22,14 @@ const EnvSchema = z.object({
   GEMINI_API_KEY: z.string().optional(),
   GEMINI_MODEL: z.string().default('gemini-2.5-flash'),
   AI_TIMEOUT_MS: z.coerce.number().int().positive().default(20000),
+  AI_MAX_REQUESTS_PER_MINUTE: z.coerce.number().int().positive().default(10),
+  AI_MAX_QUEUE_WAIT_MS: z.coerce.number().int().nonnegative().default(15000),
+
+  TRUST_PROXY: z.coerce.number().int().nonnegative().default(0),
+  AUTH_ATTEMPTS_PER_15_MIN: z.coerce.number().int().positive().default(10),
+  API_REQUESTS_PER_15_MIN: z.coerce.number().int().positive().default(600),
+  SOFT_DELETE_RETENTION_DAYS: z.coerce.number().int().positive().default(30),
+  AUDIT_RETENTION_DAYS: z.coerce.number().int().positive().default(365),
 }).superRefine((e, ctx) => {
   if (e.NODE_ENV !== 'production') return;
   for (const key of ['JWT_ACCESS_SECRET', 'JWT_REFRESH_SECRET'] as const) {

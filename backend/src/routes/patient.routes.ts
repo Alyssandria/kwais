@@ -1,5 +1,7 @@
 import { Router } from 'express';
 import { ConsentController, LabController, ProfileController, TargetController } from '../controllers/patient.controller.js';
+import { PrivacyController } from '../controllers/privacy.controller.js';
+import { credentialLimiter, exportLimiter } from '../middleware/rate-limits.js';
 import { requirePatient } from '../middleware/require-patient.js';
 import { validateBody } from '../middleware/validate.js';
 import {
@@ -9,6 +11,7 @@ import {
   ProfileUpdateSchema,
   TargetSchema,
 } from '../schemas/patient.schemas.js';
+import { DeleteAccountSchema } from '../schemas/privacy.schemas.js';
 
 export const patientMeRoutes = Router();
 patientMeRoutes.use(requirePatient);
@@ -20,6 +23,9 @@ patientMeRoutes.put('/targets/:nutrient', validateBody(TargetSchema), TargetCont
 patientMeRoutes.delete('/targets/:nutrient', TargetController.remove);
 patientMeRoutes.get('/consents', ConsentController.current);
 patientMeRoutes.post('/consents', validateBody(ConsentChangeSchema), ConsentController.change);
+patientMeRoutes.get('/export', exportLimiter, PrivacyController.exportData);
+patientMeRoutes.get('/activity', PrivacyController.activity);
+patientMeRoutes.post('/delete-account', credentialLimiter, validateBody(DeleteAccountSchema), PrivacyController.deleteAccount);
 
 export const labRoutes = Router();
 labRoutes.use(requirePatient);

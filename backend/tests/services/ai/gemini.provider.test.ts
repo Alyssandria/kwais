@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createGeminiProvider } from '../../../src/services/ai/gemini.provider.js';
+import { createGeminiProvider, retryDelayMs } from '../../../src/services/ai/gemini.provider.js';
+import { createRateLimiter } from '../../../src/services/ai/rate-limiter.js';
 import { AiError } from '../../../src/services/ai/types.js';
 import { sampleInput } from '../../fixtures/analysis-input.js';
 
@@ -54,7 +55,7 @@ describe('Gemini provider', () => {
   });
 
   it('reports HTTP errors and timeouts as AI errors', async () => {
-    await expect(make(vi.fn(() => Promise.resolve(reply({}, 503)))).parseMeal('kanin')).rejects.toMatchObject({ code: 'http' });
+    await expect(make(vi.fn(() => Promise.resolve(reply({}, 500)))).parseMeal('kanin')).rejects.toMatchObject({ code: 'http' });
 
     const hang: typeof fetch = (_url, init) =>
       new Promise((_resolve, reject) => init?.signal?.addEventListener('abort', () => reject(new Error('aborted'))));
@@ -79,5 +80,56 @@ describe('Gemini provider', () => {
     expect(out).toEqual(answer);
     const body = JSON.parse(fetchFn.mock.calls[0]![1].body);
     expect(JSON.parse(body.contents[0].parts[0].text)).toMatchObject({ allowedInputs: expect.arrayContaining(['target.sodium']) });
+  });
+
+  describe('when Gemini is busy', () => {
+    const busy = (headers: Record<string, string> = {}, body: unknown = {}) =>
+      new Response(JSON.stringify(body), { status: 429, headers: { 'content-type': 'application/json', ...headers } });
+
+    function paced() {
+      const waits: number[] = [];
+      let t = 0;
+      const limiter = createRateLimiter({
+        perMinute: 100,
+        maxWaitMs: 60_000,
+        now: () => t,
+        sleep: async (ms) => {
+          waits.push(ms);
+          t += ms;
+        },
+      });
+      return { waits, limiter };
+    }
+
+    it('waits for the time Gemini asks for, then retries', async () => {
+      const { waits, limiter } = paced();
+      const fetchFn = vi.fn().mockResolvedValueOnce(busy({ 'retry-after': '3' })).mockResolvedValueOnce(textReply(JSON.stringify(parsed)));
+      const p = createGeminiProvider({ apiKey: 'k', model: 'm', timeoutMs: 1000, fetchFn: fetchFn as typeof fetch, limiter });
+      await expect(p.parseMeal('kanin')).resolves.toHaveLength(2);
+      expect(waits).toEqual([3000]);
+    });
+
+    it('gives up with rate_limited when the requested wait is too long', async () => {
+      const { limiter } = paced();
+      const fetchFn = vi.fn(() => Promise.resolve(busy({ 'retry-after': '120' })));
+      const p = createGeminiProvider({ apiKey: 'k', model: 'm', timeoutMs: 1000, fetchFn: fetchFn as typeof fetch, limiter, maxRetryWaitMs: 20_000 });
+      await expect(p.parseMeal('kanin')).rejects.toMatchObject({ code: 'rate_limited' });
+      expect(fetchFn).toHaveBeenCalledOnce();
+    });
+
+    it('stops after two busy retries', async () => {
+      const { waits, limiter } = paced();
+      const fetchFn = vi.fn(() => Promise.resolve(busy()));
+      const p = createGeminiProvider({ apiKey: 'k', model: 'm', timeoutMs: 1000, fetchFn: fetchFn as typeof fetch, limiter });
+      await expect(p.parseMeal('kanin')).rejects.toMatchObject({ code: 'rate_limited' });
+      expect(fetchFn).toHaveBeenCalledTimes(3);
+      expect(waits).toEqual([2000, 4000]);
+    });
+
+    it('reads the retry delay from the error body', async () => {
+      const body = { error: { details: [{ '@type': 'type.googleapis.com/google.rpc.RetryInfo', retryDelay: '17s' }] } };
+      await expect(retryDelayMs(busy({}, body))).resolves.toBe(17_000);
+      await expect(retryDelayMs(busy())).resolves.toBeNull();
+    });
   });
 });

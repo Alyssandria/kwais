@@ -59,7 +59,7 @@ function Hero() {
               See how it works
             </a>
           </div>
-          <p className="text-[13px] text-[#a7d3cf]">
+          <p className="text-[13px] text-[#d7eeeb]">
             Decision support only. K-WAIS does not diagnose or replace your doctor or dietitian.
           </p>
         </div>
@@ -91,7 +91,7 @@ function HeroPreview() {
           <MiniNutrient name="Protein" value="30 g" pct={60} kind="within" status="60% of your target" />
         </div>
       </div>
-      <figcaption className="mt-3 text-center text-[12px] text-[#a7d3cf]">Illustration with fictional sample data</figcaption>
+      <figcaption className="mt-3 text-center text-[12px] text-[#d7eeeb]">Illustration with fictional sample data</figcaption>
     </figure>
   );
 }
@@ -124,7 +124,7 @@ function MiniNutrient({
 function SectionHead({ id, eyebrow, title, intro }: { id?: string; eyebrow: string; title: string; intro?: string }) {
   return (
     <div className="mx-auto mb-10 max-w-2xl text-center">
-      <p className="text-[13px] font-bold tracking-wide text-primary uppercase">{eyebrow}</p>
+      <p className="text-[13px] font-bold tracking-wide text-primary-dark uppercase">{eyebrow}</p>
       <h2 id={id} className="mt-2 text-3xl font-extrabold tracking-tight">
         {title}
       </h2>
@@ -272,7 +272,7 @@ function Preview() {
         <div className="grid gap-6 lg:grid-cols-2">
           <figure className="rounded-panel bg-canvas p-5">
             <div className="rounded-card bg-primary-dark p-5 text-white">
-              <p className="text-[12.5px] text-primary-line">Log a meal</p>
+              <p className="text-[12.5px] text-[#d7eeeb]">Log a meal</p>
               <p className="mb-3 text-xl font-extrabold">What did you have for lunch?</p>
               <p className="rounded-field bg-surface p-3 text-ink">1 tasa kanin, isang hita ng inihaw na manok, kalahating tasa pinakbet</p>
             </div>

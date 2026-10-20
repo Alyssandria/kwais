@@ -78,6 +78,9 @@ terminal running the backend (`pnpm dev`).
 | frontend | `pnpm dev` | Web app with hot reload |
 | frontend | `pnpm build` | Type-check and production build |
 | frontend | `pnpm test` | Component tests (Vitest + Testing Library) |
+| frontend | `pnpm exec playwright install chromium` | One-time browser download for end-to-end tests |
+| frontend | `pnpm test:e2e` | Public pages and accessibility scans (starts the dev server if needed) |
+| frontend | `pnpm test:e2e:full` | Also the signed-in flows; needs the API running with `AI_PROVIDER=mock`, `AUTH_ATTEMPTS_PER_15_MIN=200` and `API_REQUESTS_PER_15_MIN=5000` |
 
 ## Environment variables
 
@@ -90,6 +93,8 @@ Secrets live only in `backend/.env`; the browser only ever sees `VITE_*` values.
 | `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET` | Section 3 | Any long random strings |
 | `LAB_ENCRYPTION_KEY` | Section 5 (required) | 32 random bytes, base64. Back it up: without it, saved lab values cannot be read |
 | `AI_PROVIDER`, `GEMINI_API_KEY`, `GEMINI_MODEL`, `AI_TIMEOUT_MS` | Section 7 | `AI_PROVIDER=mock` works offline with rule-based sample text, labelled as not AI |
+| `AI_MAX_REQUESTS_PER_MINUTE`, `AI_MAX_QUEUE_WAIT_MS` | Section 9 | 10 a minute, 15 s queue: fits the Gemini free tier |
+| `TRUST_PROXY`, `SOFT_DELETE_RETENTION_DAYS`, `AUDIT_RETENTION_DAYS` | Section 9 | `0`, 30 days, 365 days |
 
 Use only fictional data with a free-tier Gemini key, since free-tier inputs may be used to
 improve Google's products. Switch to a paid key before any real patient data is processed.
@@ -108,7 +113,7 @@ The work is split into sections so each can be reviewed and committed on its own
 | 6 | Meal logging and nutrition engine | ✅ |
 | 7 | Gemini layer (parsing + structured analysis) | ✅ |
 | 8 | Live dashboard, history, analytics, reminders | ✅ |
-| 9 | Hardening: privacy requests, audit, tests, accessibility | |
+| 9 | Hardening: privacy requests, audit, tests, accessibility | ✅ |
 
 ## Data and privacy notes
 
@@ -118,3 +123,9 @@ The work is split into sections so each can be reviewed and committed on its own
 - **The seeded food values are approximate sample data**, not PhilFCT or USDA records. They are
   stored as unverified, so every result that uses them is labelled *Estimated*. Replace them with
   real records before the study: see `backend/prisma/seed-data/README.md`.
+- Patients can download everything K-WAIS stores about them and delete their account from
+  **Settings**. Deleted meals are purged after 30 days.
+
+## Deployment
+
+See [`docs/deployment.md`](docs/deployment.md) for the production checklist, Docker setup and operations.

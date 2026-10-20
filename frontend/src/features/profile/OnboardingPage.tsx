@@ -91,7 +91,7 @@ export function OnboardingPage() {
         </ol>
 
         <div>
-          <p className="text-[13px] font-semibold text-primary">
+          <p className="text-[13px] font-semibold text-primary-dark">
             Step {current + 1} of {STEPS.length}
           </p>
           <h1 className="text-[26px] font-extrabold tracking-tight">{STEPS[current]!.title}</h1>

@@ -9,7 +9,6 @@ import { RegisterPage } from '@/pages/auth/RegisterPage';
 import { ForgotPasswordPage } from '@/pages/auth/ForgotPasswordPage';
 import { ResetPasswordPage } from '@/pages/auth/ResetPasswordPage';
 import { PatientLayout } from '@/pages/patient/PatientLayout';
-import { ComingSoonPage } from '@/pages/patient/ComingSoonPage';
 import { DashboardPage } from '@/features/dashboard/DashboardPage';
 import { OnboardingPage } from '@/features/profile/OnboardingPage';
 import { ProfilePage } from '@/features/profile/ProfilePage';
@@ -19,6 +18,7 @@ import { MealPage } from '@/features/meals/MealPage';
 import { HistoryPage } from '@/features/meals/HistoryPage';
 import { AnalyticsPage } from '@/features/analytics/AnalyticsPage';
 import { NotificationsPage } from '@/features/notifications/NotificationsPage';
+import { SettingsPage } from '@/features/settings/SettingsPage';
 import { ComponentGallery } from '@/pages/dev/ComponentGallery';
 import { StatusPage } from '@/pages/dev/StatusPage';
 
@@ -56,7 +56,7 @@ const patientRoutes: RouteObject = {
     { path: 'labs', element: <LabsPage /> },
     { path: 'notifications', element: <NotificationsPage /> },
     { path: 'profile', element: <ProfilePage /> },
-    { path: 'settings', element: <ComingSoonPage title="Settings" section={9} /> },
+    { path: 'settings', element: <SettingsPage /> },
   ],
 };
 

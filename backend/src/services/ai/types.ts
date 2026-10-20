@@ -68,7 +68,7 @@ export interface AiProvider {
   analyseMeal(input: AnalysisInput): Promise<AnalysisOutput>;
 }
 
-export type AiErrorCode = 'not_configured' | 'timeout' | 'http' | 'blocked' | 'invalid_output';
+export type AiErrorCode = 'not_configured' | 'timeout' | 'http' | 'blocked' | 'invalid_output' | 'rate_limited';
 
 export class AiError extends Error {
   constructor(

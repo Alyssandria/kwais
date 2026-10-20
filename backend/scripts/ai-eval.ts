@@ -3,6 +3,7 @@ import { env } from '../src/config/env.js';
 import { createGeminiProvider } from '../src/services/ai/gemini.provider.js';
 import { buildAnalysisInput } from '../src/services/ai/inputs.js';
 import { createMockProvider } from '../src/services/ai/mock.provider.js';
+import { createRateLimiter } from '../src/services/ai/rate-limiter.js';
 import { checkAnalysis } from '../src/services/ai/rubric.js';
 import { toParsedItem } from '../src/services/ai/ai.service.js';
 import { FoodService } from '../src/services/food.service.js';
@@ -33,14 +34,25 @@ const MEALS: { text: string; expect: string[] }[] = [
 
 const provider =
   env.AI_PROVIDER === 'gemini' && env.GEMINI_API_KEY
-    ? createGeminiProvider({ apiKey: env.GEMINI_API_KEY, model: env.GEMINI_MODEL, timeoutMs: env.AI_TIMEOUT_MS })
+    ? createGeminiProvider({
+        apiKey: env.GEMINI_API_KEY,
+        model: env.GEMINI_MODEL,
+        timeoutMs: env.AI_TIMEOUT_MS,
+        limiter: createRateLimiter({ perMinute: env.AI_MAX_REQUESTS_PER_MINUTE, maxWaitMs: 5 * 60_000 }),
+        maxRetryWaitMs: 90_000,
+      })
     : createMockProvider();
 
 async function main() {
   const catalog = await FoodService.catalog();
   let parseOk = 0;
   let analysisOk = 0;
-  console.log(`Provider: ${provider.name} (${provider.model})\n`);
+  console.log(`Provider: ${provider.name} (${provider.model})`);
+  if (provider.name === 'gemini') {
+    const minutes = Math.ceil((MEALS.length * 2) / env.AI_MAX_REQUESTS_PER_MINUTE);
+    console.log(`Paced at ${env.AI_MAX_REQUESTS_PER_MINUTE} requests a minute, so this takes about ${minutes} minutes.`);
+  }
+  console.log('');
 
   for (const m of MEALS) {
     const line: string[] = [m.text.slice(0, 60).padEnd(62)];

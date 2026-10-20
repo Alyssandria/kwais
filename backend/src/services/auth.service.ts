@@ -73,6 +73,14 @@ async function uniquePatientCode(): Promise<string> {
   throw new Error('Could not generate a unique patient code');
 }
 
+export async function verifyCurrentPassword(userId: string, password: string): Promise<void> {
+  const creds = await UserModel.findCredentialsById(userId);
+  if (!creds) throw HttpError.unauthorized();
+  if (!(await verifyPassword(password, creds.passwordHash))) {
+    throw new HttpError(400, 'invalid_password', 'That password is not correct.');
+  }
+}
+
 export interface RegisterInput {
   email: string;
   password: string;
@@ -195,6 +203,25 @@ export const AuthService = {
     await PasswordResetModel.invalidateAllForUser(reset.userId);
     await RefreshTokenModel.revokeAllForUser(reset.userId);
     await AuditService.record('update', 'password', meta, { actorId: reset.userId, resourceId: reset.userId });
+  },
+
+  async changePassword(userId: string, currentPassword: string, newPassword: string, meta: RequestMeta): Promise<Session> {
+    await verifyCurrentPassword(userId, currentPassword);
+    if (currentPassword === newPassword) {
+      throw new HttpError(400, 'same_password', 'Choose a password that is different from your current one.');
+    }
+    await UserModel.updatePassword(userId, await hashPassword(newPassword));
+    await PasswordResetModel.invalidateAllForUser(userId);
+    await RefreshTokenModel.revokeAllForUser(userId);
+    await AuditService.record('update', 'password', meta, { actorId: userId, actorRole: 'patient', resourceId: userId });
+    const user = await UserModel.findPublicById(userId);
+    if (!user) throw HttpError.unauthorized();
+    return issueSession(user);
+  },
+
+  async logoutEverywhere(userId: string, meta: RequestMeta): Promise<void> {
+    await RefreshTokenModel.revokeAllForUser(userId);
+    await AuditService.record('update', 'sessions', meta, { actorId: userId, resourceId: userId });
   },
 
   async me(userId: string): Promise<AuthUser> {

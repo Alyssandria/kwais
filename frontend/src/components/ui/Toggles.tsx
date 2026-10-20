@@ -78,7 +78,7 @@ export function Switch({ checked, onChange, label, description, disabled, tone =
       </span>
       <span className="flex flex-col">
         <span className="font-semibold">{label}</span>
-        {description && <span className={cn('text-[11.5px]', dark ? 'text-[#a7d3cf]' : 'text-muted')}>{description}</span>}
+        {description && <span className={cn('text-[11.5px]', dark ? 'text-[#d7eeeb]' : 'text-muted')}>{description}</span>}
       </span>
     </button>
   );

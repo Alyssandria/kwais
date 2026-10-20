@@ -125,11 +125,11 @@ export function WeekTrendCard({ week, targets }: { week: DaySummary[]; targets: 
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data} margin={{ top: 18, right: 12, bottom: 0, left: -12 }}>
             <CartesianGrid vertical={false} stroke="#f1f5f9" />
-            <XAxis dataKey="day" tickLine={false} axisLine={{ stroke: '#e2e8f0' }} tick={{ fill: '#64748b', fontSize: 11 }} />
+            <XAxis dataKey="day" tickLine={false} axisLine={{ stroke: '#e2e8f0' }} tick={{ fill: '#5b6779', fontSize: 11 }} />
             <YAxis
               tickLine={false}
               axisLine={false}
-              tick={{ fill: '#64748b', fontSize: 11 }}
+              tick={{ fill: '#5b6779', fontSize: 11 }}
               domain={series === 'score' ? [0, 10] : [0, 'auto']}
               tickFormatter={(v: number) => fmt(v)}
             />

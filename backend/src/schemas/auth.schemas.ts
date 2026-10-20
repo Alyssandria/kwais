@@ -34,7 +34,13 @@ export const ResetPasswordSchema = z.object({
   password: passwordRule,
 });
 
+export const ChangePasswordSchema = z.object({
+  currentPassword: z.string().min(1, 'Enter your current password').max(128),
+  newPassword: passwordRule,
+});
+
 export type RegisterBody = z.infer<typeof RegisterSchema>;
 export type LoginBody = z.infer<typeof LoginSchema>;
 export type ForgotPasswordBody = z.infer<typeof ForgotPasswordSchema>;
 export type ResetPasswordBody = z.infer<typeof ResetPasswordSchema>;
+export type ChangePasswordBody = z.infer<typeof ChangePasswordSchema>;

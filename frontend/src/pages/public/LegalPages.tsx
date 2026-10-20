@@ -64,8 +64,10 @@ export function PrivacyPage() {
       <section>
         <h2>How long we keep it</h2>
         <p>
-          We keep your data while your account is active. After you ask us to delete your account, we remove or
-          anonymise it within [30] days, except security logs that the law requires us to keep.
+          We keep your data while your account is active. When you delete your account in Settings, your profile,
+          meals, analyses, lab results and targets are deleted immediately. Meals you delete one at a time are kept
+          for 30 days in case of mistakes, then removed. A security log of sign-ins and changes, without your health
+          data, is kept for up to one year.
         </p>
       </section>
     </LegalShell>

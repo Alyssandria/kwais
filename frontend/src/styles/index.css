@@ -12,7 +12,7 @@
   --color-canvas: #f4f8f7;
   --color-surface: #ffffff;
   --color-ink: #172b36;
-  --color-muted: #64748b;
+  --color-muted: #5b6779;
   --color-line: #e2e8f0;
 
   --color-sodium: #0369a1;
@@ -63,6 +63,6 @@
     outline-offset: 2px;
   }
   a {
-    @apply text-primary-dark;
+    @apply text-primary-dark underline underline-offset-2;
   }
 }

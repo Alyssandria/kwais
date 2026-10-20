@@ -11,13 +11,14 @@ export function createApp() {
   const app = express();
 
   app.disable('x-powered-by');
-  app.set('trust proxy', 1);
+  app.set('trust proxy', env.TRUST_PROXY);
 
   app.use(helmet());
   app.use(
     cors({
       origin: env.CLIENT_URL,
       credentials: true,
+      exposedHeaders: ['Content-Disposition'],
     }),
   );
   app.use(express.json({ limit: '100kb' }));
@@ -27,7 +28,7 @@ export function createApp() {
     '/api',
     rateLimit({
       windowMs: 15 * 60 * 1000,
-      limit: 300,
+      limit: env.API_REQUESTS_PER_15_MIN,
       standardHeaders: 'draft-8',
       legacyHeaders: false,
     }),

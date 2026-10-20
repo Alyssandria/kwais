@@ -13,7 +13,9 @@
     "preview": "vite preview",
     "typecheck": "tsc -b --noEmit",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "test:e2e:full": "cross-env E2E_FULL=1 playwright test"
   },
   "dependencies": {
     "@hookform/resolvers": "5.1.1",
@@ -29,6 +31,8 @@
     "zod": "3.25.67"
   },
   "devDependencies": {
+    "@axe-core/playwright": "4.10.2",
+    "@playwright/test": "1.53.1",
     "@tailwindcss/vite": "4.1.10",
     "@testing-library/jest-dom": "6.6.3",
     "@testing-library/react": "16.3.0",
@@ -37,6 +41,7 @@
     "@types/react": "18.3.23",
     "@types/react-dom": "18.3.7",
     "@vitejs/plugin-react": "4.5.2",
+    "cross-env": "7.0.3",
     "jsdom": "26.1.0",
     "tailwindcss": "4.1.10",
     "typescript": "5.8.3",

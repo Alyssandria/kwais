@@ -166,3 +166,19 @@ analyse meal ─► AI consent? ── no ──► rules parser → engine → 
 | Analysis progress streams from `POST /meals/:id/analyse` as newline-delimited JSON (`{step}` lines, then `{done, data}` or `{error}`) when the request sends `Accept: application/x-ndjson` | The progress dialog shows the step the server is actually on, not a timer |
 | Reminders: a scheduler in the API process checks every 5 minutes and creates one in-app reminder per day, only with `reminders` consent, after the patient's chosen time, and only if nothing was logged that day | Respects consent; never nags twice; no email or SMS in v0 |
 
+
+## Section 9 decisions: privacy, audit, rate limits, testing, deployment
+
+| Decision | Why |
+| --- | --- |
+| Outbound Gemini calls share one in-process limiter (`AI_MAX_REQUESTS_PER_MINUTE`, default 10). Callers queue for up to `AI_MAX_QUEUE_WAIT_MS`, then get "busy, try again in N seconds" | Stays under the free-tier quota instead of answering 429s; a long wait never blocks a request silently |
+| A 429 or 503 from Gemini pauses every caller for the `Retry-After` time (header or `RetryInfo` in the body), with at most two retries | One quota error does not trigger a burst of further ones |
+| `GET /patients/me/export` returns one JSON file: account, profile, all targets (including ended ones), decrypted labs, meals with every analysis and `inputs_snapshot`, consents, notifications, data requests and activity | Right to access and data portability (RA 10173 §16); the patient sees exactly what was sent to the AI |
+| Each export is recorded as a completed `data_requests` row and audited as `export`; limited to 5 an hour | Proof the request was honoured; a stolen session cannot pull the file repeatedly |
+| Account deletion needs the password and the word DELETE, then deletes the user row and cascades to every record | Right to erasure; no half-deleted accounts |
+| Audit rows have no foreign keys, so the deletion event and earlier entries remain, with no health data in them. Entries older than `AUDIT_RETENTION_DAYS` (365) are purged | Security accountability without keeping health data after deletion |
+| Soft-deleted meals are purged after `SOFT_DELETE_RETENTION_DAYS` (30); expired refresh and reset tokens after 7 days. A daily job in the API process runs the purge | Undo window for mistakes, then storage limitation |
+| Account activity reads the audit log for the signed-in user (as actor, or as the patient whose record was touched) and shows the device as "Chrome on Windows"; the IP hash is never sent to the browser | Patients can spot sign-ins and changes they did not make |
+| Changing the password revokes every refresh token and reset link, then issues a new session for the current device. "Sign out on every device" revokes all refresh tokens | A leaked password or device can be shut out; access tokens still expire within 15 minutes |
+| `trust proxy` comes from `TRUST_PROXY` (number of proxies in front of the API) | Rate limits and IP hashes use the real client address without trusting spoofed headers |
+| Playwright end-to-end tests live in `frontend/e2e`. Public pages always run; signed-in flows run with `E2E_FULL=1` against a real API using `AI_PROVIDER=mock`. Every page is scanned with axe for serious or critical WCAG 2.2 AA problems | The thesis can show accessibility and the main flows were checked on desktop and mobile sizes |

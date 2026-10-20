@@ -225,7 +225,9 @@ describe('MealPage', () => {
     expect(screen.getByText('Saved · not analysed')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Analyse now' }));
     expect(analyse).toHaveBeenCalledWith(expect.objectContaining({ id: 'm1' }));
-    expect(within(screen.getByRole('dialog', { name: 'Analysing your lunch' })).getByText('Reading what you ate')).toBeInTheDocument();
+    const steps = within(screen.getByRole('dialog', { name: 'Analysing your lunch' })).getAllByRole('listitem');
+    expect(steps[0]).toHaveTextContent(/^Reading what you ate$/);
+    expect(steps).toHaveLength(4);
 
     finish(meal());
     expect(await screen.findByText('Analysis ready')).toBeInTheDocument();

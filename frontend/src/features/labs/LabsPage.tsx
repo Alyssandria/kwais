@@ -227,8 +227,8 @@ function TestDetail({ items, onEdit, onDelete }: { items: Lab[]; onEdit: (l: Lab
               ) : latest.refHigh != null ? (
                 <ReferenceLine y={latest.refHigh} stroke="#047857" strokeDasharray="5 4" label={{ value: `Range below ${latest.refHigh}`, position: 'insideTopRight', fill: '#047857', fontSize: 11 }} />
               ) : null}
-              <XAxis dataKey="date" tickLine={false} axisLine={{ stroke: '#e2e8f0' }} tick={{ fill: '#64748b', fontSize: 11 }} />
-              <YAxis tickLine={false} axisLine={false} tick={{ fill: '#64748b', fontSize: 11 }} domain={[Math.max(0, lo - pad), hi + pad]} />
+              <XAxis dataKey="date" tickLine={false} axisLine={{ stroke: '#e2e8f0' }} tick={{ fill: '#5b6779', fontSize: 11 }} />
+              <YAxis tickLine={false} axisLine={false} tick={{ fill: '#5b6779', fontSize: 11 }} domain={[Math.max(0, lo - pad), hi + pad]} />
               <Tooltip formatter={(v: number) => [`${v} ${latest.unit}`, latest.label]} contentStyle={{ borderRadius: 12, border: '1px solid #e2e8f0', fontSize: 12 }} />
               <Line type="monotone" dataKey="value" stroke="#087f8c" strokeWidth={2.5} dot={{ r: 4, fill: '#fff', stroke: '#087f8c', strokeWidth: 2 }} isAnimationActive={false} />
             </LineChart>
@@ -238,7 +238,7 @@ function TestDetail({ items, onEdit, onDelete }: { items: Lab[]; onEdit: (l: Lab
         <p className="rounded-card bg-canvas p-4 text-[13px] text-muted">Add another {latest.label} result to see how it changes over time.</p>
       )}
 
-      <div className="overflow-x-auto rounded-card border border-line">
+      <div className="overflow-x-auto rounded-card border border-line" tabIndex={0} role="region" aria-label={`All ${latest.label} results, scrolls sideways`}>
         <table className="w-full min-w-[560px] border-collapse text-[13px]">
           <caption className="sr-only">All {latest.label} results</caption>
           <thead>

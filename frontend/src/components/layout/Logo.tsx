@@ -13,7 +13,7 @@ export function Logo({ tone = 'dark', showTagline = true }: { tone?: 'dark' | 'l
       <span className="flex flex-col leading-tight">
         <span className={cn('text-[17px] font-extrabold tracking-wide', onDark ? 'text-white' : 'text-primary-dark')}>K-WAIS</span>
         {showTagline && (
-          <span className={cn('text-[11.5px]', onDark ? 'text-[#9cc9c4]' : 'text-muted')}>Kidney care companion</span>
+          <span className={cn('text-[11.5px]', onDark ? 'text-[#d7eeeb]' : 'text-muted')}>Kidney care companion</span>
         )}
       </span>
     </span>

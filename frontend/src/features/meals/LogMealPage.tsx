@@ -393,7 +393,7 @@ export function LogMealPage() {
             label="Analyse with AI"
             description={analyse ? 'On · nutrients and a score' : 'Off · just save it to my log'}
           />
-          <p className="hidden max-w-[340px] text-[12.5px] text-[#a7d3cf] lg:block">
+          <p className="hidden max-w-[340px] text-[12.5px] text-[#d7eeeb] lg:block">
             {analyse
               ? 'Compared only with the targets and lab results you entered. Nothing else is assumed.'
               : 'Counts toward your history and streak. You can analyse it later.'}

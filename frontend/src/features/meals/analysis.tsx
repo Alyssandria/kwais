@@ -228,7 +228,7 @@ export function ItemsTable({ items }: { items: AnalysedItem[] }) {
       <div className="px-5 pt-5">
         <CardHeader id="items-title" title="Food by food" subtitle="How each food was matched and weighed. Amounts marked “assumed” were not in what you typed." />
       </div>
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Food by food table, scrolls sideways">
         <table className="w-full min-w-[720px] text-left text-[13.5px]">
           <caption className="sr-only">Nutrients for each food in this meal</caption>
           <thead className="bg-[#f8fafc] text-[12px] text-muted">

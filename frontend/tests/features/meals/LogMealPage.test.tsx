@@ -66,7 +66,8 @@ describe('LogMealPage', () => {
     await userEvent.click(screen.getByRole('radio', { name: /Dinner/ }));
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('What did you have for dinner?');
 
-    await userEvent.type(foodBox(), '1 tasa kanin, inihaw na liempo');
+    await userEvent.click(foodBox());
+    await userEvent.paste('1 tasa kanin, inihaw na liempo');
     const condiments = screen.getByRole('group', { name: 'Condiments' });
     await userEvent.click(within(condiments).getByRole('button', { name: /Toyo-mansi/ }));
     await userEvent.click(within(screen.getByRole('radiogroup', { name: 'Amount of Toyo-mansi' })).getByRole('radio', { name: '1 tsp' }));

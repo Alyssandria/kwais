@@ -3,6 +3,7 @@ import { parseMealText, PARSER_VERSION } from '../nutrition/text-parser.js';
 import type { ParsedItem } from '../nutrition/types.js';
 import { toUnit } from '../nutrition/units.js';
 import { createGeminiProvider } from './gemini.provider.js';
+import { createRateLimiter, type RateLimiter } from './rate-limiter.js';
 import { createMockProvider } from './mock.provider.js';
 import { PROMPT_VERSION } from './prompts.js';
 import { bandFor, checkAnalysis } from './rubric.js';
@@ -31,6 +32,7 @@ export interface AnalyseResult {
 }
 
 let override: AiProvider | null = null;
+let geminiLimiter: RateLimiter | null = null;
 
 export function setAiProviderForTests(p: AiProvider | null) {
   override = p;
@@ -40,7 +42,14 @@ function provider(): AiProvider {
   if (override) return override;
   if (env.AI_PROVIDER === 'gemini') {
     if (!env.GEMINI_API_KEY) throw new AiError('not_configured', 'AI_PROVIDER is gemini but GEMINI_API_KEY is empty');
-    return createGeminiProvider({ apiKey: env.GEMINI_API_KEY, model: env.GEMINI_MODEL, timeoutMs: env.AI_TIMEOUT_MS });
+    geminiLimiter ??= createRateLimiter({ perMinute: env.AI_MAX_REQUESTS_PER_MINUTE, maxWaitMs: env.AI_MAX_QUEUE_WAIT_MS });
+    return createGeminiProvider({
+      apiKey: env.GEMINI_API_KEY,
+      model: env.GEMINI_MODEL,
+      timeoutMs: env.AI_TIMEOUT_MS,
+      limiter: geminiLimiter,
+      maxRetryWaitMs: env.AI_MAX_QUEUE_WAIT_MS,
+    });
   }
   return createMockProvider();
 }

@@ -6,7 +6,7 @@ import { cn } from '@/lib/cn';
 import type { Insight, PatientDashboard, RecentMeal } from '../types';
 
 const SHADES = [
-  { bg: '#f1f5f9', fg: '#64748b' },
+  { bg: '#f1f5f9', fg: '#5b6779' },
   { bg: '#d5eeea', fg: '#075e68' },
   { bg: '#9fd6cf', fg: '#073b40' },
   { bg: '#3fa3a8', fg: '#ffffff' },
