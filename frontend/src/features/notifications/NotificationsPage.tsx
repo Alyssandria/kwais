@@ -1,11 +1,12 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { Bell, BellRing, CircleUser, Sparkles } from 'lucide-react';
+import { Bell, BellRing, CircleUser, Sparkles, Users } from 'lucide-react';
 import { Button, Card, EmptyState, ErrorState, LoadingRegion, PageHeader, Skeleton } from '@/components/ui';
 import { errorMessage } from '@/lib/api';
 import { cn } from '@/lib/cn';
+import { useAuth } from '@/features/auth/AuthProvider';
 import { useMarkAllRead, useMarkRead, useNotifications, type AppNotification } from './api';
 
-const ICONS = { meal_reminder: BellRing, analysis_ready: Sparkles, account: CircleUser } as const;
+const ICONS = { meal_reminder: BellRing, analysis_ready: Sparkles, account: CircleUser, care_team: Users } as const;
 
 function when(iso: string) {
   const d = new Date(iso);
@@ -15,6 +16,8 @@ function when(iso: string) {
 
 export function NotificationsPage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const isDoctor = user?.role === 'doctor';
   const list = useNotifications();
   const markRead = useMarkRead();
   const markAll = useMarkAllRead();
@@ -29,9 +32,13 @@ export function NotificationsPage() {
       <PageHeader
         title="Notifications"
         description={
-          <>
-            Logging reminders are set in your <Link to="/patient/profile">profile</Link>.
-          </>
+          isDoctor ? (
+            'Care team requests and replies from your patients.'
+          ) : (
+            <>
+              Logging reminders are set in your <Link to="/patient/profile">profile</Link>.
+            </>
+          )
         }
         actions={
           list.data && list.data.unread > 0 ? (
@@ -51,7 +58,11 @@ export function NotificationsPage() {
         </Card>
       ) : list.data.items.length === 0 ? (
         <Card padding="none">
-          <EmptyState icon={Bell} title="Nothing here yet" description="Reminders you turn on will show up here." />
+          <EmptyState
+            icon={Bell}
+            title="Nothing here yet"
+            description={isDoctor ? 'Requests and replies from patients will show up here.' : 'Reminders you turn on will show up here.'}
+          />
         </Card>
       ) : (
         <ul className="flex flex-col gap-2">

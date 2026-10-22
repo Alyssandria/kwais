@@ -216,3 +216,23 @@ Supersedes the Section 7 rule that a meal gets no score without a patient target
 | Doctor pages live under `/doctor` with their own layout, closed to patients and the reverse | One app, two roles; each role lands on its own home after sign-in |
 | Email goes through one SMTP sender (nodemailer). `MAIL_TRANSPORT=console` prints emails in development; `smtp` sends them, with Brevo's free plan as the default | Any provider works by changing settings. Brevo sends from a single verified address, so no domain is needed for the study |
 | A failed email is logged and not reported to the user | Password-reset answers stay the same whether or not the address exists |
+
+## Section 11 decisions: linking doctors and patients
+
+```
+doctor ── request by patient code ──► pending ── patient approves ──► active ── either side ends ──► ended
+patient ── invite by email ──┬─ doctor has an account ──► pending ── doctor accepts ──► active
+                             └─ no account ──► email with a one-time link ── doctor signs up and accepts ──► active
+```
+
+| Decision | Why |
+| --- | --- |
+| A `care_links` row per doctor–patient pair: pending, active, declined, cancelled or ended, with who started it and who ended it | One place decides access; history stays for the audit trail |
+| Approve and decline belong to whoever did not send the request; cancel to whoever did; either side can end an active link | Neither side can be added without saying yes |
+| A request for an unknown patient code, an invitation to an address that is not a doctor, or a repeat request gets the same "sent" answer | Codes and email addresses cannot be probed |
+| Invitations to people without an account carry a random token, stored only as a hash, valid for 14 days, used once. The patient can cancel it | Only the person holding the email can accept, and an old email cannot be reused |
+| Requests and invitations are limited to 10 an hour per account | Stops a doctor or patient spamming others |
+| `CareService.assertActiveLink` answers "not found" unless the doctor has an active link to that patient | The single check every doctor route to patient data uses from Section 12 on |
+| Every request, answer and ending is audited as `care_link` against the patient, notified in the app, and emailed where the other side may not be signed in | Patients see it in their activity; nothing happens silently |
+| Doctors' details in requests and emails are labelled as entered by the doctor | K-WAIS does not verify licences in v1 |
+| Notifications are shared by both roles; doctors get the bell back | Requests and replies need to reach doctors too |

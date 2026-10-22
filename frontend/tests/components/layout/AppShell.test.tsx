@@ -58,7 +58,7 @@ describe('AppShell', () => {
     expect(screen.getByRole('link', { name: 'Add a meal' })).toHaveAttribute('href', '/patient/meals/new');
   });
 
-  it('can leave out the bell and the add button, for doctors', () => {
+  it('can leave out the top-bar bell and the add button', () => {
     render(
       <MemoryRouter initialEntries={['/doctor/dashboard']}>
         <AppShell nav={doctorNav} user={{ firstName: 'Jose', lastName: 'Reyes' }} onSignOut={vi.fn()} notificationsTo={null} profileTo="/doctor/profile" addTo={null}>
@@ -66,7 +66,7 @@ describe('AppShell', () => {
         </AppShell>
       </MemoryRouter>,
     );
-    expect(screen.queryByRole('link', { name: /Notifications/ })).not.toBeInTheDocument();
+    expect(within(screen.getByRole('banner')).queryByRole('link', { name: /Notifications/ })).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Add a meal' })).not.toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Jose Reyes/ })).toHaveAttribute('href', '/doctor/profile');
   });

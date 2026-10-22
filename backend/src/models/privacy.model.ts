@@ -32,6 +32,12 @@ export const PrivacyModel = {
             createdAt: true,
             updatedAt: true,
             targets: { orderBy: [{ nutrient: 'asc' }, { effectiveFrom: 'asc' }], omit: { patientId: true } },
+            careLinks: {
+              orderBy: { createdAt: 'asc' },
+              omit: { patientId: true, doctorId: true },
+              include: { doctor: { select: { firstName: true, lastName: true, specialty: true, clinic: true } } },
+            },
+            careInvites: { orderBy: { createdAt: 'asc' }, omit: { patientId: true, tokenHash: true } },
             meals: {
               orderBy: { eatenAt: 'asc' },
               omit: { patientId: true },

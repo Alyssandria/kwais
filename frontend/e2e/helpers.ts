@@ -28,6 +28,7 @@ export interface TestPatient {
   email: string;
   password: string;
   firstName: string;
+  patientCode?: string;
 }
 
 export async function createPatient(request: APIRequestContext, opts: { finishOnboarding?: boolean } = {}): Promise<TestPatient> {
@@ -40,12 +41,12 @@ export async function createPatient(request: APIRequestContext, opts: { finishOn
     data: { ...patient, lastName: 'Santos', acceptTerms: true, acceptHealthData: true },
   });
   expect(res.status(), await res.text()).toBe(201);
+  const { data } = (await res.json()) as { data: { accessToken: string; user: { patientCode: string } } };
   if (opts.finishOnboarding ?? true) {
-    const { data } = (await res.json()) as { data: { accessToken: string } };
     const done = await request.post('/api/v1/patients/me/onboarding/complete', { headers: { Authorization: `Bearer ${data.accessToken}` } });
     expect(done.ok()).toBe(true);
   }
-  return patient;
+  return { ...patient, patientCode: data.user.patientCode };
 }
 
 export async function createDoctor(request: APIRequestContext): Promise<TestPatient> {

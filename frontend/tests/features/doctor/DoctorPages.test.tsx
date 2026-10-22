@@ -13,6 +13,7 @@ let profile: DoctorProfile = { firstName: 'Jose', lastName: 'Reyes', prcLicense:
 vi.mock('@/features/auth/AuthProvider', () => ({
   useAuth: () => ({ user: { role: 'doctor', firstName: 'Jose', lastName: 'Reyes' }, refreshUser }),
 }));
+vi.mock('@/features/care/DoctorCare', () => ({ DoctorCarePanels: () => <p>Care panels</p> }));
 vi.mock('@/features/doctor/api', async (original) => ({
   ...(await original<typeof import('@/features/doctor/api')>()),
   useDoctorProfile: () => ({ data: profile, isPending: false, isError: false }),
@@ -42,7 +43,7 @@ describe('DoctorHomePage', () => {
     expect(seen).toHaveTextContent('Dr. Jose Reyes');
     expect(seen).toHaveTextContent('Nephrology');
     expect(seen).toHaveTextContent('A PRC number and clinic help them recognise you');
-    expect(screen.getByRole('region', { name: 'Your patients' })).toHaveTextContent('No patients yet');
+    expect(screen.getByText('Care panels')).toBeInTheDocument();
   });
 
   it('drops the reminder once the profile is complete', () => {

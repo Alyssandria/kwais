@@ -120,7 +120,7 @@ The work is split into sections so each can be reviewed and committed on its own
 | 8 | Live dashboard, history, analytics, reminders | ✅ |
 | 9 | Hardening: privacy requests, audit, tests, accessibility | ✅ |
 | 10 | Doctor accounts, doctor app shell, email delivery | ✅ |
-| 11 | Linking doctors and patients, with consent | |
+| 11 | Linking doctors and patients, with consent | ✅ |
 | 12 | Doctor's patient list and priorities | |
 | 13 | Patient detail for doctors (read-only) | |
 | 14 | Clinical actions: verify targets and labs, add labs, notes | |

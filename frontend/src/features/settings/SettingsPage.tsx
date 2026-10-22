@@ -8,6 +8,7 @@ import { Download, History, KeyRound, LogOut, ShieldAlert, Trash2 } from 'lucide
 import { Badge, Button, Card, ConfirmDialog, EmptyState, ErrorState, Input, LoadingRegion, Modal, Notice, PageHeader, Skeleton, useToast } from '@/components/ui';
 import { useAuth } from '@/features/auth/AuthProvider';
 import { passwordRule } from '@/features/auth/schemas';
+import { CareTeam } from '@/features/care/CareTeam';
 import { useConsents, type Consents } from '@/features/profile/api';
 import { errorMessage, type ApiErrorBody } from '@/lib/api';
 import { cn } from '@/lib/cn';
@@ -349,6 +350,12 @@ export function SettingsPage() {
       <Section id="sessions" title="Signed-in devices">
         <SignOutEverywhere />
       </Section>
+
+      {isPatient && (
+        <Section id="care-team" title="Care team" description="Doctors you share your K-WAIS records with. You can stop sharing at any time.">
+          <CareTeam />
+        </Section>
+      )}
 
       {isPatient && (
         <Section id="privacy" title="Privacy choices" description="What you agreed to, and when.">

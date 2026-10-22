@@ -3,7 +3,7 @@ import { api } from '@/lib/api';
 
 export interface AppNotification {
   id: string;
-  type: 'meal_reminder' | 'analysis_ready' | 'account';
+  type: 'meal_reminder' | 'analysis_ready' | 'account' | 'care_team';
   title: string;
   body: string;
   link: string | null;

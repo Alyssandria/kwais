@@ -21,7 +21,22 @@ const toView = (n: NotificationRecord): NotificationView => ({
   createdAt: n.createdAt.toISOString(),
 });
 
+export interface NewNotification {
+  type: NotificationRecord['type'];
+  title: string;
+  body: string;
+  link: string | null;
+}
+
 export const NotificationService = {
+  async notify(userId: string, n: NewNotification): Promise<void> {
+    try {
+      await NotificationModel.create(userId, n);
+    } catch (err) {
+      console.error('Notification write failed', err);
+    }
+  },
+
   async list(userId: string, limit = 50): Promise<{ items: NotificationView[]; unread: number }> {
     const [rows, unread] = await Promise.all([NotificationModel.list(userId, limit), NotificationModel.countUnread(userId)]);
     return { items: rows.map(toView), unread };

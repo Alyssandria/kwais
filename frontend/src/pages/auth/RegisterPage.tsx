@@ -5,6 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Button, Checkbox, Input, Notice, RadioCards } from '@/components/ui';
 import { errorMessage, fieldErrors } from '@/lib/api';
 import { homeFor, useAuth } from '@/features/auth/AuthProvider';
+import { safeNext } from '@/features/auth/guards';
 import { registerSchema, type RegisterValues } from '@/features/auth/schemas';
 import { AuthLayout } from './AuthLayout';
 
@@ -43,7 +44,7 @@ export function RegisterPage() {
     setFormError(null);
     try {
       const user = await signUp(values);
-      navigate(user.role === 'patient' ? '/patient/onboarding' : homeFor(user), { replace: true });
+      navigate(user.role === 'patient' ? '/patient/onboarding' : safeNext(params.get('next'), homeFor(user)), { replace: true });
     } catch (err) {
       const fields = fieldErrors(err);
       const known = Object.entries(fields).filter(([k]) => k in values);

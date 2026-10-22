@@ -40,7 +40,7 @@ export const PrivacyService = {
     if (!account) throw HttpError.unauthorized();
     const { patientProfile, doctorProfile, consents, notifications, dataRequests, ...user } = account;
     const patientId = patientProfile?.id ?? null;
-    const { targets = [], meals = [], ...profile } = patientProfile ?? {};
+    const { targets = [], meals = [], careLinks = [], careInvites = [], ...profile } = patientProfile ?? {};
     const labs = patientId ? await LabService.list(patientId) : [];
     const activity = await PrivacyService.activity(userId, 1000);
 
@@ -63,6 +63,7 @@ export const PrivacyService = {
       account: user,
       profile: patientProfile ? profile : (doctorProfile ?? null),
       targets,
+      careTeam: { links: careLinks, invites: careInvites },
       labs,
       meals,
       consents,

@@ -22,6 +22,7 @@ import { SettingsPage } from '@/features/settings/SettingsPage';
 import { DoctorLayout } from '@/pages/doctor/DoctorLayout';
 import { DoctorHomePage } from '@/features/doctor/DoctorHomePage';
 import { DoctorProfilePage } from '@/features/doctor/DoctorProfilePage';
+import { InvitePage } from '@/features/care/InvitePage';
 import { ComponentGallery } from '@/pages/dev/ComponentGallery';
 import { StatusPage } from '@/pages/dev/StatusPage';
 
@@ -74,6 +75,8 @@ const doctorRoutes: RouteObject = {
     { index: true, element: <Navigate to="dashboard" replace /> },
     { path: 'dashboard', element: <DoctorHomePage /> },
     { path: 'profile', element: <DoctorProfilePage /> },
+    { path: 'notifications', element: <NotificationsPage /> },
+    { path: 'invite', element: <InvitePage /> },
     { path: 'settings', element: <SettingsPage /> },
   ],
 };

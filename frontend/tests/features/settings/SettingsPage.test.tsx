@@ -15,6 +15,7 @@ const endSession = vi.fn();
 vi.mock('@/features/auth/AuthProvider', () => ({
   useAuth: () => ({ user: { email: 'ana@example.com', patientCode: role === 'patient' ? 'KW-000123' : null, role }, acceptSession, endSession }),
 }));
+vi.mock('@/features/care/CareTeam', () => ({ CareTeam: () => <p>Care team list</p> }));
 vi.mock('@/features/profile/api', () => ({
   useConsents: () => ({
     isPending: false,
@@ -71,6 +72,7 @@ describe('SettingsPage', () => {
     renderPage();
     expect(screen.getByRole('heading', { level: 1, name: 'Settings' })).toBeInTheDocument();
     expect(screen.getByText('ana@example.com')).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'Care team' })).toHaveTextContent('Care team list');
     const privacy = screen.getByRole('region', { name: 'Privacy choices' });
     expect(within(privacy).getByText('AI meal analysis')).toBeInTheDocument();
     expect(within(privacy).getByText(/Never asked/)).toBeInTheDocument();
@@ -144,6 +146,7 @@ describe('SettingsPage', () => {
     role = 'doctor';
     renderPage();
     expect(screen.queryByRole('region', { name: 'Privacy choices' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: 'Care team' })).not.toBeInTheDocument();
     expect(screen.queryByText('Patient code')).not.toBeInTheDocument();
     expect(screen.getByRole('region', { name: 'Your data' })).toHaveTextContent('your doctor profile');
     expect(screen.getByRole('region', { name: 'Delete account' })).toHaveTextContent('deletes your account and doctor profile');

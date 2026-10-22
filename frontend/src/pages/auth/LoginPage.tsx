@@ -13,6 +13,9 @@ export function LoginPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
   const [params] = useSearchParams();
+  const next = params.get('next');
+  const invited = safeNext(next, '').startsWith('/doctor/invite');
+  const registerLink = invited ? `/register?role=doctor&next=${encodeURIComponent(next!)}` : '/register';
   const [formError, setFormError] = useState<string | null>(null);
   const {
     register,
@@ -35,7 +38,7 @@ export function LoginPage() {
       title="Welcome back"
       subtitle={
         <>
-          New to K-WAIS? <Link to="/register">Create a free account</Link>
+          New to K-WAIS? <Link to={registerLink}>{invited ? 'Create a doctor account' : 'Create a free account'}</Link>
         </>
       }
     >

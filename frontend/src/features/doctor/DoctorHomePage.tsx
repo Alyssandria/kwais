@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
-import { IdCard, Users } from 'lucide-react';
-import { Card, CardHeader, EmptyState, ErrorState, LoadingRegion, Notice, PageHeader, Skeleton } from '@/components/ui';
+import { IdCard } from 'lucide-react';
+import { Card, CardHeader, ErrorState, LoadingRegion, Notice, PageHeader, Skeleton } from '@/components/ui';
+import { DoctorCarePanels } from '@/features/care/DoctorCare';
 import { useAuth } from '@/features/auth/AuthProvider';
 import { errorMessage } from '@/lib/api';
 import { displayName, useDoctorProfile } from './api';
@@ -46,16 +47,7 @@ export function DoctorHomePage() {
         </Card>
       )}
 
-      <Card as="section" aria-labelledby="patients-title" padding="none">
-        <div className="px-5 pt-5">
-          <CardHeader id="patients-title" title="Your patients" />
-        </div>
-        <EmptyState
-          icon={Users}
-          title="No patients yet"
-          description="A patient appears here once they approve your request to follow their records, or invite you themselves."
-        />
-      </Card>
+      <DoctorCarePanels />
     </div>
   );
 }

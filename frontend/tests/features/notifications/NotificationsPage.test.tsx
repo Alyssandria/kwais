@@ -13,6 +13,8 @@ vi.mock('@/features/notifications/api', () => ({
   useMarkAllRead: () => ({ mutate: markAll, isPending: false }),
 }));
 
+vi.mock('@/features/auth/AuthProvider', () => ({ useAuth: () => ({ user: { role: 'patient' } }) }));
+
 const { NotificationsPage } = await import('@/features/notifications/NotificationsPage');
 
 const reminder: AppNotification = {

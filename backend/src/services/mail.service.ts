@@ -57,4 +57,58 @@ export const MailService = {
       ].join('\n'),
     });
   },
+
+  async sendCareRequestToPatient(to: string, patientFirstName: string, doctorName: string, details: string, message: string | null) {
+    await deliver({
+      to,
+      subject: `${doctorName} wants to follow your K-WAIS records`,
+      text: [
+        `Hi ${patientFirstName},`,
+        '',
+        `${doctorName}${details ? ` (${details})` : ''} asked to see your K-WAIS meals, lab results and targets.`,
+        ...(message ? ['', `Their message: "${message}"`] : []),
+        '',
+        `Nothing is shared unless you approve. Sign in and open Settings, then Care team: ${env.CLIENT_URL}/patient/settings`,
+        '',
+        'These details were entered by the doctor; K-WAIS has not checked them. If you do not know this person, decline the request.',
+      ].join('\n'),
+    });
+  },
+
+  async sendCareInviteToDoctor(to: string, patientName: string, message: string | null) {
+    await deliver({
+      to,
+      subject: `${patientName} invited you to follow their kidney diet records`,
+      text: [
+        'Hello,',
+        '',
+        `${patientName} uses K-WAIS to log meals for chronic kidney disease, and invited you to see their records.`,
+        ...(message ? ['', `Their message: "${message}"`] : []),
+        '',
+        `Sign in and accept it under Patients, then Requests: ${env.CLIENT_URL}/doctor/dashboard`,
+        '',
+        `If you do not know ${patientName}, decline it. Nothing is shared until you accept.`,
+      ].join('\n'),
+    });
+  },
+
+  async sendCareInviteToNewDoctor(to: string, patientName: string, token: string, validDays: number, message: string | null) {
+    const link = `${env.CLIENT_URL}/doctor/invite?token=${encodeURIComponent(token)}`;
+    await deliver({
+      to,
+      subject: `${patientName} invited you to follow their kidney diet records`,
+      text: [
+        'Hello,',
+        '',
+        `${patientName} uses K-WAIS to log meals for chronic kidney disease, and invited you to see their records:`,
+        'meals, estimated sodium, potassium, phosphorus and protein, and lab results.',
+        ...(message ? ['', `Their message: "${message}"`] : []),
+        '',
+        'Sign up as a doctor (or sign in) and accept:',
+        link,
+        '',
+        `The link works for ${validDays} days. If you do not know ${patientName}, ignore this email. Nothing is shared until you accept.`,
+      ].join('\n'),
+    });
+  },
 };

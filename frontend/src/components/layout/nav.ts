@@ -34,6 +34,7 @@ export const patientNav: NavItem[] = [
 
 export const doctorNav: NavItem[] = [
   { to: '/doctor/dashboard', label: 'Patients', icon: Users, mobile: true },
+  { to: '/doctor/notifications', label: 'Notifications', icon: Bell },
   { to: '/doctor/profile', label: 'Your profile', short: 'Profile', icon: IdCard, mobile: true },
   { to: '/doctor/settings', label: 'Settings', icon: Settings, mobile: true },
 ];

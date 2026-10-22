@@ -7,6 +7,7 @@ const RESOURCE: Record<string, string> = {
   nutrition_target: 'a daily target',
   patient_profile: 'your profile',
   onboarding: 'your setup progress',
+  doctor_profile: 'your doctor profile',
 };
 
 const VERB: Record<string, string> = { create: 'Added', update: 'Changed', delete: 'Deleted', read: 'Viewed' };
@@ -23,6 +24,10 @@ const FIXED: Record<string, string> = {
   'export:account_data': 'Downloaded a copy of your data',
   'delete:account': 'Deleted the account',
   'access_denied:refresh_token': 'Blocked a reused sign-in link and ended that session',
+  'create:care_link': 'Care team request sent',
+  'update:care_link': 'Care team request answered, or sharing changed',
+  'create:care_invite': 'Invited a doctor by email',
+  'update:care_invite': 'Cancelled or used a doctor invitation',
 };
 
 export function describeActivity(e: Pick<ActivityEntry, 'action' | 'resourceType' | 'byYou' | 'actorRole'>): string {

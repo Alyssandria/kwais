@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { createDoctor, expectNoSeriousA11yIssues, fullFlow, fullFlowReason, signIn } from './helpers';
+import { createDoctor, createPatient, expectNoSeriousA11yIssues, fullFlow, fullFlowReason, signIn } from './helpers';
 
 test.describe('signed-in doctor', () => {
   test.skip(!fullFlow, fullFlowReason);
@@ -26,5 +26,40 @@ test.describe('signed-in doctor', () => {
     await expect(page.getByText('Profile saved')).toBeVisible();
     await page.goto('/doctor/dashboard');
     await expect(page.getByRole('region', { name: 'What patients see about you' })).toContainText('Philippine General Hospital');
+  });
+
+  test('a doctor asks by code, the patient approves, and either can stop', async ({ page, request, browser }) => {
+    const doctor = await createDoctor(request);
+    const patient = await createPatient(request);
+    await signIn(page, doctor, '/doctor/dashboard');
+
+    await page.getByRole('button', { name: 'Add a patient' }).click();
+    const dialog = page.getByRole('dialog', { name: 'Add a patient' });
+    await dialog.getByLabel('Patient code').fill(patient.patientCode!);
+    await dialog.getByRole('button', { name: 'Send request' }).click();
+    await expect(page.getByText(`Waiting for ${patient.patientCode} to approve`)).toBeVisible();
+
+    const other = await browser.newContext();
+    const patientPage = await other.newPage();
+    await signIn(patientPage, patient);
+    await patientPage.goto('/patient/settings');
+    const req = patientPage.getByRole('region', { name: /Request from Dr\. Jose Reyes/ });
+    await expect(req).toContainText('K-WAIS has not checked them');
+    await expectNoSeriousA11yIssues(patientPage, 'settings with a care team request');
+    await req.getByRole('button', { name: 'Approve' }).click();
+    await expect(patientPage.getByRole('region', { name: 'Care team' })).toContainText('Since');
+
+    await page.reload();
+    const list = page.getByRole('region', { name: 'Your patients' });
+    await expect(list).toContainText(`${patient.firstName} Santos`);
+    await expectNoSeriousA11yIssues(page, 'doctor home with a patient');
+
+    await patientPage.getByRole('button', { name: 'Stop sharing' }).click();
+    await patientPage.getByRole('dialog').getByRole('button', { name: 'Stop sharing' }).click();
+    await page.reload();
+    await expect(page.getByRole('region', { name: 'Your patients' })).toContainText('No patients yet');
+    await page.goto('/doctor/notifications');
+    await expect(page.getByText(/stopped sharing/)).toBeVisible();
+    await other.close();
   });
 });
