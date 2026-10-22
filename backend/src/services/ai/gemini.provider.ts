@@ -1,4 +1,4 @@
-import type { ZodType } from 'zod';
+import type { ZodType, ZodTypeDef } from 'zod';
 import { ANALYSIS_SYSTEM, PARSE_SYSTEM, analysisUserPrompt, parseUserPrompt } from './prompts.js';
 import {
   ANALYSIS_RESPONSE_SCHEMA,
@@ -111,7 +111,7 @@ export function createGeminiProvider(opts: GeminiOptions): AiProvider {
     return out;
   }
 
-  async function generate<T>(system: string, user: string, responseSchema: unknown, schema: ZodType<T>, temperature: number): Promise<T> {
+  async function generate<T>(system: string, user: string, responseSchema: unknown, schema: ZodType<T, ZodTypeDef, unknown>, temperature: number): Promise<T> {
     let last: AiError | null = null;
     for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
       try {

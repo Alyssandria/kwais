@@ -1,3 +1,4 @@
+import type { AnalysisOutput } from './ai/schemas.js';
 import { MealModel } from '../models/meal.model.js';
 import { lastLocalDays, localDate } from '../lib/time.js';
 import { LabService, type LabView } from './lab.service.js';
@@ -115,13 +116,17 @@ export function buildDashboard(input: {
   });
 
   const newestFirst = [...meals].sort((a, b) => b.eatenAt.getTime() - a.eatenAt.getTime());
-  const withIdeas = newestFirst.filter((m) => m.ai && m.ai.observations.length > 0 && (m.aiStatus === 'ok' || m.aiStatus === 'mock')).slice(0, 3);
+  const ideaOf = (ai: AnalysisOutput) => {
+    const action = ai.actions?.[0];
+    return action ? `${action.title}. ${action.detail}` : ai.observations[0];
+  };
+  const withIdeas = newestFirst.filter((m) => m.ai && ideaOf(m.ai) && (m.aiStatus === 'ok' || m.aiStatus === 'mock')).slice(0, 3);
   const insights = withIdeas.map((m) => {
     const top = [...m.ai!.scoreReasons].filter((r) => (r.deduction ?? 0) > 0).sort((a, b) => (b.deduction ?? 0) - (a.deduction ?? 0))[0];
     return {
       id: m.id,
       title: top?.title ?? `From your ${MEAL_LABEL[m.category].toLowerCase()}`,
-      body: m.ai!.observations[0]!,
+      body: ideaOf(m.ai!)!,
       source: { label: `${MEAL_LABEL[m.category]} ${dayWord(m.date, today, yesterday)}`, href: `/patient/meals/${m.id}` },
     };
   });

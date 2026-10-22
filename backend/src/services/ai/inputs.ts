@@ -2,6 +2,7 @@ import type { LabView } from '../lab.service.js';
 import type { ProfileView } from '../profile.service.js';
 import type { TargetView } from '../target.service.js';
 import { NUTRIENT_KEYS, type EngineResult, type MealInput, type NutrientKey } from '../nutrition/types.js';
+import { guidanceWithout } from './guidance.js';
 import type { AnalysisInput, InputKey } from './types.js';
 
 export interface InputSources {
@@ -58,6 +59,9 @@ export function buildAnalysisInput(src: InputSources): AnalysisInput {
     }
   }
 
+  const guidance = guidanceWithout(supplied.targets);
+  for (const n of Object.keys(guidance) as NutrientKey[]) allowed.push(`guide.${n}`);
+
   const totalsWithMeal = {} as Record<NutrientKey, number>;
   for (const n of NUTRIENT_KEYS) totalsWithMeal[n] = Math.round((src.day.totalsBeforeMeal[n] + (src.engine.totals[n].value ?? 0)) * 10) / 10;
 
@@ -85,6 +89,7 @@ export function buildAnalysisInput(src: InputSources): AnalysisInput {
     },
     day: { ...src.day, totalsWithMeal },
     supplied,
+    guidance,
     allowedInputs: allowed,
   };
 }

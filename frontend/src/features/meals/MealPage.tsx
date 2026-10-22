@@ -5,7 +5,7 @@ import { ChevronLeft, PencilLine, Trash2 } from 'lucide-react';
 import { Badge, Button, Card, CardHeader, ConfirmDialog, ErrorState, LoadingRegion, Notice, Skeleton, useToast } from '@/components/ui';
 import { useChangeConsent } from '@/features/profile/api';
 import { errorMessage } from '@/lib/api';
-import { AnalysisFooter, Contribution, DataQuality, Insights, ItemsTable, NutrientTotals, ScoreCard } from './analysis';
+import { Actions, AnalysisFooter, Contribution, DataQuality, Insights, ItemsTable, NutrientTotals, ScoreCard } from './analysis';
 import { useAnalyseMeal, useDeleteMeal, useMeal, type Meal } from './api';
 import { ProgressDialog, type ProgressKind, type ProgressStep } from './ProgressDialog';
 import { amountLabel, condimentLabel, cookingLabel, drinkLabel, mealLabel, whenText } from './options';
@@ -175,6 +175,7 @@ export function MealPage() {
       {m.analysis && (
         <>
           <ScoreCard analysis={m.analysis} onAllowAi={allowAiAndAnalyse} onRetry={runAnalysis} busy={busy} />
+          <Actions analysis={m.analysis} />
           <NutrientTotals analysis={m.analysis} />
           <Contribution items={m.analysis.items} />
           <ItemsTable items={m.analysis.items} />

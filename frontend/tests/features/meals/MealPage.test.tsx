@@ -37,6 +37,10 @@ const aiOutput: AiAnalysis = {
     { title: 'Phosphorus not scored', detail: 'You have not entered a phosphorus target.', deduction: null },
   ],
   summary: 'A filling lunch with most of its sodium from patis.',
+  actions: [
+    { title: 'Swap the patis', detail: 'Next time, try calamansi or suka on its own.' },
+    { title: 'Keep dinner light on salt', detail: 'You are past 2,000 mg today, so choose fresh, unsalted food tonight.' },
+  ],
   observations: ['Calamansi on its own keeps the flavour with less sodium.'],
   concerns: ['Today’s sodium is above the target you entered.'],
   clinicianQuestions: ['Is 2,000 mg still the right sodium target for me?'],
@@ -147,6 +151,47 @@ describe('MealPage', () => {
     expect(card).toHaveTextContent(/AI-generated/);
   });
 
+  it('lists what the patient can do next', () => {
+    renderPage();
+    const actions = screen.getByRole('region', { name: 'What you can do' });
+    const items = within(actions).getAllByRole('listitem');
+    expect(items).toHaveLength(2);
+    expect(items[0]).toHaveTextContent('Swap the patis');
+    expect(items[1]).toHaveTextContent('choose fresh, unsalted food tonight');
+  });
+
+  it('marks reasons that came from the description or general guidance', () => {
+    const output = {
+      ...aiOutput,
+      scoreBasis: 'general' as const,
+      scoreReasons: [
+        { title: 'Sodium is over general guidance', detail: 'Today about 2,203 mg of 2,000 mg.', deduction: 2, basis: 'guidance' as const },
+        { title: 'Saltier than the food tables show', detail: 'You wrote “maalat”.', deduction: 1, basis: 'description' as const },
+      ],
+    };
+    query.data = meal({ analysis: analysis({ score: 7, ai: { status: 'ok', reason: null, output, model: 'g', promptVersion: 'v3' } }) });
+    renderPage();
+    const card = screen.getByRole('region', { name: 'Meal score' });
+    const items = within(card).getAllByRole('listitem');
+    expect(items[0]).toHaveTextContent('General CKD guidance');
+    expect(items[1]).toHaveTextContent('From your description');
+    expect(within(items[1]!).getByLabelText('1 point off')).toBeInTheDocument();
+  });
+
+  it('says when the score uses general guidance, and how to make it personal', () => {
+    query.data = meal({ analysis: analysis({ ai: { status: 'ok', reason: null, output: { ...aiOutput, scoreBasis: 'general' }, model: 'g', promptVersion: 'v2' } }) });
+    renderPage();
+    const card = screen.getByRole('region', { name: 'Meal score' });
+    expect(card).toHaveTextContent('Scored against general guidance for people with CKD');
+    expect(within(card).getByRole('link', { name: 'daily targets' })).toHaveAttribute('href', '/patient/profile');
+  });
+
+  it('shows no actions card for older analyses without actions', () => {
+    query.data = meal({ analysis: analysis({ ai: { status: 'ok', reason: null, output: { ...aiOutput, actions: undefined }, model: 'g', promptVersion: 'v1' } }) });
+    renderPage();
+    expect(screen.queryByRole('region', { name: 'What you can do' })).not.toBeInTheDocument();
+  });
+
   it('labels the offline mock as sample text', () => {
     query.data = meal({ analysis: analysis({ ai: { status: 'mock', reason: null, output: aiOutput, model: 'mock-rules', promptVersion: 'v1' } }) });
     renderPage();
@@ -210,7 +255,7 @@ describe('MealPage', () => {
 
   it('shows observations, concerns and questions', () => {
     renderPage();
-    expect(screen.getByRole('region', { name: 'Observations and ideas' })).toHaveTextContent('Calamansi on its own');
+    expect(screen.getByRole('region', { name: 'What stood out' })).toHaveTextContent('Calamansi on its own');
     expect(screen.getByRole('region', { name: 'Worth raising with your care team' })).toHaveTextContent('above the target you entered');
     const q = screen.getByRole('region', { name: 'Questions to ask at your next visit' });
     expect(within(q).getByRole('listitem')).toHaveTextContent('Is 2,000 mg still the right sodium target for me?');

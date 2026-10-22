@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Copy, RefreshCw, Sparkles } from 'lucide-react';
+import { CircleCheck, Copy, RefreshCw, Sparkles } from 'lucide-react';
 import { NutrientIcon } from '@/components/domain/NutrientIcon';
 import { ScoreRing } from '@/components/domain/ScoreRing';
 import { Badge, Button, Card, CardHeader, SourceTag, StatusLabel, useToast } from '@/components/ui';
@@ -15,6 +15,12 @@ function AiLabel({ status }: { status: MealAnalysis['ai']['status'] }) {
   if (status === 'mock') return <Badge>Sample text, not AI · numbers from the food tables</Badge>;
   return <SourceTag kind="ai" detail="numbers from the food tables" />;
 }
+
+const BASIS_TAG: Partial<Record<NonNullable<NonNullable<MealAnalysis['ai']['output']>['scoreReasons'][number]['basis']>, string>> = {
+  description: 'From your description',
+  guidance: 'General CKD guidance',
+  meal_share: 'This meal alone',
+};
 
 function DeductionMark({ value }: { value: number | null }) {
   const text = value == null ? '—' : value === 0 ? '0' : `−${value}`;
@@ -80,7 +86,17 @@ export function ScoreCard({
         {score != null ? (
           <>
             <ScoreRing score={score} size={104} />
-            <p className="text-[12.5px] text-muted">Starts at 10. Points come off only for things you told us: your targets, restrictions, allergies and lab ranges.</p>
+            {out?.scoreBasis === 'general' ? (
+              <p className="rounded-field bg-info-soft px-3 py-2 text-[12.5px] text-info">
+                Scored against general guidance for people with CKD. Add your{' '}
+                <Link to="/patient/profile">daily targets</Link> or <Link to="/patient/labs">lab results</Link> for a score that fits you.
+              </p>
+            ) : (
+              <p className="text-[12.5px] text-muted">
+                Starts at 10. Points come off for your targets, restrictions, allergies and lab ranges, general CKD guidance where you have no
+                target, and a little for what you wrote, like “maalat”.
+              </p>
+            )}
           </>
         ) : (
           <>
@@ -104,6 +120,7 @@ export function ScoreCard({
               <DeductionMark value={r.deduction} />
               <p className="text-[14px]">
                 <strong>{r.title}.</strong> {r.detail}
+                {r.basis && BASIS_TAG[r.basis] && <Badge className="ml-2 align-middle">{BASIS_TAG[r.basis]}</Badge>}
               </p>
             </li>
           ))}
@@ -303,6 +320,28 @@ export function DataQuality({ analysis }: { analysis: MealAnalysis }) {
   );
 }
 
+export function Actions({ analysis }: { analysis: MealAnalysis }) {
+  const actions = analysis.ai.output?.actions ?? [];
+  if (!actions.length) return null;
+  return (
+    <Card as="section" aria-labelledby="actions-title" tone="mint" padding="lg">
+      <CardHeader id="actions-title" title="What you can do" subtitle="Practical next steps for this meal and the rest of today." action={<AiLabel status={analysis.ai.status} />} />
+      <ol className="grid gap-3 sm:grid-cols-2">
+        {actions.map((a) => (
+          <li key={a.title} className="flex gap-3 rounded-card bg-surface p-4">
+            <CircleCheck className="mt-0.5 size-5 shrink-0 text-primary-dark" aria-hidden />
+            <div>
+              <p className="font-bold">{a.title}</p>
+              <p className="mt-0.5 text-[14px]">{a.detail}</p>
+            </div>
+          </li>
+        ))}
+      </ol>
+      <p className="mt-3 text-[12px] text-muted">Food ideas only, not medical advice. Check with your care team before big changes to your diet.</p>
+    </Card>
+  );
+}
+
 export function Insights({ analysis }: { analysis: MealAnalysis }) {
   const toast = useToast();
   const out = analysis.ai.output;
@@ -323,7 +362,7 @@ export function Insights({ analysis }: { analysis: MealAnalysis }) {
     <div className="grid gap-5 lg:grid-cols-3">
       {observations.length > 0 && (
         <Card as="section" aria-labelledby="obs-title">
-          <CardHeader id="obs-title" title="Observations and ideas" action={<AiLabel status={analysis.ai.status} />} />
+          <CardHeader id="obs-title" title="What stood out" action={<AiLabel status={analysis.ai.status} />} />
           <ul className="list-disc space-y-1.5 pl-4 text-[14px]">
             {observations.map((o) => (
               <li key={o}>{o}</li>

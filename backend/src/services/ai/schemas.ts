@@ -18,6 +18,9 @@ export const ParseOutputSchema = z.object({
     .max(20),
 });
 
+export const REASON_BASES = ['target', 'guidance', 'lab', 'restriction', 'allergy', 'meal_share', 'description', 'not_scored'] as const;
+export type ReasonBasis = (typeof REASON_BASES)[number];
+
 export const AnalysisOutputSchema = z.object({
   score: z.number().int().min(1).max(10).nullable(),
   scoreReasons: z
@@ -26,16 +29,22 @@ export const AnalysisOutputSchema = z.object({
         title: text(90),
         detail: text(320),
         deduction: z.number().int().min(0).max(5).nullable(),
+        basis: z.enum(REASON_BASES).default('target'),
       }),
     )
     .min(1)
-    .max(6),
-  summary: text(240),
+    .max(8),
+  summary: text(400),
+  actions: z
+    .array(z.object({ title: text(80), detail: text(280) }))
+    .max(4)
+    .default([]),
   observations: z.array(text(240)).max(4),
   concerns: z.array(text(240)).max(4),
   clinicianQuestions: z.array(text(200)).max(3),
   dataQuality: text(400),
   usedInputs: z.array(z.string()).max(16),
+  scoreBasis: z.enum(['personal', 'general']).nullable().optional(),
 });
 
 export type ParseOutput = z.infer<typeof ParseOutputSchema>;
@@ -68,16 +77,24 @@ export const ANALYSIS_RESPONSE_SCHEMA = S('OBJECT', {
     score: nullable(S('INTEGER')),
     scoreReasons: S('ARRAY', {
       items: S('OBJECT', {
-        properties: { title: S('STRING'), detail: S('STRING'), deduction: nullable(S('INTEGER')) },
-        required: ['title', 'detail', 'deduction'],
+        properties: {
+          title: S('STRING'),
+          detail: S('STRING'),
+          deduction: nullable(S('INTEGER')),
+          basis: S('STRING', { enum: REASON_BASES }),
+        },
+        required: ['title', 'detail', 'deduction', 'basis'],
       }),
     }),
     summary: S('STRING'),
+    actions: S('ARRAY', {
+      items: S('OBJECT', { properties: { title: S('STRING'), detail: S('STRING') }, required: ['title', 'detail'] }),
+    }),
     observations: S('ARRAY', { items: S('STRING') }),
     concerns: S('ARRAY', { items: S('STRING') }),
     clinicianQuestions: S('ARRAY', { items: S('STRING') }),
     dataQuality: S('STRING'),
     usedInputs: S('ARRAY', { items: S('STRING') }),
   },
-  required: ['score', 'scoreReasons', 'summary', 'observations', 'concerns', 'clinicianQuestions', 'dataQuality', 'usedInputs'],
+  required: ['score', 'scoreReasons', 'summary', 'actions', 'observations', 'concerns', 'clinicianQuestions', 'dataQuality', 'usedInputs'],
 });

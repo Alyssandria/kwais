@@ -40,13 +40,20 @@ export interface DataNote {
 
 export interface AiAnalysis {
   score: number | null;
-  scoreReasons: { title: string; detail: string; deduction: number | null }[];
+  scoreReasons: {
+    title: string;
+    detail: string;
+    deduction: number | null;
+    basis?: 'target' | 'guidance' | 'lab' | 'restriction' | 'allergy' | 'meal_share' | 'description' | 'not_scored';
+  }[];
   summary: string;
+  actions?: { title: string; detail: string }[];
   observations: string[];
   concerns: string[];
   clinicianQuestions: string[];
   dataQuality: string;
   usedInputs: string[];
+  scoreBasis?: 'personal' | 'general' | null;
 }
 
 type Totals = Record<NutrientKey, number>;

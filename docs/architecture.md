@@ -182,3 +182,25 @@ analyse meal ─► AI consent? ── no ──► rules parser → engine → 
 | Changing the password revokes every refresh token and reset link, then issues a new session for the current device. "Sign out on every device" revokes all refresh tokens | A leaked password or device can be shut out; access tokens still expire within 15 minutes |
 | `trust proxy` comes from `TRUST_PROXY` (number of proxies in front of the API) | Rate limits and IP hashes use the real client address without trusting spoofed headers |
 | Playwright end-to-end tests live in `frontend/e2e`. Public pages always run; signed-in flows run with `E2E_FULL=1` against a real API using `AI_PROVIDER=mock`. Every page is scanned with axe for serious or critical WCAG 2.2 AA problems | The thesis can show accessibility and the main flows were checked on desktop and mobile sizes |
+
+## Meal analysis v2: general guidance and next steps
+
+Supersedes the Section 7 rule that a meal gets no score without a patient target or lab range.
+
+| Decision | Why |
+| --- | --- |
+| When the patient has no sodium target, sodium is scored against general guidance: under 2,000 mg a day (KDIGO 2024 CKD guideline). The AI receives it as `guidance.sodium`, separate from `supplied`, and must call it "general guidance for people with CKD", never "your target" | Every meal with a sodium value gets a score, without pretending a general number is personal |
+| No general numbers for potassium, phosphorus or protein | KDIGO 2024 sets no general dietary limit for potassium or phosphorus (they depend on labs and a dietitian), and protein guidance needs body weight, which the profile does not store. The AI may say which foods contributed most, but does not judge the amount |
+| The server sets `scoreBasis`: `personal` with any patient target or ranged lab, `general` with guidance only, `null` when even sodium is unknown. The score card says when a score uses general guidance and links to targets and labs | The patient always knows what the score was measured against |
+| The AI never assumes the patient's CKD stage, labs or targets | Guidance is a published population number; inferring personal values would be a clinical judgement |
+| New `actions` field: two to four concrete food steps (a swap, a portion, what to keep light today, a detail to add to the profile), shown as "What you can do" under the score. Dashboard insights use the first action | Patients asked for advice they can act on, not just numbers |
+| `PROMPT_VERSION` is `v2`. Older analyses keep their stored output; `actions` defaults to an empty list, so they show no actions card | Stored analyses stay reproducible from `inputs_snapshot` and their prompt version |
+
+### Prompt v3: dietitian judgement and per-meal share
+
+| Decision | Why |
+| --- | --- |
+| The analysis prompt speaks as a renal dietitian on a Philippine nephrology team, not as a nephrologist | It brings knowledge of Filipino dishes and common CKD diet advice, while staying with food advice rather than diagnosis or medication |
+| Every score reason has a `basis`: target, guidance, lab, restriction, allergy, meal_share, description or not_scored | The server can enforce limits per kind, and the page can show where each deduction came from |
+| A meal that alone gives more than 40% of the day's target or guidance for a nutrient loses 1 point (`meal_share`) | One meal is about a third of the day; before this, a salty meal scored 10 as long as the whole-day total stayed under the limit |
+| The AI may take off points for what the patient wrote that the food tables cannot show, such as "maalat", a lot of sabaw, extra sawsawan, or processed and instant food (`description`): at most 2 per reason and 3 in total, enforced by the server, and the detail must quote the patient's words | The tables give typical recipes; "maalat na sinigang" scored 10. The limit keeps the AI's own judgement from deciding most of the score |

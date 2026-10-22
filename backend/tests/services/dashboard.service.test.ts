@@ -75,14 +75,15 @@ describe('buildDashboard', () => {
     ]);
   });
 
-  it('turns the newest AI observations into insights, and flags sample text', () => {
+  it('turns the newest AI actions or observations into insights, and flags sample text', () => {
     const ai = {
       score: 6,
       scoreReasons: [
-        { title: 'Sodium is over your target', detail: '…', deduction: 2 },
-        { title: 'Phosphorus not scored', detail: '…', deduction: null },
+        { title: 'Sodium is over your target', detail: '…', deduction: 2, basis: 'target' as const },
+        { title: 'Phosphorus not scored', detail: '…', deduction: null, basis: 'not_scored' as const },
       ],
       summary: '…',
+      actions: [] as { title: string; detail: string }[],
       observations: ['Calamansi on its own has less sodium.'],
       concerns: [],
       clinicianQuestions: [],
@@ -94,14 +95,14 @@ describe('buildDashboard', () => {
       timeZone: TZ,
       meals: meals(
         facts({ at: '2026-10-16T04:00:00Z', ai, aiStatus: 'ok', score: 6 }),
-        facts({ at: '2026-10-15T11:00:00Z', category: 'dinner', ai: { ...ai, scoreReasons: [] }, aiStatus: 'mock' }),
+        facts({ at: '2026-10-15T11:00:00Z', category: 'dinner', ai: { ...ai, scoreReasons: [], actions: [{ title: 'Swap the sawsawan', detail: 'Try suka instead of patis.' }] }, aiStatus: 'mock' }),
       ),
       targets: [],
       labs: [],
     });
     expect(d.insights).toEqual([
       { id: 'meal-2026-10-16T04:00:00Z', title: 'Sodium is over your target', body: 'Calamansi on its own has less sodium.', source: { label: 'Lunch today', href: '/patient/meals/meal-2026-10-16T04:00:00Z' } },
-      { id: 'meal-2026-10-15T11:00:00Z', title: 'From your dinner', body: 'Calamansi on its own has less sodium.', source: { label: 'Dinner yesterday', href: '/patient/meals/meal-2026-10-15T11:00:00Z' } },
+      { id: 'meal-2026-10-15T11:00:00Z', title: 'From your dinner', body: 'Swap the sawsawan. Try suka instead of patis.', source: { label: 'Dinner yesterday', href: '/patient/meals/meal-2026-10-15T11:00:00Z' } },
     ]);
     expect(d.sampleInsights).toBe(true);
     expect(d.recentMeals[0]).toMatchObject({ status: 'analysed', score: 6, summary: '1 tasa kanin' });

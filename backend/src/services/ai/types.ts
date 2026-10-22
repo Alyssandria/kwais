@@ -5,6 +5,7 @@ export type InputKey =
   | 'meal'
   | 'day'
   | `target.${NutrientKey}`
+  | `guide.${NutrientKey}`
   | `lab.${string}`
   | 'ckdStage'
   | 'dialysisStatus'
@@ -49,6 +50,7 @@ export interface AnalysisInput {
     allergies?: string[];
     dietaryPreferences?: string[];
   };
+  guidance: PerNutrient<{ dailyMax: number; unit: string; source: string }>;
   allowedInputs: InputKey[];
 }
 

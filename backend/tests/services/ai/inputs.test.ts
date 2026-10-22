@@ -36,7 +36,8 @@ describe('buildAnalysisInput', () => {
   it('sends only the meal and day when the patient supplied nothing else', () => {
     const input = buildAnalysisInput(sources());
     expect(input.supplied).toEqual({});
-    expect(input.allowedInputs).toEqual(['meal', 'day']);
+    expect(input.guidance).toEqual({ sodium: expect.objectContaining({ dailyMax: 2000, unit: 'mg' }) });
+    expect(input.allowedInputs).toEqual(['meal', 'day', 'guide.sodium']);
     // kanin 3.2 + patis 400 + 1000 earlier
     expect(input.day.totalsWithMeal.sodium).toBe(1403.2);
   });
@@ -47,7 +48,7 @@ describe('buildAnalysisInput', () => {
     );
     expect(input.supplied.labs?.potassium).toMatchObject({ value: 5.6, collectedOn: '2026-09-28' });
     expect(JSON.stringify(input)).not.toContain('Private lab name');
-    expect(input.allowedInputs).toEqual(['meal', 'day', 'lab.potassium', 'lab.other:uric acid panel']);
+    expect(input.allowedInputs).toEqual(['meal', 'day', 'lab.potassium', 'lab.other:uric acid panel', 'guide.sodium']);
   });
 
   it('includes profile details only when given', () => {
@@ -63,6 +64,7 @@ describe('buildAnalysisInput', () => {
       dialysisStatus: 'none',
       restrictions: ['Low-salt diet'],
     });
+    expect(input.guidance).toEqual({});
     expect(input.allowedInputs).toEqual(['meal', 'day', 'target.sodium', 'ckdStage', 'dialysisStatus', 'restrictions']);
   });
 });

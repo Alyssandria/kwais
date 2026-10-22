@@ -1,3 +1,4 @@
+import { guidanceWithout } from '../../src/services/ai/guidance.js';
 import type { AnalysisInput } from '../../src/services/ai/types.js';
 
 const totals = (sodium: number, potassium: number, phosphorus: number, protein: number) => ({ sodium, potassium, phosphorus, protein });
@@ -15,6 +16,8 @@ export function sampleInput(over: Partial<AnalysisInput['supplied']> = {}, withM
   for (const n of Object.keys(supplied.targets ?? {})) allowedInputs.push(`target.${n}` as 'target.sodium');
   for (const t of Object.keys(supplied.labs ?? {})) allowedInputs.push(`lab.${t}`);
   for (const k of ['restrictions', 'allergies'] as const) if (supplied[k]?.length) allowedInputs.push(k);
+  const guidance = guidanceWithout(supplied.targets);
+  for (const n of Object.keys(guidance)) allowedInputs.push(`guide.${n}` as 'guide.sodium');
 
   return {
     meal: {
@@ -35,6 +38,7 @@ export function sampleInput(over: Partial<AnalysisInput['supplied']> = {}, withM
     },
     day: { date: '2026-10-16', earlierMeals: 1, totalsBeforeMeal: totals(500, 200, 50, 0), totalsWithMeal: withMeal },
     supplied,
+    guidance,
     allowedInputs,
   };
 }

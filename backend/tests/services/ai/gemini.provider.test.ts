@@ -67,7 +67,7 @@ describe('Gemini provider', () => {
   it('sends the analysis input as JSON and validates the answer', async () => {
     const answer = {
       score: 8,
-      scoreReasons: [{ title: 'Sodium within your target', detail: 'Today 1,200 of 2,000 mg.', deduction: 0 }],
+      scoreReasons: [{ title: 'Sodium within your target', detail: 'Today 1,200 of 2,000 mg.', deduction: 0, basis: 'target' }],
       summary: 'A balanced lunch.',
       observations: [],
       concerns: [],
@@ -77,7 +77,7 @@ describe('Gemini provider', () => {
     };
     const fetchFn = vi.fn().mockResolvedValue(textReply(JSON.stringify(answer)));
     const out = await make(fetchFn).analyseMeal(sampleInput());
-    expect(out).toEqual(answer);
+    expect(out).toEqual({ ...answer, actions: [] });
     const body = JSON.parse(fetchFn.mock.calls[0]![1].body);
     expect(JSON.parse(body.contents[0].parts[0].text)).toMatchObject({ allowedInputs: expect.arrayContaining(['target.sodium']) });
   });
