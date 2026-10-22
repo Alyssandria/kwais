@@ -10,12 +10,18 @@ export function AppShell({
   user,
   unreadCount = 0,
   onSignOut,
+  notificationsTo = '/patient/notifications',
+  profileTo = '/patient/profile',
+  addTo = '/patient/meals/new',
   children,
 }: {
   nav: NavItem[];
   user: ShellUser;
   unreadCount?: number;
   onSignOut: () => void;
+  notificationsTo?: string | null;
+  profileTo?: string;
+  addTo?: string | null;
   children: ReactNode;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -40,15 +46,15 @@ export function AppShell({
           unreadCount={unreadCount}
           onOpenMenu={() => setMenuOpen(true)}
           onSignOut={onSignOut}
-          notificationsTo="/patient/notifications"
-          profileTo="/patient/profile"
+          notificationsTo={notificationsTo}
+          profileTo={profileTo}
         />
         <main id="main" tabIndex={-1} className="mx-auto w-full max-w-[1180px] flex-1 px-4 pt-6 pb-28 outline-none sm:px-6 md:pb-12 lg:px-8">
           {children}
         </main>
       </div>
 
-      <BottomNav items={nav} addTo="/patient/meals/new" />
+      <BottomNav items={nav} addTo={addTo} />
     </div>
   );
 }

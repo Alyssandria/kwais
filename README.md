@@ -6,7 +6,7 @@ sodium, potassium, phosphorus and protein, and bring better questions to their c
 > **Decision support, not diagnosis.** K-WAIS never infers a CKD stage, prescribes, or labels
 > intake as safe on its own authority. Clinical values come only from the patient or their clinician.
 
-MIT capstone project. v0 is the patient portal; the doctor portal follows in v1.
+MIT capstone project. v0 is the patient portal; v1 adds the doctor portal.
 
 ## Repository layout
 
@@ -57,8 +57,11 @@ Development-only pages:
 - **Status** at `/dev/status`: green checks when the web app, API and database are connected
 - **Component gallery** at `/dev/components`: every shared UI piece in each state
 
-**Password reset in development:** no email is sent. The reset link is printed in the
-terminal running the backend (`pnpm dev`).
+**Email in development:** with `MAIL_TRANSPORT=console` (the default) no email is sent; password-reset
+links and other emails are printed in the terminal running the backend (`pnpm dev`). To send real email
+through Brevo, see [Email](docs/deployment.md#email) and check it with `pnpm mail:test you@example.com`.
+
+**Doctor accounts:** choose "A doctor or dietitian" when signing up, or open `/register?role=doctor`.
 
 ## Everyday commands
 
@@ -75,6 +78,7 @@ terminal running the backend (`pnpm dev`).
 | backend | `pnpm db:seed` | Load or refresh the sample food tables |
 | backend | `pnpm db:import-foods <file.csv>` | Import real PhilFCT / USDA records (checked first; nothing written on errors) |
 | backend | `pnpm ai:eval` | Run 20 sample meals (15 Filipino, 5 international) through the configured AI and check parsing and validation |
+| backend | `pnpm mail:test <email>` | Send a test email with the current mail settings |
 | frontend | `pnpm dev` | Web app with hot reload |
 | frontend | `pnpm build` | Type-check and production build |
 | frontend | `pnpm test` | Component tests (Vitest + Testing Library) |
@@ -95,6 +99,7 @@ Secrets live only in `backend/.env`; the browser only ever sees `VITE_*` values.
 | `AI_PROVIDER`, `GEMINI_API_KEY`, `GEMINI_MODEL`, `AI_TIMEOUT_MS` | Section 7 | `AI_PROVIDER=mock` works offline with rule-based sample text, labelled as not AI |
 | `AI_MAX_REQUESTS_PER_MINUTE`, `AI_MAX_QUEUE_WAIT_MS` | Section 9 | 10 a minute, 15 s queue: fits the Gemini free tier |
 | `TRUST_PROXY`, `SOFT_DELETE_RETENTION_DAYS`, `AUDIT_RETENTION_DAYS` | Section 9 | `0`, 30 days, 365 days |
+| `MAIL_TRANSPORT`, `MAIL_FROM`, `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS` | Section 10 | `console`: emails are printed, not sent |
 
 Use only fictional data with a free-tier Gemini key, since free-tier inputs may be used to
 improve Google's products. Switch to a paid key before any real patient data is processed.
@@ -114,6 +119,12 @@ The work is split into sections so each can be reviewed and committed on its own
 | 7 | Gemini layer (parsing + structured analysis) | ✅ |
 | 8 | Live dashboard, history, analytics, reminders | ✅ |
 | 9 | Hardening: privacy requests, audit, tests, accessibility | ✅ |
+| 10 | Doctor accounts, doctor app shell, email delivery | ✅ |
+| 11 | Linking doctors and patients, with consent | |
+| 12 | Doctor's patient list and priorities | |
+| 13 | Patient detail for doctors (read-only) | |
+| 14 | Clinical actions: verify targets and labs, add labs, notes | |
+| 15 | v1 hardening: tests, accessibility, docs | |
 
 ## Data and privacy notes
 

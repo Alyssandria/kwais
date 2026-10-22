@@ -20,7 +20,7 @@ export function Topbar({
   unreadCount: number;
   onOpenMenu: () => void;
   onSignOut: () => void;
-  notificationsTo: string;
+  notificationsTo: string | null;
   profileTo: string;
 }) {
   const initials = `${user.firstName[0] ?? ''}${user.lastName[0] ?? ''}`.toUpperCase();
@@ -34,22 +34,24 @@ export function Topbar({
       </div>
 
       <div className="ml-auto flex items-center gap-2.5">
-        <Link
-          to={notificationsTo}
-          aria-label={bellLabel}
-          title={bellLabel}
-          className="relative flex size-11 items-center justify-center rounded-field border border-line bg-surface text-[#334155] no-underline hover:bg-canvas"
-        >
-          <Bell className="size-[18px]" aria-hidden />
-          {unreadCount > 0 && (
-            <span
-              aria-hidden
-              className="absolute top-1.5 right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-bad px-1 text-[10px] font-bold text-white"
-            >
-              {unreadCount > 9 ? '9+' : unreadCount}
-            </span>
-          )}
-        </Link>
+        {notificationsTo && (
+          <Link
+            to={notificationsTo}
+            aria-label={bellLabel}
+            title={bellLabel}
+            className="relative flex size-11 items-center justify-center rounded-field border border-line bg-surface text-[#334155] no-underline hover:bg-canvas"
+          >
+            <Bell className="size-[18px]" aria-hidden />
+            {unreadCount > 0 && (
+              <span
+                aria-hidden
+                className="absolute top-1.5 right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-bad px-1 text-[10px] font-bold text-white"
+              >
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </span>
+            )}
+          </Link>
+        )}
         <Link
           to={profileTo}
           className="flex h-11 items-center gap-2.5 rounded-full border border-line bg-surface py-1 pr-3 pl-1 text-ink no-underline hover:bg-canvas"

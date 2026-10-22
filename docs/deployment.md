@@ -45,9 +45,31 @@ AI_MAX_REQUESTS_PER_MINUTE=10   # raise to match the paid quota
 AI_MAX_QUEUE_WAIT_MS=15000
 SOFT_DELETE_RETENTION_DAYS=30
 AUDIT_RETENTION_DAYS=365
+MAIL_TRANSPORT=smtp
+MAIL_FROM="K-WAIS <your-verified-address@example.com>"
+SMTP_HOST=smtp-relay.brevo.com
+SMTP_PORT=587
+SMTP_USER=...
+SMTP_PASS=...
 ```
 
 `DATABASE_URL`, `PORT`, `NODE_ENV` and `TRUST_PROXY` are set by the compose file.
+
+## Email
+
+K-WAIS sends email over SMTP, so any provider works. The defaults point at Brevo's free plan (300 emails a day),
+which can send from a single verified address, so no domain of your own is needed.
+
+1. Create a free account at brevo.com.
+2. **Senders, domains and dedicated IPs → Senders → Add a sender**, and confirm the email Brevo sends to that address.
+3. **SMTP & API → SMTP**: copy the SMTP login into `SMTP_USER` and generate an SMTP key for `SMTP_PASS`.
+4. Set `MAIL_TRANSPORT=smtp` and `MAIL_FROM` to the verified sender, e.g. `"K-WAIS <kwais.capstone@gmail.com>"`.
+5. Check it: `pnpm mail:test you@example.com` locally, or
+   `docker compose -f docker-compose.prod.yml exec api node_modules/.bin/tsx scripts/mail-test.ts you@example.com` on the server.
+
+Emails from a free mailbox address (Gmail, Yahoo) may land in spam. Verifying a domain you own in Brevo
+(SPF and DKIM records) fixes that when you have one. A failed send is logged as `Email to … failed` and never
+shown to the user, so password-reset responses look the same whether or not the address exists.
 
 ## Run
 
@@ -72,7 +94,8 @@ kwais.example.ph {
 - [ ] Register a test account, log a meal, download the data, delete the account.
 - [ ] Run the end-to-end suite against the server: `E2E_BASE_URL=https://kwais.example.ph E2E_FULL=1 pnpm test:e2e` (frontend).
 - [ ] Database backups scheduled (`pg_dump` daily, kept encrypted, restore tested once).
-- [ ] Logs checked for `Audit log write failed` and `Retention purge failed`.
+- [ ] Logs checked for `Audit log write failed`, `Retention purge failed` and `Email to … failed`.
+- [ ] A password reset email arrives (check spam the first time).
 
 ## Operations
 

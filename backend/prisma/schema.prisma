@@ -140,6 +140,7 @@ model User {
   updatedAt        DateTime   @updatedAt @map("updated_at")
 
   patientProfile PatientProfile?
+  doctorProfile  DoctorProfile?
   refreshTokens  RefreshToken[]
   passwordResets PasswordReset[]
   notifications  Notification[]
@@ -177,6 +178,24 @@ model PasswordReset {
 
   @@index([userId])
   @@map("password_resets")
+}
+
+// ─── Doctor profile ──────────────────────────────────────────────────────────
+
+model DoctorProfile {
+  id         String   @id @default(uuid()) @db.Uuid
+  userId     String   @unique @map("user_id") @db.Uuid
+  firstName  String   @map("first_name")
+  lastName   String   @map("last_name")
+  prcLicense String?  @map("prc_license")
+  specialty  String?
+  clinic     String?
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("doctor_profiles")
 }
 
 // ─── Patient profile ─────────────────────────────────────────────────────────

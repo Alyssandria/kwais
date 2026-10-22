@@ -204,3 +204,15 @@ Supersedes the Section 7 rule that a meal gets no score without a patient target
 | Every score reason has a `basis`: target, guidance, lab, restriction, allergy, meal_share, description or not_scored | The server can enforce limits per kind, and the page can show where each deduction came from |
 | A meal that alone gives more than 40% of the day's target or guidance for a nutrient loses 1 point (`meal_share`) | One meal is about a third of the day; before this, a salty meal scored 10 as long as the whole-day total stayed under the limit |
 | The AI may take off points for what the patient wrote that the food tables cannot show, such as "maalat", a lot of sabaw, extra sawsawan, or processed and instant food (`description`): at most 2 per reason and 3 in total, enforced by the server, and the detail must quote the patient's words | The tables give typical recipes; "maalat na sinigang" scored 10. The limit keeps the AI's own judgement from deciding most of the score |
+
+## Section 10 decisions: doctor accounts and email
+
+| Decision | Why |
+| --- | --- |
+| Doctors are ordinary accounts with the `doctor` role, chosen at sign-up. No licence check or admin approval | Keeps v1 simple for the capstone. The safeguard is consent: a doctor sees nothing about a patient until that patient approves a link (Section 11) |
+| `doctor_profiles` holds name, and optional PRC licence number, specialty and clinic, shown to patients as self-reported | Lets patients recognise who is asking without implying K-WAIS verified them |
+| Registration body is a union on `role` (missing role means patient). Doctors give only the terms consent; the health-data consent is for patients | Doctors do not store their own health data |
+| Download data, account activity and delete account moved to `/account/*`, open to any signed-in user | The same privacy rights apply to doctors |
+| Doctor pages live under `/doctor` with their own layout, closed to patients and the reverse | One app, two roles; each role lands on its own home after sign-in |
+| Email goes through one SMTP sender (nodemailer). `MAIL_TRANSPORT=console` prints emails in development; `smtp` sends them, with Brevo's free plan as the default | Any provider works by changing settings. Brevo sends from a single verified address, so no domain is needed for the study |
+| A failed email is logged and not reported to the user | Password-reset answers stay the same whether or not the address exists |

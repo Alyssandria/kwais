@@ -67,14 +67,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const register = useCallback(
     async (values: RegisterValues) => {
-      const res = await api.post<{ data: SessionPayload }>('/auth/register', {
+      const account = {
+        role: values.role,
         firstName: values.firstName,
         lastName: values.lastName,
         email: values.email,
         password: values.password,
         acceptTerms: values.acceptTerms,
-        acceptHealthData: values.acceptHealthData,
-      });
+      };
+      const body =
+        values.role === 'doctor'
+          ? { ...account, prcLicense: values.prcLicense, specialty: values.specialty, clinic: values.clinic }
+          : { ...account, acceptHealthData: values.acceptHealthData };
+      const res = await api.post<{ data: SessionPayload }>('/auth/register', body);
       applySession(res.data.data);
       return res.data.data.user;
     },

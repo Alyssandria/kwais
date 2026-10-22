@@ -59,6 +59,32 @@ describe('POST /auth/register', () => {
   });
 });
 
+describe('POST /auth/register as a doctor', () => {
+  const doctor = { role: 'doctor', email: 'dr.reyes@example.com', password: 'kidney-care-2026', firstName: 'Jose', lastName: 'Reyes', acceptTerms: true };
+
+  it('does not ask a doctor for the health-data consent, and cleans optional details', async () => {
+    vi.mocked(AuthService.register).mockResolvedValue({ ...session, user: { ...user, role: 'doctor', patientCode: null } });
+    const res = await request(app).post('/api/v1/auth/register').send({ ...doctor, prcLicense: ' 012 3456 ', specialty: '', clinic: 'Philippine General Hospital' });
+    expect(res.status).toBe(201);
+    expect(AuthService.register).toHaveBeenCalledWith(
+      expect.objectContaining({ role: 'doctor', prcLicense: '0123456', specialty: null, clinic: 'Philippine General Hospital' }),
+      expect.any(Object),
+    );
+  });
+
+  it('checks the PRC licence number when one is given', async () => {
+    const res = await request(app).post('/api/v1/auth/register').send({ ...doctor, prcLicense: 'ABC-12' });
+    expect(res.status).toBe(400);
+    expect(res.body.error.details.map((d: { path: string }) => d.path)).toContain('prcLicense');
+  });
+
+  it('refuses a role that does not exist', async () => {
+    const res = await request(app).post('/api/v1/auth/register').send({ ...doctor, role: 'admin' });
+    expect(res.status).toBe(400);
+    expect(AuthService.register).not.toHaveBeenCalled();
+  });
+});
+
 describe('GET /auth/me', () => {
   it('requires a bearer token', async () => {
     const res = await request(app).get('/api/v1/auth/me');

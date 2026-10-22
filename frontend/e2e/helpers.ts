@@ -48,10 +48,23 @@ export async function createPatient(request: APIRequestContext, opts: { finishOn
   return patient;
 }
 
-export async function signIn(page: Page, patient: TestPatient) {
+export async function createDoctor(request: APIRequestContext): Promise<TestPatient> {
+  const doctor = {
+    email: `e2e-dr-${Date.now()}-${Math.floor(Math.random() * 1e6)}@example.test`,
+    password: 'e2e-Password-123',
+    firstName: 'Jose',
+  };
+  const res = await request.post('/api/v1/auth/register', {
+    data: { ...doctor, role: 'doctor', lastName: 'Reyes', acceptTerms: true, specialty: 'Nephrology' },
+  });
+  expect(res.status(), await res.text()).toBe(201);
+  return doctor;
+}
+
+export async function signIn(page: Page, account: TestPatient, home = '/patient/dashboard') {
   await page.goto('/login');
-  await page.getByLabel('Email').fill(patient.email);
-  await page.getByLabel('Password', { exact: true }).fill(patient.password);
+  await page.getByLabel('Email').fill(account.email);
+  await page.getByLabel('Password', { exact: true }).fill(account.password);
   await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page).toHaveURL(/\/patient\/dashboard/);
+  await expect(page).toHaveURL(new RegExp(home));
 }

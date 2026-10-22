@@ -38,7 +38,7 @@ export const PrivacyService = {
     const request = await PrivacyModel.recordRequest(userId, 'export');
     const account = await PrivacyModel.accountForExport(userId);
     if (!account) throw HttpError.unauthorized();
-    const { patientProfile, consents, notifications, dataRequests, ...user } = account;
+    const { patientProfile, doctorProfile, consents, notifications, dataRequests, ...user } = account;
     const patientId = patientProfile?.id ?? null;
     const { targets = [], meals = [], ...profile } = patientProfile ?? {};
     const labs = patientId ? await LabService.list(patientId) : [];
@@ -46,7 +46,7 @@ export const PrivacyService = {
 
     await AuditService.record('export', 'account_data', meta, {
       actorId: userId,
-      actorRole: 'patient',
+      actorRole: account.role,
       resourceId: request.id,
       ...(patientId ? { patientId } : {}),
     });
@@ -61,7 +61,7 @@ export const PrivacyService = {
         'Each meal analysis keeps inputsSnapshot: exactly what was sent to the AI, if anything.',
       ],
       account: user,
-      profile: patientProfile ? profile : null,
+      profile: patientProfile ? profile : (doctorProfile ?? null),
       targets,
       labs,
       meals,
@@ -93,7 +93,7 @@ export const PrivacyService = {
     await PrivacyModel.deleteUser(userId);
     await AuditService.record('delete', 'account', meta, {
       actorId: userId,
-      actorRole: 'patient',
+      actorRole: patientId ? 'patient' : 'doctor',
       resourceId: userId,
       ...(patientId ? { patientId } : {}),
     });

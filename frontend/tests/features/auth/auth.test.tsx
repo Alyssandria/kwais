@@ -30,6 +30,7 @@ function at(path: string, element: ReactNode) {
         <Route path="/register" element={element} />
         <Route path="/patient/*" element={<RequireAuth role="patient"><p>Patient area</p></RequireAuth>} />
         <Route path="/patient/dashboard" element={<p>Dashboard page</p>} />
+        <Route path="/doctor/dashboard" element={<p>Doctor home</p>} />
       </Routes>
     </MemoryRouter>,
   );
@@ -81,6 +82,36 @@ describe('RegisterPage', () => {
     expect(screen.getByText('You need to accept the terms to continue')).toBeInTheDocument();
     expect(screen.getByText(/needs this consent/)).toBeInTheDocument();
     expect(registerFn).not.toHaveBeenCalled();
+  });
+
+  it('signs up a doctor without the patient health-data consent', async () => {
+    registerFn.mockResolvedValue({ ...maria, id: 'd1', role: 'doctor', patientCode: null, onboardingComplete: true });
+    at('/register', <RegisterPage />);
+    await userEvent.click(screen.getByRole('radio', { name: /A doctor or dietitian/ }));
+    expect(screen.queryByLabelText(/store and process my health information/)).not.toBeInTheDocument();
+    await userEvent.type(screen.getByLabelText('First name'), 'Jose');
+    await userEvent.type(screen.getByLabelText('Last name'), 'Reyes');
+    await userEvent.type(screen.getByLabelText('Email'), 'dr.reyes@example.com');
+    await userEvent.type(screen.getByLabelText('Password'), 'kidney-care-2026');
+    await userEvent.type(screen.getByLabelText('Confirm password'), 'kidney-care-2026');
+    await userEvent.type(screen.getByLabelText(/PRC licence number/), 'abc');
+    await userEvent.click(screen.getByRole('checkbox', { name: /terms of use/ }));
+    await userEvent.click(screen.getByRole('button', { name: 'Create account' }));
+    expect(await screen.findByText('Enter the digits of your PRC licence number')).toBeInTheDocument();
+    expect(registerFn).not.toHaveBeenCalled();
+
+    await userEvent.clear(screen.getByLabelText(/PRC licence number/));
+    await userEvent.type(screen.getByLabelText(/PRC licence number/), '0123456');
+    await userEvent.type(screen.getByLabelText(/Specialty/), 'Nephrology');
+    await userEvent.click(screen.getByRole('button', { name: 'Create account' }));
+    expect(registerFn).toHaveBeenCalledWith(expect.objectContaining({ role: 'doctor', prcLicense: '0123456', specialty: 'Nephrology', clinic: '' }));
+    expect(await screen.findByText('Doctor home')).toBeInTheDocument();
+  });
+
+  it('starts on the doctor option when the link asks for it', () => {
+    at('/register?role=doctor', <RegisterPage />);
+    expect(screen.getByRole('radio', { name: /A doctor or dietitian/ })).toBeChecked();
+    expect(screen.getByLabelText(/PRC licence number/)).toBeInTheDocument();
   });
 
   it('rejects weak passwords', async () => {

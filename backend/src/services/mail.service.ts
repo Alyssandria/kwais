@@ -1,16 +1,43 @@
+import nodemailer, { type Transporter } from 'nodemailer';
 import { env } from '../config/env.js';
 
-interface Message {
+export interface Message {
   to: string;
   subject: string;
   text: string;
 }
 
-async function deliver(msg: Message): Promise<void> {
-  if (env.NODE_ENV === 'test') return;
+let transporter: Transporter | null = null;
+
+function smtp(): Transporter {
+  transporter ??= nodemailer.createTransport({
+    host: env.SMTP_HOST,
+    port: env.SMTP_PORT,
+    secure: env.SMTP_PORT === 465,
+    auth: { user: env.SMTP_USER, pass: env.SMTP_PASS },
+  });
+  return transporter;
+}
+
+function printToConsole(msg: Message) {
   console.log(
-    ['', '──── Email (development: not actually sent) ────', `To:      ${msg.to}`, `Subject: ${msg.subject}`, '', msg.text, '────────────────────────────────────────────────', ''].join('\n'),
+    ['', '──── Email (MAIL_TRANSPORT=console: not actually sent) ────', `To:      ${msg.to}`, `Subject: ${msg.subject}`, '', msg.text, '──────────────────────────────────────────────────────────', ''].join('\n'),
   );
+}
+
+export async function deliver(msg: Message): Promise<boolean> {
+  if (env.NODE_ENV === 'test') return true;
+  if (env.MAIL_TRANSPORT === 'console') {
+    printToConsole(msg);
+    return true;
+  }
+  try {
+    await smtp().sendMail({ from: env.MAIL_FROM, to: msg.to, subject: msg.subject, text: msg.text });
+    return true;
+  } catch (err) {
+    console.error(`Email to ${msg.to} failed: ${(err as Error).message}`);
+    return false;
+  }
 }
 
 export const MailService = {

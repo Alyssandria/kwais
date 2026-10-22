@@ -8,11 +8,12 @@ const changePassword = vi.fn();
 const logoutAll = vi.fn();
 const deleteAccount = vi.fn();
 const download = vi.fn();
+let role: 'patient' | 'doctor' = 'patient';
 const acceptSession = vi.fn();
 const endSession = vi.fn();
 
 vi.mock('@/features/auth/AuthProvider', () => ({
-  useAuth: () => ({ user: { email: 'ana@example.com', patientCode: 'KW-000123' }, acceptSession, endSession }),
+  useAuth: () => ({ user: { email: 'ana@example.com', patientCode: role === 'patient' ? 'KW-000123' : null, role }, acceptSession, endSession }),
 }));
 vi.mock('@/features/profile/api', () => ({
   useConsents: () => ({
@@ -60,7 +61,10 @@ function renderPage() {
   );
 }
 
-beforeEach(() => vi.clearAllMocks());
+beforeEach(() => {
+  vi.clearAllMocks();
+  role = 'patient';
+});
 
 describe('SettingsPage', () => {
   it('shows the account, consents and activity', () => {
@@ -134,5 +138,14 @@ describe('SettingsPage', () => {
     expect(deleteAccount).toHaveBeenCalledWith({ password: 'pw', confirm: 'DELETE' });
     expect(endSession).toHaveBeenCalled();
     expect(await screen.findByText('Home page')).toBeInTheDocument();
+  });
+
+  it('leaves out patient-only sections for doctors', () => {
+    role = 'doctor';
+    renderPage();
+    expect(screen.queryByRole('region', { name: 'Privacy choices' })).not.toBeInTheDocument();
+    expect(screen.queryByText('Patient code')).not.toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'Your data' })).toHaveTextContent('your doctor profile');
+    expect(screen.getByRole('region', { name: 'Delete account' })).toHaveTextContent('deletes your account and doctor profile');
   });
 });

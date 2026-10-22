@@ -8,6 +8,7 @@ vi.mock('../../src/models/user.model.js', () => ({
     emailExists: vi.fn(),
     patientCodeExists: vi.fn(),
     createPatient: vi.fn(),
+    createDoctor: vi.fn(),
     recordFailedLogin: vi.fn(),
     recordSuccessfulLogin: vi.fn(),
     updatePassword: vi.fn(),
@@ -43,6 +44,7 @@ const publicUser = {
   status: 'active' as const,
   createdAt: new Date(),
   patientProfile: { firstName: 'Maria', lastName: 'Santos', patientCode: 'KW-000123', onboardingDoneAt: null },
+  doctorProfile: null,
 };
 
 beforeEach(() => vi.clearAllMocks());
@@ -66,6 +68,28 @@ describe('register', () => {
     expect(s.user).toMatchObject({ firstName: 'Maria', patientCode: 'KW-000123', onboardingComplete: false });
     expect(verifyAccessToken(s.accessToken, process.env.JWT_ACCESS_SECRET!)).toEqual({ sub: 'u1', role: 'patient' });
     expect(RefreshTokenModel.create).toHaveBeenCalledWith(expect.objectContaining({ tokenHash: sha256(s.refreshToken) }));
+  });
+
+  it('creates a doctor with only the terms consent and no patient code', async () => {
+    vi.mocked(UserModel.emailExists).mockResolvedValue(false);
+    vi.mocked(UserModel.createDoctor).mockResolvedValue({
+      ...publicUser,
+      id: 'd1',
+      email: 'dr.reyes@example.com',
+      role: 'doctor',
+      patientProfile: null,
+      doctorProfile: { firstName: 'Jose', lastName: 'Reyes' },
+    });
+
+    const s = await AuthService.register(
+      { role: 'doctor', email: 'dr.reyes@example.com', password: 'kidney-care-2026', firstName: 'Jose', lastName: 'Reyes', acceptTerms: true, prcLicense: '0123456', specialty: 'Nephrology', clinic: null },
+      meta,
+    );
+
+    expect(UserModel.createPatient).not.toHaveBeenCalled();
+    expect(vi.mocked(UserModel.createDoctor).mock.calls[0]![0]).toMatchObject({ email: 'dr.reyes@example.com', prcLicense: '0123456', specialty: 'Nephrology', clinic: null });
+    expect(s.user).toEqual({ id: 'd1', email: 'dr.reyes@example.com', role: 'doctor', firstName: 'Jose', lastName: 'Reyes', patientCode: null, onboardingComplete: true });
+    expect(verifyAccessToken(s.accessToken, process.env.JWT_ACCESS_SECRET!)).toEqual({ sub: 'd1', role: 'doctor' });
   });
 
   it('refuses a duplicate email', async () => {

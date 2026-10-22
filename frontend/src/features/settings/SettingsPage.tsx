@@ -176,7 +176,7 @@ function PrivacyChoices() {
   );
 }
 
-function YourData() {
+function YourData({ isPatient }: { isPatient: boolean }) {
   const toast = useToast();
   const download = useDownloadMyData();
   const [error, setError] = useState<string | null>(null);
@@ -199,15 +199,16 @@ function YourData() {
         </div>
       )}
       <p className="text-[13.5px]">
-        One JSON file with your profile, targets (including old ones), lab results, meals with every analysis, what was sent to the AI, consents,
-        notifications and account activity.
+        {isPatient
+          ? 'One JSON file with your profile, targets (including old ones), lab results, meals with every analysis, what was sent to the AI, consents, notifications and account activity.'
+          : 'One JSON file with your account, your doctor profile, consents, notifications and account activity.'}
       </p>
       <div>
         <Button variant="primary" onClick={run} loading={download.isPending} iconLeft={<Download className="size-4" aria-hidden />}>
           Download my data
         </Button>
       </div>
-      <p className="text-[12.5px] text-muted">Meals you delete are kept for 30 days in case of mistakes, then removed for good.</p>
+      {isPatient && <p className="text-[12.5px] text-muted">Meals you delete are kept for 30 days in case of mistakes, then removed for good.</p>}
     </div>
   );
 }
@@ -247,7 +248,7 @@ const deleteSchema = z.object({
 });
 type DeleteValues = z.infer<typeof deleteSchema>;
 
-function DeleteAccount() {
+function DeleteAccount({ isPatient }: { isPatient: boolean }) {
   const { endSession } = useAuth();
   const navigate = useNavigate();
   const toast = useToast();
@@ -284,8 +285,10 @@ function DeleteAccount() {
   return (
     <div className="flex flex-col gap-3">
       <p className="text-[13.5px]">
-        This permanently deletes your profile, meals, analyses, lab results, targets and notifications. It cannot be undone. A minimal security log
-        (what happened and when, without your health data) is kept for up to a year.
+        {isPatient
+          ? 'This permanently deletes your profile, meals, analyses, lab results, targets and notifications. It cannot be undone.'
+          : 'This permanently deletes your account and doctor profile. It cannot be undone.'}{' '}
+        A minimal security log (what happened and when, without your health data) is kept for up to a year.
       </p>
       <div>
         <Button variant="danger" onClick={() => setOpen(true)} iconLeft={<Trash2 className="size-4" aria-hidden />}>
@@ -324,6 +327,7 @@ function DeleteAccount() {
 
 export function SettingsPage() {
   const { user } = useAuth();
+  const isPatient = user?.role === 'patient';
   return (
     <div className="flex max-w-3xl flex-col gap-5">
       <PageHeader title="Settings" description="Your sign-in, privacy choices and the data K-WAIS keeps about you." />
@@ -346,12 +350,14 @@ export function SettingsPage() {
         <SignOutEverywhere />
       </Section>
 
-      <Section id="privacy" title="Privacy choices" description="What you agreed to, and when.">
-        <PrivacyChoices />
-      </Section>
+      {isPatient && (
+        <Section id="privacy" title="Privacy choices" description="What you agreed to, and when.">
+          <PrivacyChoices />
+        </Section>
+      )}
 
       <Section id="data" title="Your data" description="You can take a copy of everything at any time.">
-        <YourData />
+        <YourData isPatient={isPatient} />
       </Section>
 
       <Section id="activity" title="Account activity" description="Sign-ins and changes to your records, newest first. If something looks wrong, change your password.">
@@ -359,7 +365,7 @@ export function SettingsPage() {
       </Section>
 
       <Section id="delete" title="Delete account" tone="danger">
-        <DeleteAccount />
+        <DeleteAccount isPatient={isPatient} />
       </Section>
     </div>
   );

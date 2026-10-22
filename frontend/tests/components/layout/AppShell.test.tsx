@@ -2,7 +2,7 @@ import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { AppShell } from '@/components/layout/AppShell';
-import { patientNav } from '@/components/layout/nav';
+import { doctorNav, patientNav } from '@/components/layout/nav';
 
 const onSignOut = vi.fn();
 
@@ -56,5 +56,18 @@ describe('AppShell', () => {
     const quick = screen.getByRole('navigation', { name: 'Quick' });
     expect(within(quick).getAllByRole('link').map((a) => a.textContent)).toEqual(['Home', 'History', 'Labs', 'Profile']);
     expect(screen.getByRole('link', { name: 'Add a meal' })).toHaveAttribute('href', '/patient/meals/new');
+  });
+
+  it('can leave out the bell and the add button, for doctors', () => {
+    render(
+      <MemoryRouter initialEntries={['/doctor/dashboard']}>
+        <AppShell nav={doctorNav} user={{ firstName: 'Jose', lastName: 'Reyes' }} onSignOut={vi.fn()} notificationsTo={null} profileTo="/doctor/profile" addTo={null}>
+          <p>Doctor page</p>
+        </AppShell>
+      </MemoryRouter>,
+    );
+    expect(screen.queryByRole('link', { name: /Notifications/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Add a meal' })).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Jose Reyes/ })).toHaveAttribute('href', '/doctor/profile');
   });
 });

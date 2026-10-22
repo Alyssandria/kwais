@@ -19,6 +19,9 @@ import { HistoryPage } from '@/features/meals/HistoryPage';
 import { AnalyticsPage } from '@/features/analytics/AnalyticsPage';
 import { NotificationsPage } from '@/features/notifications/NotificationsPage';
 import { SettingsPage } from '@/features/settings/SettingsPage';
+import { DoctorLayout } from '@/pages/doctor/DoctorLayout';
+import { DoctorHomePage } from '@/features/doctor/DoctorHomePage';
+import { DoctorProfilePage } from '@/features/doctor/DoctorProfilePage';
 import { ComponentGallery } from '@/pages/dev/ComponentGallery';
 import { StatusPage } from '@/pages/dev/StatusPage';
 
@@ -60,6 +63,21 @@ const patientRoutes: RouteObject = {
   ],
 };
 
+const doctorRoutes: RouteObject = {
+  path: '/doctor',
+  element: (
+    <RequireAuth role="doctor">
+      <DoctorLayout />
+    </RequireAuth>
+  ),
+  children: [
+    { index: true, element: <Navigate to="dashboard" replace /> },
+    { path: 'dashboard', element: <DoctorHomePage /> },
+    { path: 'profile', element: <DoctorProfilePage /> },
+    { path: 'settings', element: <SettingsPage /> },
+  ],
+};
+
 const onboardingRoute: RouteObject = {
   path: '/patient/onboarding',
   element: (
@@ -81,6 +99,7 @@ export const router = createBrowserRouter([
   ...authRoutes,
   onboardingRoute,
   patientRoutes,
+  doctorRoutes,
   ...devRoutes,
   { path: '*', element: <NotFoundPage /> },
 ]);

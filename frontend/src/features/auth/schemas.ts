@@ -13,17 +13,31 @@ export const loginSchema = z.object({
   password: z.string().min(1, 'Enter your password'),
 });
 
+export const prcLicenseRule = z
+  .string()
+  .trim()
+  .refine((v) => v === '' || /^\d{4,10}$/.test(v.replace(/\s/g, '')), 'Enter the digits of your PRC licence number');
+
 export const registerSchema = z
   .object({
+    role: z.enum(['patient', 'doctor']),
     firstName: z.string().trim().min(1, 'Enter your first name').max(80),
     lastName: z.string().trim().min(1, 'Enter your last name').max(80),
     email,
     password: passwordRule,
     confirmPassword: z.string(),
+    prcLicense: prcLicenseRule,
+    specialty: z.string().trim().max(80, 'Specialty is too long'),
+    clinic: z.string().trim().max(120, 'Clinic or hospital is too long'),
     acceptTerms: z.boolean().refine((v) => v, 'You need to accept the terms to continue'),
-    acceptHealthData: z.boolean().refine((v) => v, 'K-WAIS needs this consent to store meals and lab results'),
+    acceptHealthData: z.boolean(),
   })
-  .refine((v) => v.password === v.confirmPassword, { path: ['confirmPassword'], message: 'Passwords do not match' });
+  .superRefine((v, ctx) => {
+    if (v.password !== v.confirmPassword) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['confirmPassword'], message: 'Passwords do not match' });
+    if (v.role === 'patient' && !v.acceptHealthData) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['acceptHealthData'], message: 'K-WAIS needs this consent to store meals and lab results' });
+    }
+  });
 
 export const forgotSchema = z.object({ email });
 

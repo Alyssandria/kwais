@@ -43,6 +43,7 @@ export const PrivacyModel = {
             },
           },
         },
+        doctorProfile: { omit: { id: true, userId: true } },
         consents: { orderBy: { createdAt: 'asc' }, omit: { userId: true } },
         notifications: { orderBy: { createdAt: 'asc' }, omit: { userId: true } },
         dataRequests: { orderBy: { createdAt: 'asc' }, omit: { userId: true } },

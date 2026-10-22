@@ -25,12 +25,24 @@ const EnvSchema = z.object({
   AI_MAX_REQUESTS_PER_MINUTE: z.coerce.number().int().positive().default(10),
   AI_MAX_QUEUE_WAIT_MS: z.coerce.number().int().nonnegative().default(15000),
 
+  MAIL_TRANSPORT: z.enum(['console', 'smtp']).default('console'),
+  MAIL_FROM: z.string().default('K-WAIS <no-reply@kwais.local>'),
+  SMTP_HOST: z.string().default('smtp-relay.brevo.com'),
+  SMTP_PORT: z.coerce.number().int().positive().default(587),
+  SMTP_USER: z.string().optional(),
+  SMTP_PASS: z.string().optional(),
+
   TRUST_PROXY: z.coerce.number().int().nonnegative().default(0),
   AUTH_ATTEMPTS_PER_15_MIN: z.coerce.number().int().positive().default(10),
   API_REQUESTS_PER_15_MIN: z.coerce.number().int().positive().default(600),
   SOFT_DELETE_RETENTION_DAYS: z.coerce.number().int().positive().default(30),
   AUDIT_RETENTION_DAYS: z.coerce.number().int().positive().default(365),
 }).superRefine((e, ctx) => {
+  if (e.MAIL_TRANSPORT === 'smtp') {
+    for (const key of ['SMTP_USER', 'SMTP_PASS'] as const) {
+      if (!e[key]) ctx.addIssue({ code: z.ZodIssueCode.custom, path: [key], message: 'Required when MAIL_TRANSPORT=smtp' });
+    }
+  }
   if (e.NODE_ENV !== 'production') return;
   for (const key of ['JWT_ACCESS_SECRET', 'JWT_REFRESH_SECRET'] as const) {
     if (e[key].startsWith('change-me')) {

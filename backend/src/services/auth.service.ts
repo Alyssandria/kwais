@@ -34,14 +34,15 @@ export interface Session {
 }
 
 export function toAuthUser(u: PublicUser): AuthUser {
+  const names = u.patientProfile ?? u.doctorProfile;
   return {
     id: u.id,
     email: u.email,
     role: u.role,
-    firstName: u.patientProfile?.firstName ?? null,
-    lastName: u.patientProfile?.lastName ?? null,
+    firstName: names?.firstName ?? null,
+    lastName: names?.lastName ?? null,
     patientCode: u.patientProfile?.patientCode ?? null,
-    onboardingComplete: Boolean(u.patientProfile?.onboardingDoneAt),
+    onboardingComplete: u.role === 'doctor' || Boolean(u.patientProfile?.onboardingDoneAt),
   };
 }
 
@@ -81,14 +82,17 @@ export async function verifyCurrentPassword(userId: string, password: string): P
   }
 }
 
-export interface RegisterInput {
+interface AccountInput {
   email: string;
   password: string;
   firstName: string;
   lastName: string;
   acceptTerms: true;
-  acceptHealthData: true;
 }
+
+export type RegisterInput =
+  | (AccountInput & { role?: 'patient'; acceptHealthData: true })
+  | (AccountInput & { role: 'doctor'; prcLicense?: string | null; specialty?: string | null; clinic?: string | null });
 
 export const AuthService = {
   async register(input: RegisterInput, meta: RequestMeta): Promise<Session> {
@@ -96,19 +100,25 @@ export const AuthService = {
     if (await UserModel.emailExists(email)) {
       throw HttpError.conflict('An account with this email already exists. Try signing in instead.');
     }
-    const user = await UserModel.createPatient({
+    const account = {
       email,
       passwordHash: await hashPassword(input.password),
       firstName: input.firstName.trim(),
       lastName: input.lastName.trim(),
-      patientCode: await uniquePatientCode(),
       policyVersion: POLICY_VERSION,
-      consents: [
-        { type: 'terms', granted: input.acceptTerms },
-        { type: 'health_data', granted: input.acceptHealthData },
-      ],
-    });
-    await AuditService.record('create', 'user', meta, { actorId: user.id, actorRole: 'patient', resourceId: user.id });
+    };
+    const user =
+      input.role === 'doctor'
+        ? await UserModel.createDoctor({ ...account, prcLicense: input.prcLicense ?? null, specialty: input.specialty ?? null, clinic: input.clinic ?? null })
+        : await UserModel.createPatient({
+            ...account,
+            patientCode: await uniquePatientCode(),
+            consents: [
+              { type: 'terms', granted: input.acceptTerms },
+              { type: 'health_data', granted: input.acceptHealthData },
+            ],
+          });
+    await AuditService.record('create', 'user', meta, { actorId: user.id, actorRole: user.role, resourceId: user.id });
     return issueSession(user);
   },
 
@@ -190,7 +200,7 @@ export const AuthService = {
       expiresAt: new Date(Date.now() + env.PASSWORD_RESET_TTL_MINUTES * 60_000),
     });
     const user = await UserModel.findPublicById(creds.id);
-    await MailService.sendPasswordReset(creds.email, user?.patientProfile?.firstName, token, env.PASSWORD_RESET_TTL_MINUTES);
+    await MailService.sendPasswordReset(creds.email, user ? (toAuthUser(user).firstName ?? undefined) : undefined, token, env.PASSWORD_RESET_TTL_MINUTES);
     await AuditService.record('update', 'password_reset_request', meta, { actorId: creds.id, resourceId: creds.id });
   },
 
@@ -213,7 +223,7 @@ export const AuthService = {
     await UserModel.updatePassword(userId, await hashPassword(newPassword));
     await PasswordResetModel.invalidateAllForUser(userId);
     await RefreshTokenModel.revokeAllForUser(userId);
-    await AuditService.record('update', 'password', meta, { actorId: userId, actorRole: 'patient', resourceId: userId });
+    await AuditService.record('update', 'password', meta, { actorId: userId, resourceId: userId });
     const user = await UserModel.findPublicById(userId);
     if (!user) throw HttpError.unauthorized();
     return issueSession(user);

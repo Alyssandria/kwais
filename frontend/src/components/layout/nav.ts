@@ -1,5 +1,7 @@
 import {
   Bell,
+  IdCard,
+  Users,
   FlaskConical,
   History,
   LayoutDashboard,
@@ -28,4 +30,10 @@ export const patientNav: NavItem[] = [
   { to: '/patient/notifications', label: 'Notifications', icon: Bell },
   { to: '/patient/profile', label: 'Profile', icon: User, mobile: true },
   { to: '/patient/settings', label: 'Settings', icon: Settings },
+];
+
+export const doctorNav: NavItem[] = [
+  { to: '/doctor/dashboard', label: 'Patients', icon: Users, mobile: true },
+  { to: '/doctor/profile', label: 'Your profile', short: 'Profile', icon: IdCard, mobile: true },
+  { to: '/doctor/settings', label: 'Settings', icon: Settings, mobile: true },
 ];

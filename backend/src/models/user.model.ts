@@ -20,6 +20,9 @@ const publicSelect = {
   patientProfile: {
     select: { firstName: true, lastName: true, patientCode: true, onboardingDoneAt: true },
   },
+  doctorProfile: {
+    select: { firstName: true, lastName: true },
+  },
 } satisfies Prisma.UserSelect;
 
 export type UserCredentials = Prisma.UserGetPayload<{ select: typeof credentialsSelect }>;
@@ -32,6 +35,17 @@ export interface NewPatient {
   lastName: string;
   patientCode: string;
   consents: { type: ConsentType; granted: boolean }[];
+  policyVersion: string;
+}
+
+export interface NewDoctor {
+  email: string;
+  passwordHash: string;
+  firstName: string;
+  lastName: string;
+  prcLicense: string | null;
+  specialty: string | null;
+  clinic: string | null;
   policyVersion: string;
 }
 
@@ -72,6 +86,27 @@ export const UserModel = {
             policyVersion: input.policyVersion,
           })),
         },
+      },
+      select: publicSelect,
+    });
+  },
+
+  createDoctor(input: NewDoctor): Promise<PublicUser> {
+    return prisma.user.create({
+      data: {
+        email: input.email,
+        passwordHash: input.passwordHash,
+        role: 'doctor',
+        doctorProfile: {
+          create: {
+            firstName: input.firstName,
+            lastName: input.lastName,
+            prcLicense: input.prcLicense,
+            specialty: input.specialty,
+            clinic: input.clinic,
+          },
+        },
+        consents: { create: [{ consentType: 'terms', granted: true, policyVersion: input.policyVersion }] },
       },
       select: publicSelect,
     });

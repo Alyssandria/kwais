@@ -14,7 +14,7 @@ export interface ActivityEntry {
 export function useActivity(limit = 30) {
   return useQuery({
     queryKey: ['activity', limit],
-    queryFn: () => api.get<{ data: ActivityEntry[] }>('/patients/me/activity', { params: { limit } }).then((r) => r.data.data),
+    queryFn: () => api.get<{ data: ActivityEntry[] }>('/account/activity', { params: { limit } }).then((r) => r.data.data),
   });
 }
 
@@ -31,7 +31,7 @@ export function useLogoutEverywhere() {
 
 export function useDeleteAccount() {
   return useMutation({
-    mutationFn: (body: { password: string; confirm: 'DELETE' }) => api.post('/patients/me/delete-account', body).then(() => undefined),
+    mutationFn: (body: { password: string; confirm: 'DELETE' }) => api.post('/account/delete', body).then(() => undefined),
   });
 }
 
@@ -41,7 +41,7 @@ export function filenameFrom(disposition: string | undefined, fallback: string):
 }
 
 export async function downloadMyData(): Promise<string> {
-  const res = await api.get<Blob>('/patients/me/export', { responseType: 'blob' });
+  const res = await api.get<Blob>('/account/export', { responseType: 'blob' });
   const name = filenameFrom(res.headers['content-disposition'] as string | undefined, 'kwais-export.json');
   const url = URL.createObjectURL(res.data);
   const a = document.createElement('a');

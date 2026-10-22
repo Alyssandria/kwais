@@ -3,13 +3,13 @@ import { Plus } from 'lucide-react';
 import { cn } from '@/lib/cn';
 import type { NavItem } from './nav';
 
-export function BottomNav({ items, addTo }: { items: NavItem[]; addTo: string }) {
+export function BottomNav({ items, addTo }: { items: NavItem[]; addTo: string | null }) {
   const tabs = items.filter((i) => i.mobile).slice(0, 4);
   const { pathname } = useLocation();
   const onAddScreen = pathname === addTo;
   return (
     <>
-      {!onAddScreen && (
+      {addTo && !onAddScreen && (
         <Link
           to={addTo}
           aria-label="Add a meal"
