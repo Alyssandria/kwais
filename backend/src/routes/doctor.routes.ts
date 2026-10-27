@@ -4,6 +4,7 @@ import { DoctorPatientsController, DoctorProfileController } from '../controller
 import { careRequestLimiter } from '../middleware/rate-limits.js';
 import { requireDoctor } from '../middleware/require-doctor.js';
 import { validateBody } from '../middleware/validate.js';
+import { doctorPatientRoutes } from './doctor-patient.routes.js';
 import { CareClaimSchema, CareRequestSchema } from '../schemas/care.schemas.js';
 import { DoctorProfileUpdateSchema } from '../schemas/doctor.schemas.js';
 
@@ -17,3 +18,4 @@ doctorMeRoutes.get('/care/invites/:token', DoctorCareController.previewInvite);
 doctorMeRoutes.post('/care/invites/claim', validateBody(CareClaimSchema), DoctorCareController.claimInvite);
 doctorMeRoutes.post('/care/links/:id/:action', DoctorCareController.act);
 doctorMeRoutes.get('/patients', DoctorPatientsController.list);
+doctorMeRoutes.use('/patients/:patientId', doctorPatientRoutes);

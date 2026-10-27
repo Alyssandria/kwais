@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Plus, Search, Users } from 'lucide-react';
 import { Badge, Button, Card, CardHeader, EmptyState, ErrorState, LoadingRegion, Skeleton } from '@/components/ui';
 import { patientMeta } from '@/features/care/format';
@@ -240,7 +241,9 @@ export function PatientList({ onAdd, onStop }: { onAdd: () => void; onStop: (lin
                             {initials(r.patient.name)}
                           </span>
                           <span className="flex flex-col">
-                            <span className="font-bold">{r.patient.name}</span>
+                            <Link to={`/doctor/patients/${r.patient.patientId}`} className="font-bold">
+                              {r.patient.name}
+                            </Link>
                             <span className="text-[12.5px] text-muted">{patientMeta(r.patient)}</span>
                           </span>
                         </div>
@@ -276,7 +279,9 @@ export function PatientList({ onAdd, onStop }: { onAdd: () => void; onStop: (lin
                       {initials(r.patient.name)}
                     </span>
                     <div className="min-w-0 flex-1">
-                      <p className="font-bold">{r.patient.name}</p>
+                      <Link to={`/doctor/patients/${r.patient.patientId}`} className="font-bold">
+                        {r.patient.name}
+                      </Link>
                       <p className="text-[12.5px] text-muted">{patientMeta(r.patient)}</p>
                     </div>
                   </div>

@@ -5,6 +5,7 @@ import { bandFor } from '@/components/domain/ScoreRing';
 import { Button, Card, EmptyState, ErrorState, LoadingRegion, PageHeader, Segmented, Skeleton } from '@/components/ui';
 import { errorMessage } from '@/lib/api';
 import { cn } from '@/lib/cn';
+import { usePatientScope } from '@/lib/patient-scope';
 import { useMealHistory, type Meal, type MealCategory, type MealStatus } from './api';
 import { MEAL_TYPES, mealLabel } from './options';
 
@@ -37,10 +38,14 @@ function dayHeading(iso: string) {
   return d.toLocaleDateString('en-PH', { weekday: 'long', day: 'numeric', month: 'long' });
 }
 
-function MealRow({ meal }: { meal: Meal }) {
+function MealRow({ meal, patientId }: { meal: Meal; patientId: string | null }) {
   const score = meal.analysis?.score ?? null;
   const time = new Date(meal.eatenAt).toLocaleTimeString('en-PH', { hour: 'numeric', minute: '2-digit' });
-  const href = meal.status === 'draft' ? `/patient/meals/new?draft=${meal.id}` : `/patient/meals/${meal.id}`;
+  const href = patientId
+    ? `/doctor/patients/${patientId}/meals/${meal.id}`
+    : meal.status === 'draft'
+      ? `/patient/meals/new?draft=${meal.id}`
+      : `/patient/meals/${meal.id}`;
   const status =
     meal.status === 'draft' ? 'Draft' : meal.status === 'saved' ? 'Saved · not analysed' : score == null ? 'Analysed · no score' : null;
 
@@ -68,6 +73,7 @@ function MealRow({ meal }: { meal: Meal }) {
 }
 
 export function HistoryPage() {
+  const patientId = usePatientScope();
   const [status, setStatus] = useState<StatusFilter>('all');
   const [category, setCategory] = useState<CategoryFilter>('all');
   const history = useMealHistory({
@@ -84,29 +90,42 @@ export function HistoryPage() {
     else groups.push({ key, heading: dayHeading(m.eatenAt), meals: [m] });
   }
 
+  const logLink = patientId ? undefined : (
+    <Link to="/patient/meals/new" className="font-semibold">
+      Log a meal
+    </Link>
+  );
+
   return (
     <div className="flex flex-col gap-5">
-      <PageHeader
-        title="Meal history"
-        description="Every meal you logged, newest first."
-        actions={
-          <Link
-            to="/patient/meals/new"
-            className="inline-flex h-11 items-center gap-2 rounded-card bg-accent px-4 font-extrabold text-ink no-underline shadow-card hover:bg-[#fca85a]"
-          >
-            <Plus className="size-4" aria-hidden />
-            Log a meal
-          </Link>
-        }
-      />
+      {patientId ? (
+        <div>
+          <h2 className="text-lg font-extrabold">Meals</h2>
+          <p className="text-[13.5px] text-muted">Saved and analysed meals, newest first. Drafts stay private to the patient.</p>
+        </div>
+      ) : (
+        <PageHeader
+          title="Meal history"
+          description="Every meal you logged, newest first."
+          actions={
+            <Link
+              to="/patient/meals/new"
+              className="inline-flex h-11 items-center gap-2 rounded-card bg-accent px-4 font-extrabold text-ink no-underline shadow-card hover:bg-[#fca85a]"
+            >
+              <Plus className="size-4" aria-hidden />
+              Log a meal
+            </Link>
+          }
+        />
+      )}
 
       <div className="flex flex-wrap gap-3">
-        <Segmented label="Show" value={status} options={STATUS_OPTIONS} onChange={setStatus} />
+        <Segmented label="Show" value={status} options={patientId ? STATUS_OPTIONS.filter((o) => o.value !== 'draft') : STATUS_OPTIONS} onChange={setStatus} />
         <Segmented label="Meal" value={category} options={CATEGORY_OPTIONS} onChange={setCategory} />
       </div>
 
       {history.isPending ? (
-        <LoadingRegion label="Loading your meals">
+        <LoadingRegion label={patientId ? 'Loading meals' : 'Loading your meals'}>
           <div className="flex flex-col gap-2.5">
             {[0, 1, 2, 3].map((i) => (
               <Skeleton key={i} className="h-[74px] rounded-card" />
@@ -115,19 +134,17 @@ export function HistoryPage() {
         </LoadingRegion>
       ) : history.isError ? (
         <Card padding="none">
-          <ErrorState title="We couldn’t load your meals" message={errorMessage(history.error)} onRetry={() => void history.refetch()} />
+          <ErrorState title={patientId ? 'We couldn’t load these meals' : 'We couldn’t load your meals'} message={errorMessage(history.error)} onRetry={() => void history.refetch()} />
         </Card>
       ) : meals.length === 0 ? (
         <Card padding="none">
           <EmptyState
             icon={Utensils}
             title={status === 'all' && category === 'all' ? 'No meals yet' : 'No meals match these filters'}
-            description={status === 'all' && category === 'all' ? 'Meals you log will appear here.' : 'Try another filter.'}
-            action={
-              <Link to="/patient/meals/new" className="font-semibold">
-                Log a meal
-              </Link>
+            description={
+              status !== 'all' || category !== 'all' ? 'Try another filter.' : patientId ? 'Meals the patient saves will appear here.' : 'Meals you log will appear here.'
             }
+            action={logLink}
           />
         </Card>
       ) : (
@@ -138,7 +155,7 @@ export function HistoryPage() {
               <ul className="flex flex-col gap-2">
                 {g.meals.map((m) => (
                   <li key={m.id}>
-                    <MealRow meal={m} />
+                    <MealRow meal={m} patientId={patientId} />
                   </li>
                 ))}
               </ul>

@@ -18,6 +18,8 @@ describe('describeActivity', () => {
 
   it('says when a clinician did it', () => {
     expect(describeActivity({ action: 'read', resourceType: 'lab_result', byYou: false, actorRole: 'doctor' })).toBe('Your clinician: viewed a lab result');
+    expect(describeActivity({ action: 'read', resourceType: 'meal_history', byYou: false, actorRole: 'doctor' })).toBe('Your clinician: viewed your meal history');
+    expect(describeActivity({ action: 'read', resourceType: 'patient_record', byYou: false, actorRole: 'doctor' })).toBe('Your clinician: viewed your record');
   });
 
   it('flags failed sign-ins and blocked tokens', () => {

@@ -5,6 +5,7 @@ import { ScoreRing } from '@/components/domain/ScoreRing';
 import { Badge, Button, Card, CardHeader, SourceTag, StatusLabel, useToast } from '@/components/ui';
 import { useTargets } from '@/features/profile/api';
 import { cn } from '@/lib/cn';
+import { usePatientScope } from '@/lib/patient-scope';
 import { NUTRIENTS, NUTRIENT_KEYS, fmt, percentOfTarget, targetStatus, type NutrientKey } from '@/lib/nutrition';
 import type { AnalysedItem, MealAnalysis } from './api';
 import { amountLabel } from './options';
@@ -45,14 +46,23 @@ export function ScoreCard({
   busy,
 }: {
   analysis: MealAnalysis;
-  onAllowAi: () => void;
-  onRetry: () => void;
-  busy: boolean;
+  onAllowAi?: () => void;
+  onRetry?: () => void;
+  busy?: boolean;
 }) {
   const { ai, score } = analysis;
+  const forDoctor = usePatientScope() != null;
 
   if (ai.status === 'unavailable') {
     const noConsent = ai.reason === 'no_consent';
+    if (forDoctor) {
+      return (
+        <Card as="section" tone="ai" aria-labelledby="score-title">
+          <CardHeader id="score-title" title={noConsent ? 'No AI analysis: the patient has AI processing off' : 'AI analysis didn’t run for this meal'} />
+          <p className="max-w-2xl text-[14px]">The nutrient numbers below are complete. There is no score or suggestions for this meal.</p>
+        </Card>
+      );
+    }
     return (
       <Card as="section" tone="ai" aria-labelledby="score-title">
         <CardHeader
@@ -69,7 +79,7 @@ export function ScoreCard({
             ? 'This meal has its nutrient numbers, but no score or suggestions. If you allow AI processing, the meal and the health details you entered are sent to Google Gemini for analysis. Your name and contact details are never sent.'
             : 'The nutrient numbers below are complete. Only the score and suggestions are missing.'}
         </p>
-        <Button className="mt-4" onClick={noConsent ? onAllowAi : onRetry} loading={busy}>
+        <Button className="mt-4" onClick={noConsent ? onAllowAi : onRetry} loading={busy ?? false}>
           {noConsent ? 'Allow AI and analyse' : 'Try again'}
         </Button>
       </Card>
@@ -86,7 +96,13 @@ export function ScoreCard({
         {score != null ? (
           <>
             <ScoreRing score={score} size={104} />
-            {out?.scoreBasis === 'general' ? (
+            {forDoctor ? (
+              <p className="text-[12.5px] text-muted">
+                {out?.scoreBasis === 'general'
+                  ? 'Scored against general CKD guidance: the patient had no targets or labs with ranges at the time.'
+                  : 'Starts at 10. Points come off for the patient’s targets, restrictions, allergies and lab ranges, general CKD guidance where there is no target, and a little for what they wrote.'}
+              </p>
+            ) : out?.scoreBasis === 'general' ? (
               <p className="rounded-field bg-info-soft px-3 py-2 text-[12.5px] text-info">
                 Scored against general guidance for people with CKD. Add your{' '}
                 <Link to="/patient/profile">daily targets</Link> or <Link to="/patient/labs">lab results</Link> for a score that fits you.
@@ -101,10 +117,14 @@ export function ScoreCard({
         ) : (
           <>
             <p className="text-[22px] font-extrabold">No score yet</p>
-            <p className="text-[13px] text-muted">
-              Add a <Link to="/patient/profile">daily target</Link> or a <Link to="/patient/labs">lab result</Link> with its range, and
-              the next analysis will include a score.
-            </p>
+            {forDoctor ? (
+              <p className="text-[13px] text-muted">The patient had no targets or lab ranges when this meal was analysed.</p>
+            ) : (
+              <p className="text-[13px] text-muted">
+                Add a <Link to="/patient/profile">daily target</Link> or a <Link to="/patient/labs">lab result</Link> with its range, and
+                the next analysis will include a score.
+              </p>
+            )}
           </>
         )}
       </div>
@@ -321,11 +341,17 @@ export function DataQuality({ analysis }: { analysis: MealAnalysis }) {
 }
 
 export function Actions({ analysis }: { analysis: MealAnalysis }) {
+  const forDoctor = usePatientScope() != null;
   const actions = analysis.ai.output?.actions ?? [];
   if (!actions.length) return null;
   return (
     <Card as="section" aria-labelledby="actions-title" tone="mint" padding="lg">
-      <CardHeader id="actions-title" title="What you can do" subtitle="Practical next steps for this meal and the rest of today." action={<AiLabel status={analysis.ai.status} />} />
+      <CardHeader
+        id="actions-title"
+        title={forDoctor ? 'Suggested to the patient' : 'What you can do'}
+        subtitle={forDoctor ? 'Next steps the patient saw for this meal and the rest of that day.' : 'Practical next steps for this meal and the rest of today.'}
+        action={<AiLabel status={analysis.ai.status} />}
+      />
       <ol className="grid gap-3 sm:grid-cols-2">
         {actions.map((a) => (
           <li key={a.title} className="flex gap-3 rounded-card bg-surface p-4">
@@ -344,6 +370,7 @@ export function Actions({ analysis }: { analysis: MealAnalysis }) {
 
 export function Insights({ analysis }: { analysis: MealAnalysis }) {
   const toast = useToast();
+  const forDoctor = usePatientScope() != null;
   const out = analysis.ai.output;
   if (!out) return null;
   const { observations, concerns, clinicianQuestions } = out;
@@ -373,7 +400,7 @@ export function Insights({ analysis }: { analysis: MealAnalysis }) {
       )}
       {concerns.length > 0 && (
         <Card as="section" aria-labelledby="rev-title">
-          <CardHeader id="rev-title" title="Worth raising with your care team" />
+          <CardHeader id="rev-title" title={forDoctor ? 'Suggested for the care team' : 'Worth raising with your care team'} />
           <ul className="list-disc space-y-1.5 pl-4 text-[14px]">
             {concerns.map((c) => (
               <li key={c}>{c}</li>
@@ -384,7 +411,7 @@ export function Insights({ analysis }: { analysis: MealAnalysis }) {
       )}
       {clinicianQuestions.length > 0 && (
         <Card as="section" aria-labelledby="q-title">
-          <CardHeader id="q-title" title="Questions to ask at your next visit" />
+          <CardHeader id="q-title" title={forDoctor ? 'Questions the patient may bring' : 'Questions to ask at your next visit'} />
           <ol className="list-decimal space-y-1.5 pl-5 text-[14px]">
             {clinicianQuestions.map((q) => (
               <li key={q}>{q}</li>
@@ -399,7 +426,7 @@ export function Insights({ analysis }: { analysis: MealAnalysis }) {
   );
 }
 
-export function AnalysisFooter({ analysis, onReanalyse, busy }: { analysis: MealAnalysis; onReanalyse: () => void; busy: boolean }) {
+export function AnalysisFooter({ analysis, onReanalyse, busy }: { analysis: MealAnalysis; onReanalyse?: () => void; busy?: boolean }) {
   const { ai } = analysis;
   const by = ai.status === 'ok' ? `Gemini (${ai.model}) · prompt ${ai.promptVersion}` : ai.status === 'mock' ? 'sample rules, not AI' : 'no AI';
   return (
@@ -414,9 +441,11 @@ export function AnalysisFooter({ analysis, onReanalyse, busy }: { analysis: Meal
           Analysed {new Date(analysis.createdAt).toLocaleString('en-PH', { dateStyle: 'medium', timeStyle: 'short' })} · {by} · {analysis.engineVersion}
           {analysis.version > 1 ? ` · version ${analysis.version}` : ''}
         </span>
-        <Button variant="ghost" size="sm" onClick={onReanalyse} loading={busy} iconLeft={<RefreshCw className="size-3.5" aria-hidden />}>
-          Analyse again
-        </Button>
+        {onReanalyse && (
+          <Button variant="ghost" size="sm" onClick={onReanalyse} loading={busy} iconLeft={<RefreshCw className="size-3.5" aria-hidden />}>
+            Analyse again
+          </Button>
+        )}
       </div>
       <p>Nutrient values are estimates and may be inaccurate. They do not replace advice from your doctor or dietitian.</p>
     </div>

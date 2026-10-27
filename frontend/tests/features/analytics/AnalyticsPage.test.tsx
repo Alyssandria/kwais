@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import type { PatientAnalytics } from '@/features/analytics/api';
+import { PatientScopeProvider } from '@/lib/patient-scope';
 
 const ranges: number[] = [];
 let data: PatientAnalytics;
@@ -90,5 +91,31 @@ describe('AnalyticsPage', () => {
     data = analytics({ mealsLogged: 0 });
     renderPage();
     expect(screen.getByText('No meals in this period')).toBeInTheDocument();
+  });
+
+  it('speaks about the patient when a doctor views it', () => {
+    render(
+      <MemoryRouter>
+        <PatientScopeProvider patientId="p1">
+          <AnalyticsPage />
+        </PatientScopeProvider>
+      </MemoryRouter>,
+    );
+    expect(screen.queryByRole('heading', { level: 1 })).not.toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 2, name: 'Trends' })).toBeInTheDocument();
+    expect(screen.getByRole('article', { name: 'Sodium' })).toHaveTextContent('105% of the 2,000 mg target');
+  });
+
+  it('offers no logging link to a doctor when the period is empty', () => {
+    data = analytics({ mealsLogged: 0 });
+    render(
+      <MemoryRouter>
+        <PatientScopeProvider patientId="p1">
+          <AnalyticsPage />
+        </PatientScopeProvider>
+      </MemoryRouter>,
+    );
+    expect(screen.getByText('Trends appear once the patient logs meals.')).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Log a meal' })).not.toBeInTheDocument();
   });
 });

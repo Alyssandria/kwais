@@ -8,6 +8,10 @@ const RESOURCE: Record<string, string> = {
   patient_profile: 'your profile',
   onboarding: 'your setup progress',
   doctor_profile: 'your doctor profile',
+  patient_record: 'your record',
+  lab_results: 'your lab results',
+  trends: 'your trends',
+  meal_history: 'your meal history',
 };
 
 const VERB: Record<string, string> = { create: 'Added', update: 'Changed', delete: 'Deleted', read: 'Viewed' };

@@ -1,5 +1,6 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, ApiError, streamLines } from '@/lib/api';
+import { scopedApiPath, scopedKey, usePatientScope } from '@/lib/patient-scope';
 import type { NutrientKey } from '@/lib/nutrition';
 
 export type MealCategory = 'breakfast' | 'lunch' | 'dinner' | 'snack';
@@ -126,9 +127,10 @@ export const mealKeys = {
 };
 
 export function useMeal(id: string | undefined) {
+  const scope = usePatientScope();
   return useQuery({
-    queryKey: mealKeys.one(id ?? ''),
-    queryFn: () => unwrap<Meal>(api.get(`/meals/${id}`)),
+    queryKey: scopedKey(mealKeys.one(id ?? ''), scope),
+    queryFn: () => unwrap<Meal>(api.get(scopedApiPath(scope, `/meals/${id}`))),
     enabled: !!id,
   });
 }
@@ -142,11 +144,12 @@ const refreshSummaries = (qc: ReturnType<typeof useQueryClient>) => {
 export const HISTORY_PAGE = 20;
 
 export function useMealHistory(filters: { status?: MealStatus; category?: MealCategory }) {
+  const scope = usePatientScope();
   return useInfiniteQuery({
-    queryKey: mealKeys.list({ history: true, ...filters }),
+    queryKey: scopedKey(mealKeys.list({ history: true, ...filters }), scope),
     initialPageParam: undefined as string | undefined,
     queryFn: ({ pageParam }) =>
-      unwrap<Meal[]>(api.get('/meals', { params: { ...filters, limit: HISTORY_PAGE, before: pageParam } })),
+      unwrap<Meal[]>(api.get(scopedApiPath(scope, '/meals'), { params: { ...filters, limit: HISTORY_PAGE, before: pageParam } })),
     getNextPageParam: (last) => (last.length === HISTORY_PAGE ? last[last.length - 1]!.eatenAt : undefined),
   });
 }

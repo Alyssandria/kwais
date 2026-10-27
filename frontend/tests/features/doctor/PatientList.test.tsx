@@ -1,5 +1,6 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { MemoryRouter } from 'react-router-dom';
 import type { PatientList as List, PatientRow } from '@/features/doctor/patients';
 
 let data: List | undefined;
@@ -61,10 +62,16 @@ beforeEach(() => {
 });
 
 const table = () => screen.getByRole('table');
+const show = () =>
+  render(
+    <MemoryRouter>
+      <PatientList onAdd={onAdd} onStop={onStop} />
+    </MemoryRouter>,
+  );
 
 describe('PatientList', () => {
   it('shows the summary and each patient with why they are flagged, in the server’s order', () => {
-    render(<PatientList onAdd={onAdd} onStop={onStop} />);
+    show();
     expect(screen.getByText('Needs attention').closest('div')).toHaveTextContent('2');
     expect(screen.getByText('Logged a meal today').closest('div')).toHaveTextContent('2 of 3');
     const rows = within(table()).getAllByRole('row').slice(1);
@@ -78,10 +85,11 @@ describe('PatientList', () => {
     expect(rows[0]).toHaveTextContent('Sodium over target 6 of 7 days');
     expect(within(rows[1]!).getByRole('img', { name: '3 of the last 7 days logged' })).toBeInTheDocument();
     expect(rows[1]).toHaveTextContent('Last meal 4 days ago');
+    expect(within(rows[0]!).getByRole('link', { name: 'Ramon dela Cruz' })).toHaveAttribute('href', '/doctor/patients/p-KW-001042');
   });
 
   it('filters and searches', async () => {
-    render(<PatientList onAdd={onAdd} onStop={onStop} />);
+    show();
     await userEvent.click(screen.getByRole('button', { name: 'Needs attention · 2' }));
     expect(within(table()).getAllByRole('rowheader')).toHaveLength(2);
     await userEvent.click(screen.getByRole('button', { name: 'On dialysis · 1' }));
@@ -95,7 +103,7 @@ describe('PatientList', () => {
   });
 
   it('asks the parent to add or stop following', async () => {
-    render(<PatientList onAdd={onAdd} onStop={onStop} />);
+    show();
     await userEvent.click(screen.getByRole('button', { name: 'Add a patient' }));
     expect(onAdd).toHaveBeenCalled();
     await userEvent.click(within(table()).getByRole('button', { name: 'Stop following Teresita Bautista' }));
@@ -104,7 +112,7 @@ describe('PatientList', () => {
 
   it('offers to add a first patient when there are none', () => {
     data = { summary: { total: 0, needsAttention: 0, loggedToday: 0, targetsUnverified: 0 }, patients: [] };
-    render(<PatientList onAdd={onAdd} onStop={onStop} />);
+    show();
     expect(screen.getByRole('region', { name: 'Your patients' })).toHaveTextContent('No patients yet');
     expect(screen.queryByRole('table')).not.toBeInTheDocument();
   });

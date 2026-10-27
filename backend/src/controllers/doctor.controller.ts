@@ -23,4 +23,8 @@ export const DoctorPatientsController = {
   async list(req: Request, res: Response) {
     res.json({ data: await DoctorPatientsService.list(userIdOf(req)) });
   },
+  async one(req: Request, res: Response) {
+    if (!req.patientId) throw HttpError.notFound('Patient not found');
+    res.json({ data: await DoctorPatientsService.one(userIdOf(req), req.patientId) });
+  },
 };

@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
+import { scopedApiPath, scopedKey, usePatientScope } from '@/lib/patient-scope';
 import type { NutrientKey } from '@/lib/nutrition';
 
 export type AnalyticsRange = 7 | 30 | 90;
@@ -24,8 +25,9 @@ export interface PatientAnalytics {
 }
 
 export function useAnalytics(range: AnalyticsRange) {
+  const scope = usePatientScope();
   return useQuery({
-    queryKey: ['analytics', range],
-    queryFn: () => api.get<{ data: PatientAnalytics }>('/analytics/me', { params: { range } }).then((r) => r.data.data),
+    queryKey: scopedKey(['analytics', range], scope),
+    queryFn: () => api.get<{ data: PatientAnalytics }>(scopedApiPath(scope, '/analytics/me'), { params: { range } }).then((r) => r.data.data),
   });
 }

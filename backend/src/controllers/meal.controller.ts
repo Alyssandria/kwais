@@ -24,6 +24,15 @@ export const MealController = {
     const q = MealListQuery.parse(req.query);
     res.json({ data: await MealService.list(patientIdOf(req), q) });
   },
+  async listShared(req: Request, res: Response) {
+    const q = MealListQuery.parse(req.query);
+    res.json({ data: q.status === 'draft' ? [] : await MealService.list(patientIdOf(req), q) });
+  },
+  async getShared(req: Request, res: Response) {
+    const meal = await MealService.get(patientIdOf(req), mealId(req));
+    if (meal.status === 'draft') throw HttpError.notFound('Meal not found');
+    res.json({ data: meal });
+  },
   async recent(req: Request, res: Response) {
     res.json({ data: await MealService.recent(patientIdOf(req)) });
   },

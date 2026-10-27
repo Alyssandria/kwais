@@ -2,6 +2,7 @@ import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import type { Meal } from '@/features/meals/api';
+import { PatientScopeProvider } from '@/lib/patient-scope';
 
 const fetchNextPage = vi.fn();
 const calls: unknown[] = [];
@@ -95,5 +96,20 @@ describe('HistoryPage', () => {
     pages = [[]];
     renderPage();
     expect(screen.getByText('No meals yet')).toBeInTheDocument();
+  });
+
+  it('lets a doctor browse without drafts or logging, linking into the patient record', () => {
+    pages = [[meal({ id: 'm1', status: 'analysed' })]];
+    render(
+      <MemoryRouter>
+        <PatientScopeProvider patientId="p1">
+          <HistoryPage />
+        </PatientScopeProvider>
+      </MemoryRouter>,
+    );
+    expect(screen.getByRole('heading', { level: 2, name: 'Meals' })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /Log a meal/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('radio', { name: 'Drafts' })).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Lunch/ })).toHaveAttribute('href', '/doctor/patients/p1/meals/m1');
   });
 });

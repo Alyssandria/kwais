@@ -122,7 +122,7 @@ The work is split into sections so each can be reviewed and committed on its own
 | 10 | Doctor accounts, doctor app shell, email delivery | ✅ |
 | 11 | Linking doctors and patients, with consent | ✅ |
 | 12 | Doctor's patient list and priorities | ✅ |
-| 13 | Patient detail for doctors (read-only) | |
+| 13 | Patient detail for doctors (read-only) | ✅ |
 | 14 | Clinical actions: verify targets and labs, add labs, notes | |
 | 15 | v1 hardening: tests, accessibility, docs | |
 

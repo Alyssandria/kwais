@@ -23,6 +23,10 @@ import { DoctorLayout } from '@/pages/doctor/DoctorLayout';
 import { DoctorHomePage } from '@/features/doctor/DoctorHomePage';
 import { DoctorProfilePage } from '@/features/doctor/DoctorProfilePage';
 import { InvitePage } from '@/features/care/InvitePage';
+import { PatientRecordLayout } from '@/features/doctor/patient/PatientRecordLayout';
+import { OverviewTab } from '@/features/doctor/patient/OverviewTab';
+import { MealDetailPage } from '@/features/doctor/patient/MealDetailPage';
+import { LabsTab } from '@/features/doctor/patient/LabsTab';
 import { ComponentGallery } from '@/pages/dev/ComponentGallery';
 import { StatusPage } from '@/pages/dev/StatusPage';
 
@@ -78,6 +82,17 @@ const doctorRoutes: RouteObject = {
     { path: 'notifications', element: <NotificationsPage /> },
     { path: 'invite', element: <InvitePage /> },
     { path: 'settings', element: <SettingsPage /> },
+    {
+      path: 'patients/:patientId',
+      element: <PatientRecordLayout />,
+      children: [
+        { index: true, element: <OverviewTab /> },
+        { path: 'meals', element: <HistoryPage /> },
+        { path: 'meals/:mealId', element: <MealDetailPage /> },
+        { path: 'trends', element: <AnalyticsPage /> },
+        { path: 'labs', element: <LabsTab /> },
+      ],
+    },
   ],
 };
 

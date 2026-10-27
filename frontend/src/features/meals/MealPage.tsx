@@ -10,13 +10,13 @@ import { useAnalyseMeal, useDeleteMeal, useMeal, type Meal } from './api';
 import { ProgressDialog, type ProgressKind, type ProgressStep } from './ProgressDialog';
 import { amountLabel, condimentLabel, cookingLabel, drinkLabel, mealLabel, whenText } from './options';
 
-function StatusBadge({ status }: { status: Meal['status'] }) {
+export function StatusBadge({ status }: { status: Meal['status'] }) {
   if (status === 'draft') return <Badge tone="warn">Draft</Badge>;
   if (status === 'saved') return <Badge>Saved · not analysed</Badge>;
   return <Badge tone="mint">Analysed</Badge>;
 }
 
-function LoggedCard({ meal }: { meal: Meal }) {
+export function LoggedCard({ meal, title = 'What you logged' }: { meal: Meal; title?: string }) {
   const rows: [string, string][] = [];
   if (meal.condiments.length) rows.push(['Condiments', meal.condiments.map((c) => `${condimentLabel(c.name)} (${amountLabel(c.amount).toLowerCase()})`).join(', ')]);
   if (meal.drinks.length) rows.push(['Drinks', meal.drinks.map(drinkLabel).join(', ')]);
@@ -24,7 +24,7 @@ function LoggedCard({ meal }: { meal: Meal }) {
   if (meal.notes) rows.push(['Note', meal.notes]);
   return (
     <Card as="section" aria-labelledby="logged-title">
-      <CardHeader id="logged-title" title="What you logged" />
+      <CardHeader id="logged-title" title={title} />
       <p className="text-[17px] leading-relaxed">{meal.rawText || <span className="text-muted">No food text yet</span>}</p>
       {rows.length > 0 && (
         <dl className="mt-3 grid gap-x-4 gap-y-1.5 text-[13.5px] sm:grid-cols-[120px_1fr]">

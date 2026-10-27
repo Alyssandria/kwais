@@ -7,6 +7,7 @@ import { ScoreRing } from '@/components/domain/ScoreRing';
 import { Card, CardHeader, EmptyState, ErrorState, LoadingRegion, PageHeader, Segmented, Skeleton, StatusLabel } from '@/components/ui';
 import { errorMessage } from '@/lib/api';
 import { cn } from '@/lib/cn';
+import { usePatientScope } from '@/lib/patient-scope';
 import { fmt, NUTRIENTS, NUTRIENT_KEYS, percentOfTarget, targetStatus, type NutrientKey } from '@/lib/nutrition';
 import { useAnalytics, type AnalyticsRange, type PatientAnalytics } from './api';
 
@@ -83,6 +84,7 @@ function BandBars({ bands }: { bands: PatientAnalytics['summary']['scoreBands'] 
 }
 
 function NutrientAverages({ a }: { a: PatientAnalytics }) {
+  const whose = usePatientScope() ? 'the' : 'your';
   return (
     <section aria-labelledby="avg-title" className="flex flex-col gap-3">
       <h2 id="avg-title" className="text-base font-bold">
@@ -104,7 +106,7 @@ function NutrientAverages({ a }: { a: PatientAnalytics }) {
                 </p>
                 {v.target != null && v.averagePerDay != null ? (
                   <StatusLabel kind={targetStatus(pct)}>
-                    {pct}% of your {fmt(v.target)} {v.unit} target
+                    {pct}% of {whose} {fmt(v.target)} {v.unit} target
                   </StatusLabel>
                 ) : (
                   <p className="text-[12.5px] text-muted">{v.target == null ? 'No target set' : 'No analysed meals'}</p>
@@ -126,6 +128,7 @@ function NutrientAverages({ a }: { a: PatientAnalytics }) {
 }
 
 function TrendCard({ a }: { a: PatientAnalytics }) {
+  const targetLabel = usePatientScope() ? 'Target' : 'Your target';
   const [series, setSeries] = useState<Series>('sodium');
   const meta = SERIES[series];
   const target = series === 'score' ? null : a.summary.nutrients[series].target;
@@ -174,7 +177,7 @@ function TrendCard({ a }: { a: PatientAnalytics }) {
                 y={target}
                 stroke="#b45309"
                 strokeDasharray="5 4"
-                label={{ value: `Your target ${fmt(target)} ${meta.unit}`, position: 'insideTopRight', fill: '#92400e', fontSize: 11, fontWeight: 600 }}
+                label={{ value: `${targetLabel} ${fmt(target)} ${meta.unit}`, position: 'insideTopRight', fill: '#92400e', fontSize: 11, fontWeight: 600 }}
               />
             )}
             <Line type="monotone" dataKey="value" stroke={meta.color} strokeWidth={2.5} dot={a.range <= 30 ? { r: 3, fill: '#fff', stroke: meta.color, strokeWidth: 2 } : false} connectNulls={false} isAnimationActive={false} />
@@ -205,16 +208,24 @@ function TrendCard({ a }: { a: PatientAnalytics }) {
 export function AnalyticsPage() {
   const [range, setRange] = useState<`${AnalyticsRange}`>('30');
   const query = useAnalytics(Number(range) as AnalyticsRange);
+  const patientId = usePatientScope();
+  const period = <Segmented label="Period" value={range} options={RANGES} onChange={setRange} />;
 
   return (
     <div className="flex flex-col gap-5">
-      <PageHeader
-        title="Analytics"
-        description="Trends from the meals you logged, compared only with the targets you entered."
-        actions={<Segmented label="Period" value={range} options={RANGES} onChange={setRange} />}
-      />
+      {patientId ? (
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <h2 className="text-lg font-extrabold">Trends</h2>
+            <p className="text-[13.5px] text-muted">From the meals the patient logged, compared with the targets on file.</p>
+          </div>
+          {period}
+        </div>
+      ) : (
+        <PageHeader title="Analytics" description="Trends from the meals you logged, compared only with the targets you entered." actions={period} />
+      )}
       {query.isPending ? (
-        <LoadingRegion label="Loading your trends">
+        <LoadingRegion label={patientId ? 'Loading trends' : 'Loading your trends'}>
           <div className="flex flex-col gap-4">
             <Skeleton className="h-32 rounded-card" />
             <Skeleton className="h-72 rounded-card" />
@@ -222,18 +233,20 @@ export function AnalyticsPage() {
         </LoadingRegion>
       ) : query.isError ? (
         <Card padding="none">
-          <ErrorState title="We couldn’t load your trends" message={errorMessage(query.error)} onRetry={() => void query.refetch()} />
+          <ErrorState title={patientId ? 'We couldn’t load these trends' : 'We couldn’t load your trends'} message={errorMessage(query.error)} onRetry={() => void query.refetch()} />
         </Card>
       ) : query.data.summary.mealsLogged === 0 ? (
         <Card padding="none">
           <EmptyState
             icon={LineChartIcon}
             title="No meals in this period"
-            description="Trends appear once you log meals."
+            description={patientId ? 'Trends appear once the patient logs meals.' : 'Trends appear once you log meals.'}
             action={
-              <Link to="/patient/meals/new" className="font-semibold">
-                Log a meal
-              </Link>
+              patientId ? undefined : (
+                <Link to="/patient/meals/new" className="font-semibold">
+                  Log a meal
+                </Link>
+              )
             }
           />
         </Card>

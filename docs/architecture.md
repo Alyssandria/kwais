@@ -247,3 +247,16 @@ patient ── invite by email ──┬─ doctor has an account ──► pend
 | Rows are sorted by attention (2 per bad flag, 1 per warning), then by name | Patients who need a look come first |
 | The list itself is not written to the patient's audit log; opening a patient's detail is (Section 13) | The list is a summary the doctor sees on every visit; logging it would bury real views in the patient's activity |
 | Computed on request, a handful of queries per patient | Fine for a clinic's list in the study; a cached summary table is the next step for hundreds of patients |
+
+## Section 13 decisions: patient detail for doctors
+
+| Decision | Why |
+| --- | --- |
+| Doctor routes live under `/doctors/me/patients/:patientId` and reuse the patient controllers. `requireLinkedPatient` checks the id, calls `assertActiveLink`, then sets `req.patientId` | One implementation of each read; the link check happens before any data is touched |
+| A malformed id, no link, a pending or ended link all answer 404 "Patient not found" | A doctor cannot tell whether a patient exists without a link |
+| The record, meal history, a single meal, labs and trends are audited as `read` against the patient. The dashboard, profile and targets requests behind those pages are not | The patient sees one "Your clinician viewed…" line per page, not five |
+| Drafts stay private: the doctor meal routes return no drafts and 404 for a draft's id | A draft is unfinished and not part of the patient's log |
+| The frontend wraps the doctor's pages in a `PatientScopeProvider`. Shared hooks then call the doctor routes and add `['patient', id]` to their cache keys; outside a scope keys are unchanged | The patient's pages and cache updates work as before, and two patients never share cached data |
+| Overview, labs and targets are doctor pages; meal history, a meal's analysis and trends are the patient's components with doctor wording and no actions | Patient cards speak to the patient ("your target", "Log a meal"); the analysis and charts read the same for both |
+| Everything is read-only in this section | Changing stage, targets and labs, and notes, come with their own audit and notifications in Section 14 |
+

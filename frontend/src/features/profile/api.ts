@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
+import { scopedApiPath, scopedKey, usePatientScope } from '@/lib/patient-scope';
 import type { NutrientKey } from '@/lib/nutrition';
 
 export type ValueSource = 'patient_entered' | 'clinician_verified';
@@ -94,7 +95,8 @@ export const keys = {
 };
 
 export function useProfile() {
-  return useQuery({ queryKey: keys.profile, queryFn: () => unwrap<Profile>(api.get('/patients/me/profile')) });
+  const scope = usePatientScope();
+  return useQuery({ queryKey: scopedKey(keys.profile, scope), queryFn: () => unwrap<Profile>(api.get(scopedApiPath(scope, '/patients/me/profile'))) });
 }
 
 export function useUpdateProfile() {
@@ -114,7 +116,8 @@ export function useCompleteOnboarding() {
 }
 
 export function useTargets() {
-  return useQuery({ queryKey: keys.targets, queryFn: () => unwrap<Target[]>(api.get('/patients/me/targets')) });
+  const scope = usePatientScope();
+  return useQuery({ queryKey: scopedKey(keys.targets, scope), queryFn: () => unwrap<Target[]>(api.get(scopedApiPath(scope, '/patients/me/targets'))) });
 }
 
 export function useSetTarget() {
@@ -135,7 +138,8 @@ export function useRemoveTarget() {
 }
 
 export function useLabs() {
-  return useQuery({ queryKey: keys.labs, queryFn: () => unwrap<Lab[]>(api.get('/labs')) });
+  const scope = usePatientScope();
+  return useQuery({ queryKey: scopedKey(keys.labs, scope), queryFn: () => unwrap<Lab[]>(api.get(scopedApiPath(scope, '/labs'))) });
 }
 
 export function useCreateLab() {
