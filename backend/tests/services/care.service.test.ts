@@ -37,7 +37,7 @@ const { sha256 } = await import('../../src/lib/tokens.js');
 
 const meta = { ipHash: 'h', userAgent: 'vitest' };
 const doctor = { id: 'doc-1', userId: 'du-1', firstName: 'Jose', lastName: 'Reyes', prcLicense: '0123456', specialty: 'Nephrology', clinic: null };
-const patient = { id: 'pat-1', userId: 'pu-1', firstName: 'Liza', lastName: 'Santos', patientCode: 'KW-002318', ckdStage: '3b', ckdStageSource: 'patient_entered' as const, dialysisStatus: 'none' as const };
+const patient = { id: 'pat-1', userId: 'pu-1', firstName: 'Liza', lastName: 'Santos', patientCode: 'KW-002318', ckdStage: '3b', ckdStageSource: 'patient_entered' as const, dialysisStatus: 'none' as const, timezone: 'Asia/Manila' };
 const link = (over: Record<string, unknown> = {}) => ({
   id: 'link-1',
   status: 'pending' as const,

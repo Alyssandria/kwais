@@ -48,7 +48,10 @@ export function useCareAction(role: 'patient' | 'doctor') {
   const base = role === 'patient' ? '/patients/me/care' : '/doctors/me/care';
   return useMutation({
     mutationFn: ({ id, action }: { id: string; action: CareAction }) => api.post(`${base}/links/${id}/${action}`).then(() => undefined),
-    onSuccess: () => qc.invalidateQueries({ queryKey: role === 'patient' ? patientKey : doctorKey }),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: role === 'patient' ? patientKey : doctorKey });
+      if (role === 'doctor') void qc.invalidateQueries({ queryKey: ['doctor-patients'] });
+    },
   });
 }
 
@@ -89,7 +92,10 @@ export function useClaimInvite() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (token: string) => unwrap<{ linkId: string; patient: PatientCard }>(api.post('/doctors/me/care/invites/claim', { token })),
-    onSuccess: () => qc.invalidateQueries({ queryKey: doctorKey }),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: doctorKey });
+      void qc.invalidateQueries({ queryKey: ['doctor-patients'] });
+    },
   });
 }
 

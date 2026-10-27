@@ -2,10 +2,11 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Plus, Users } from 'lucide-react';
-import { Badge, Button, Card, CardHeader, ConfirmDialog, EmptyState, ErrorState, Input, LoadingRegion, Modal, Notice, Skeleton, Textarea, useToast } from '@/components/ui';
+import { Button, Card, CardHeader, ConfirmDialog, ErrorState, Input, LoadingRegion, Modal, Notice, Skeleton, Textarea, useToast } from '@/components/ui';
+import { PatientList } from '@/features/doctor/PatientList';
 import { errorMessage, fieldErrors } from '@/lib/api';
-import { shortDate, useCareAction, useDoctorCare, useRequestPatient, type CareAction, type PatientCard } from './api';
+import { shortDate, useCareAction, useDoctorCare, useRequestPatient, type CareAction } from './api';
+import { patientMeta } from './format';
 
 const initials = (name: string) =>
   name
@@ -15,13 +16,7 @@ const initials = (name: string) =>
     .slice(0, 2)
     .toUpperCase();
 
-const STAGE: Record<string, string> = { '1': 'Stage 1', '2': 'Stage 2', '3a': 'Stage 3a', '3b': 'Stage 3b', '4': 'Stage 4', '5': 'Stage 5', not_sure: 'Stage not sure' };
-const DIALYSIS: Record<string, string | null> = { hemodialysis: 'Hemodialysis', peritoneal: 'Peritoneal dialysis', none: null, unknown: null };
-
-export function patientMeta(p: PatientCard): string {
-  const stage = p.ckdStage ? `${STAGE[p.ckdStage.value] ?? p.ckdStage.value} · ${p.ckdStage.source === 'clinician_verified' ? 'verified' : 'entered by patient'}` : 'No CKD stage';
-  return [p.patientCode, stage, DIALYSIS[p.dialysisStatus]].filter(Boolean).join(' · ');
-}
+export { patientMeta } from './format';
 
 const requestSchema = z.object({
   patientCode: z
@@ -132,12 +127,6 @@ export function DoctorCarePanels() {
     }
   };
 
-  const addButton = (
-    <Button variant="accent" onClick={() => setAdding(true)} iconLeft={<Plus className="size-4" aria-hidden />}>
-      Add a patient
-    </Button>
-  );
-
   if (care.isPending) {
     return (
       <LoadingRegion label="Loading your patients">
@@ -152,7 +141,7 @@ export function DoctorCarePanels() {
       </Card>
     );
   }
-  const { requests, waiting, patients } = care.data;
+  const { requests, waiting } = care.data;
 
   return (
     <>
@@ -204,37 +193,7 @@ export function DoctorCarePanels() {
         </Card>
       )}
 
-      <Card as="section" aria-labelledby="patients-title" padding="none">
-        <div className="px-5 pt-5">
-          <CardHeader id="patients-title" title="Your patients" action={patients.length > 0 ? addButton : undefined} />
-        </div>
-        {patients.length === 0 ? (
-          <EmptyState
-            icon={Users}
-            title="No patients yet"
-            description="Add a patient with their code, or ask them to invite you from their Settings. Sharing starts once they approve."
-            action={addButton}
-          />
-        ) : (
-          <ul className="flex flex-col">
-            {patients.map((p) => (
-              <li key={p.id} className="flex flex-wrap items-center gap-3 border-t border-line px-5 py-3">
-                <span aria-hidden className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary-soft font-bold text-primary-dark">
-                  {initials(p.patient.name)}
-                </span>
-                <div className="min-w-[220px] flex-1">
-                  <p className="font-bold">{p.patient.name}</p>
-                  <p className="text-[13px] text-muted">{patientMeta(p.patient)}</p>
-                </div>
-                <Badge>Following since {shortDate(p.since)}</Badge>
-                <Button variant="ghost" size="sm" onClick={() => setConfirm({ id: p.id, name: p.patient.name })}>
-                  Stop following
-                </Button>
-              </li>
-            ))}
-          </ul>
-        )}
-      </Card>
+      <PatientList onAdd={() => setAdding(true)} onStop={(id, name) => setConfirm({ id, name })} />
 
       <AddPatientDialog open={adding} onClose={() => setAdding(false)} />
       <ConfirmDialog

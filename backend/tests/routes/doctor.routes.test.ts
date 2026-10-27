@@ -4,10 +4,14 @@ import request from 'supertest';
 vi.mock('../../src/services/doctor-profile.service.js', () => ({
   DoctorProfileService: { get: vi.fn(), update: vi.fn() },
 }));
+vi.mock('../../src/services/doctor-patients.service.js', () => ({
+  DoctorPatientsService: { list: vi.fn() },
+}));
 
 const { createApp } = await import('../../src/app.js');
 const { signAccessToken } = await import('../../src/lib/jwt.js');
 const { DoctorProfileService } = await import('../../src/services/doctor-profile.service.js');
+const { DoctorPatientsService } = await import('../../src/services/doctor-patients.service.js');
 
 const app = createApp();
 const token = (role: 'patient' | 'doctor') => `Bearer ${signAccessToken({ sub: 'd1', role }, process.env.JWT_ACCESS_SECRET!, 900)}`;
@@ -37,5 +41,16 @@ describe('/doctors/me/profile', () => {
     const ok = await request(app).patch('/api/v1/doctors/me/profile').set('Authorization', token('doctor')).send({ clinic: 'PGH', specialty: '' });
     expect(ok.status).toBe(200);
     expect(DoctorProfileService.update).toHaveBeenCalledWith('d1', { clinic: 'PGH', specialty: null }, expect.any(Object));
+  });
+});
+
+describe('GET /doctors/me/patients', () => {
+  it('lists the signed-in doctor’s own patients, and is closed to patients', async () => {
+    vi.mocked(DoctorPatientsService.list).mockResolvedValue({ summary: { total: 0, needsAttention: 0, loggedToday: 0, targetsUnverified: 0 }, patients: [] });
+    expect((await request(app).get('/api/v1/doctors/me/patients').set('Authorization', token('patient'))).status).toBe(403);
+    const res = await request(app).get('/api/v1/doctors/me/patients').set('Authorization', token('doctor'));
+    expect(res.status).toBe(200);
+    expect(res.body.data.summary.total).toBe(0);
+    expect(DoctorPatientsService.list).toHaveBeenCalledWith('d1');
   });
 });

@@ -20,6 +20,7 @@ const patientSelect = {
   ckdStage: true,
   ckdStageSource: true,
   dialysisStatus: true,
+  timezone: true,
 } satisfies Prisma.PatientProfileSelect;
 
 const linkSelect = {

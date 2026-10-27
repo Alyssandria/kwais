@@ -15,6 +15,19 @@ vi.mock('@/features/care/api', async (original) => ({
   useRequestPatient: () => ({ mutateAsync: request }),
 }));
 
+vi.mock('@/features/doctor/PatientList', () => ({
+  PatientList: ({ onAdd, onStop }: { onAdd: () => void; onStop: (id: string, name: string) => void }) => (
+    <section aria-label="Your patients">
+      <button type="button" onClick={onAdd}>
+        Add a patient
+      </button>
+      <button type="button" onClick={() => onStop('l2', 'Ramon dela Cruz')}>
+        Stop following Ramon dela Cruz
+      </button>
+    </section>
+  ),
+}));
+
 const { DoctorCarePanels } = await import('@/features/care/DoctorCare');
 
 const liza = { patientId: 'p1', name: 'Liza Santos', patientCode: 'KW-002318', ckdStage: { value: '3b', source: 'patient_entered' as const }, dialysisStatus: 'none' };
@@ -56,13 +69,10 @@ describe('DoctorCarePanels', () => {
     expect(act).toHaveBeenCalledWith({ id: 'l3', action: 'cancel' });
   });
 
-  it('lists followed patients and asks before stopping', async () => {
+  it('asks before stopping following a patient from the list', async () => {
     act.mockResolvedValue(undefined);
     renderIt();
-    const list = screen.getByRole('region', { name: 'Your patients' });
-    expect(list).toHaveTextContent('Ramon dela Cruz');
-    expect(list).toHaveTextContent('KW-001042 · Stage 4 · verified');
-    await userEvent.click(within(list).getByRole('button', { name: 'Stop following' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Stop following Ramon dela Cruz' }));
     await userEvent.click(within(screen.getByRole('dialog', { name: 'Stop following Ramon dela Cruz?' })).getByRole('button', { name: 'Stop following' }));
     expect(act).toHaveBeenCalledWith({ id: 'l2', action: 'end' });
   });
@@ -84,11 +94,10 @@ describe('DoctorCarePanels', () => {
     expect(await screen.findByText('Request sent. The patient sees it next time they open K-WAIS.')).toBeInTheDocument();
   });
 
-  it('offers to add a first patient when there are none', () => {
+  it('hides the requests panel when there are none', () => {
     care = { requests: [], waiting: [], patients: [] };
     renderIt();
     expect(screen.queryByRole('region', { name: /Requests/ })).not.toBeInTheDocument();
-    expect(screen.getByRole('region', { name: 'Your patients' })).toHaveTextContent('No patients yet');
-    expect(screen.getByRole('button', { name: 'Add a patient' })).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'Your patients' })).toBeInTheDocument();
   });
 });

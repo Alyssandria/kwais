@@ -31,7 +31,7 @@ const patientName = (p: Pick<CarePatient, 'firstName' | 'lastName'>) => `${p.fir
 const doctorDetails = (d: CareDoctor) => [d.specialty, d.clinic, d.prcLicense ? `PRC ${d.prcLicense}` : null].filter(Boolean).join(', ');
 
 const toDoctorCard = (d: CareDoctor): DoctorCard => ({ name: doctorName(d), specialty: d.specialty, clinic: d.clinic, prcLicense: d.prcLicense });
-const toPatientCard = (p: CarePatient): PatientCard => ({
+export const toPatientCard = (p: CarePatient): PatientCard => ({
   patientId: p.id,
   name: patientName(p),
   patientCode: p.patientCode,

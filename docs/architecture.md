@@ -236,3 +236,14 @@ patient ── invite by email ──┬─ doctor has an account ──► pend
 | Every request, answer and ending is audited as `care_link` against the patient, notified in the app, and emailed where the other side may not be signed in | Patients see it in their activity; nothing happens silently |
 | Doctors' details in requests and emails are labelled as entered by the doctor | K-WAIS does not verify licences in v1 |
 | Notifications are shared by both roles; doctors get the bell back | Requests and replies need to reach doctors too |
+
+## Section 12 decisions: patient list and priorities
+
+| Decision | Why |
+| --- | --- |
+| `GET /doctors/me/patients` returns one row per active link, built by a pure function (`buildPriorities`) from the last 7 days of meals in the patient's own time zone, active targets and labs | Tested without a database; the same daily totals as the patient's dashboard |
+| Sodium uses the 7-day average of days with analysed meals, against the patient's target or else general guidance (2,000 mg), and the row says which | Saved-but-unanalysed meals count as logged days but have no numbers to average |
+| Flags, in plain words: sodium over the limit on 4 or more of 7 days, a latest lab outside the range on its slip (bad); no meals for 3 or more days, or never logged (warn); no CKD stage, no targets, or targets not verified (information); otherwise "On track" | A doctor sees why a patient is near the top, not just a colour |
+| Rows are sorted by attention (2 per bad flag, 1 per warning), then by name | Patients who need a look come first |
+| The list itself is not written to the patient's audit log; opening a patient's detail is (Section 13) | The list is a summary the doctor sees on every visit; logging it would bury real views in the patient's activity |
+| Computed on request, a handful of queries per patient | Fine for a clinic's list in the study; a cached summary table is the next step for hundreds of patients |
