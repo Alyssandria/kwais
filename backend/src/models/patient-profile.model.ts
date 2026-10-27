@@ -1,5 +1,6 @@
 import type { DialysisStatus, Prisma, ValueSource } from '@prisma/client';
 import { prisma } from '../config/db.js';
+import { verifierSelect } from './verifier.js';
 
 const profileSelect = {
   id: true,
@@ -13,6 +14,8 @@ const profileSelect = {
   restrictions: true,
   ckdStage: true,
   ckdStageSource: true,
+  ckdStageVerifiedAt: true,
+  ckdStageVerifiedBy: verifierSelect,
   dialysisStatus: true,
   onboardingStep: true,
   onboardingDoneAt: true,
@@ -33,6 +36,8 @@ export interface ProfileChanges {
   restrictions?: string[];
   ckdStage?: string | null;
   ckdStageSource?: ValueSource | null;
+  ckdStageVerifiedById?: string | null;
+  ckdStageVerifiedAt?: Date | null;
   dialysisStatus?: DialysisStatus;
   onboardingStep?: number;
   onboardingDoneAt?: Date | null;
@@ -53,6 +58,11 @@ export const PatientProfileModel = {
     return prisma.patientProfile
       .findMany({ where: { reminderTime: { not: null } }, select: { id: true, userId: true, reminderTime: true, timezone: true } })
       .then((rows) => rows.map((r) => ({ ...r, reminderTime: r.reminderTime! })));
+  },
+
+  async userIdById(id: string): Promise<string | null> {
+    const p = await prisma.patientProfile.findUnique({ where: { id }, select: { userId: true } });
+    return p?.userId ?? null;
   },
 
   update(id: string, data: ProfileChanges): Promise<ProfileRecord> {

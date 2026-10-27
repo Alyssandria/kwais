@@ -5,6 +5,7 @@ import { HttpError } from '../lib/http-error.js';
 import { LabModel, type EncryptedLab, type EncryptedLabInput } from '../models/lab.model.js';
 import { LAB_TESTS, type LabCreate, type LabUpdate } from '../schemas/patient.schemas.js';
 import { AuditService, type RequestMeta } from './audit.service.js';
+import { toVerification, verifiedFields, type Clinician, type Verification } from './verification.js';
 
 export interface LabView {
   id: string;
@@ -17,6 +18,7 @@ export interface LabView {
   collectedOn: string;
   labName: string | null;
   source: 'patient_entered' | 'clinician_verified';
+  verified: Verification | null;
   createdAt: string;
 }
 
@@ -43,6 +45,7 @@ function toView(patientId: string, row: EncryptedLab): LabView {
     collectedOn: row.collectedOn.toISOString().slice(0, 10),
     labName: row.labName,
     source: row.source,
+    verified: toVerification(row.verifiedAt, row.verifiedBy),
     createdAt: row.createdAt.toISOString(),
   };
 }
@@ -54,7 +57,7 @@ export const LabService = {
     return (await LabModel.list(patientId, test)).map((r) => toView(patientId, r));
   },
 
-  async create(patientId: string, body: LabCreate, actorId: string, meta: RequestMeta): Promise<LabView> {
+  async create(patientId: string, body: LabCreate, actorId: string, meta: RequestMeta, clinician?: Clinician): Promise<LabView> {
     const row = await LabModel.create(patientId, {
       test: body.test,
       testLabel: body.test === 'other' ? (body.testLabel ?? null) : null,
@@ -64,14 +67,14 @@ export const LabService = {
       unit: body.unit,
       collectedOn: dateOnly(body.collectedOn),
       labName: body.labName ?? null,
-      source: 'patient_entered',
+      ...verifiedFields(clinician),
       keyVersion: currentLabKey.version,
     });
-    await AuditService.record('create', 'lab_result', meta, { actorId, actorRole: 'patient', resourceId: row.id, patientId });
+    await AuditService.record('create', 'lab_result', meta, { actorId, actorRole: clinician ? 'doctor' : 'patient', resourceId: row.id, patientId });
     return toView(patientId, row);
   },
 
-  async update(patientId: string, id: string, body: LabUpdate, actorId: string, meta: RequestMeta): Promise<LabView> {
+  async update(patientId: string, id: string, body: LabUpdate, actorId: string, meta: RequestMeta, clinician?: Clinician): Promise<LabView> {
     const existing = await LabModel.findOwned(patientId, id);
     if (!existing) throw HttpError.notFound('Lab result not found');
     const current = toView(patientId, existing);
@@ -94,11 +97,19 @@ export const LabService = {
       unit: body.unit ?? current.unit,
       collectedOn: body.collectedOn ? dateOnly(body.collectedOn) : existing.collectedOn,
       labName: body.labName !== undefined ? body.labName : current.labName,
-      source: 'patient_entered',
+      ...verifiedFields(clinician),
       keyVersion: currentLabKey.version,
     };
     const row = await LabModel.update(id, data);
-    await AuditService.record('update', 'lab_result', meta, { actorId, actorRole: 'patient', resourceId: id, patientId });
+    await AuditService.record('update', 'lab_result', meta, { actorId, actorRole: clinician ? 'doctor' : 'patient', resourceId: id, patientId });
+    return toView(patientId, row);
+  },
+
+  async verify(patientId: string, id: string, clinician: Clinician, meta: RequestMeta): Promise<LabView> {
+    const existing = await LabModel.findOwned(patientId, id);
+    if (!existing) throw HttpError.notFound('Lab result not found');
+    const row = await LabModel.update(id, verifiedFields(clinician));
+    await AuditService.record('update', 'lab_result', meta, { actorId: clinician.userId, actorRole: 'doctor', resourceId: id, patientId });
     return toView(patientId, row);
   },
 

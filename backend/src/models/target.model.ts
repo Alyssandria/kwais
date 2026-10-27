@@ -1,5 +1,6 @@
 import { Prisma, type Nutrient, type ValueSource } from '@prisma/client';
 import { prisma } from '../config/db.js';
+import { verifierSelect } from './verifier.js';
 
 const targetSelect = {
   id: true,
@@ -11,6 +12,8 @@ const targetSelect = {
   note: true,
   effectiveFrom: true,
   effectiveTo: true,
+  verifiedAt: true,
+  verifiedBy: verifierSelect,
 } satisfies Prisma.NutritionTargetSelect;
 
 export type TargetRecord = Prisma.NutritionTargetGetPayload<{ select: typeof targetSelect }>;
@@ -26,7 +29,15 @@ export const TargetModel = {
 
   replace(
     patientId: string,
-    data: { nutrient: Nutrient; dailyMax: number; unit: string; source: ValueSource; note?: string | null },
+    data: {
+      nutrient: Nutrient;
+      dailyMax: number;
+      unit: string;
+      source: ValueSource;
+      note?: string | null;
+      verifiedById?: string | null;
+      verifiedAt?: Date | null;
+    },
     now = new Date(),
   ): Promise<TargetRecord> {
     return prisma.$transaction(async (tx) => {
@@ -42,6 +53,8 @@ export const TargetModel = {
           unit: data.unit,
           source: data.source,
           note: data.note ?? null,
+          verifiedById: data.verifiedById ?? null,
+          verifiedAt: data.verifiedAt ?? null,
           effectiveFrom: now,
         },
         select: targetSelect,

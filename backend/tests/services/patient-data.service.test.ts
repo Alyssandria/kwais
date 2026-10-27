@@ -27,6 +27,7 @@ function echoRows() {
   vi.mocked(LabModel.create).mockImplementation(async (_pid, data) => ({
     id: 'lab-1',
     ...data,
+    verifiedBy: null,
     createdAt: new Date('2026-10-01T00:00:00Z'),
     updatedAt: new Date('2026-10-01T00:00:00Z'),
   }));
@@ -34,6 +35,7 @@ function echoRows() {
     id,
     createdAt: new Date(),
     updatedAt: new Date(),
+    verifiedBy: null,
     ...(data as Required<typeof data>),
   }));
 }
@@ -102,6 +104,8 @@ describe('TargetService', () => {
     note: null,
     effectiveFrom: new Date(from),
     effectiveTo: null,
+    verifiedAt: null,
+    verifiedBy: null,
   });
 
   it('fixes the unit per nutrient and records the patient as the source', async () => {
@@ -136,6 +140,8 @@ describe('ProfileService', () => {
     restrictions: [],
     ckdStage: '3b',
     ckdStageSource: 'clinician_verified' as const,
+    ckdStageVerifiedAt: new Date('2026-10-01T00:00:00Z') as Date | null,
+    ckdStageVerifiedBy: { firstName: 'Ana', lastName: 'Reyes' } as { firstName: string; lastName: string } | null,
     dialysisStatus: 'none' as const,
     onboardingStep: 0,
     onboardingDoneAt: null,
@@ -157,5 +163,86 @@ describe('ProfileService', () => {
     await ProfileService.update('patient-1', { allergies: ['shrimp'] }, 'user-1', meta);
     const data = vi.mocked(PatientProfileModel.update).mock.calls[0]![1];
     expect(data).not.toHaveProperty('ckdStageSource');
+  });
+});
+
+describe('clinician verification', () => {
+  const clinician = { userId: 'u-doc', doctorId: 'd-1', name: 'Dr. Ana Reyes' };
+
+  it('marks targets a doctor sets as verified by them', async () => {
+    vi.mocked(TargetModel.replace).mockResolvedValue({
+      id: 't1',
+      nutrient: 'sodium',
+      dailyMax: new Prisma.Decimal(1500),
+      dailyMin: null,
+      unit: 'mg',
+      source: 'clinician_verified',
+      note: null,
+      effectiveFrom: new Date('2026-10-27T00:00:00Z'),
+      effectiveTo: null,
+      verifiedAt: new Date('2026-10-27T00:00:00Z'),
+      verifiedBy: { firstName: 'Ana', lastName: 'Reyes' },
+    });
+    const t = await TargetService.set('patient-1', 'sodium', { dailyMax: 1500 }, 'u-doc', meta, clinician);
+    expect(TargetModel.replace).toHaveBeenCalledWith('patient-1', expect.objectContaining({ source: 'clinician_verified', verifiedById: 'd-1' }));
+    expect(t.verified).toEqual({ by: 'Dr. Ana Reyes', at: '2026-10-27T00:00:00.000Z' });
+    expect(AuditModel.create).toHaveBeenCalledWith(expect.objectContaining({ actorRole: 'doctor', resourceType: 'nutrition_target' }));
+  });
+
+  it('clears verification when the patient edits a lab, and restores it when a doctor verifies', async () => {
+    echoRows();
+    const created = await LabService.create('patient-1', { test: 'potassium', value: 5.6, unit: 'mmol/L', collectedOn: '2026-10-03' }, 'u-doc', meta, clinician);
+    expect(LabModel.create).toHaveBeenCalledWith('patient-1', expect.objectContaining({ source: 'clinician_verified', verifiedById: 'd-1' }));
+    const stored = vi.mocked(LabModel.create).mock.calls[0]![1];
+    vi.mocked(LabModel.findOwned).mockResolvedValue({ id: created.id, ...stored, verifiedBy: { firstName: 'Ana', lastName: 'Reyes' }, createdAt: new Date(), updatedAt: new Date() });
+
+    await LabService.update('patient-1', created.id, { value: 5.2 }, 'u-patient', meta);
+    expect(vi.mocked(LabModel.update).mock.calls[0]![1]).toMatchObject({ source: 'patient_entered', verifiedById: null, verifiedAt: null });
+
+    vi.mocked(LabModel.update).mockImplementationOnce(async (id, data) => ({
+      ...stored,
+      ...(data as Required<typeof data>),
+      id,
+      verifiedBy: { firstName: 'Ana', lastName: 'Reyes' },
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    }));
+    const verified = await LabService.verify('patient-1', created.id, clinician, meta);
+    expect(verified).toMatchObject({ value: 5.6, source: 'clinician_verified', verified: { by: 'Dr. Ana Reyes' } });
+    const verify = vi.mocked(LabModel.update).mock.calls[1]![1];
+    expect(verify).toMatchObject({ source: 'clinician_verified', verifiedById: 'd-1' });
+    expect(verify).not.toHaveProperty('valueEnc');
+  });
+
+  it('sets the CKD stage as verified, and clears it when the patient changes the stage', async () => {
+    const verified = {
+      id: 'patient-1',
+      patientCode: 'KW-000123',
+      firstName: 'Maria',
+      lastName: 'Santos',
+      birthYear: null,
+      sex: null,
+      dietaryPreferences: [],
+      allergies: [],
+      restrictions: [],
+      ckdStage: '4',
+      ckdStageSource: 'clinician_verified' as const,
+      ckdStageVerifiedAt: new Date('2026-10-27T00:00:00Z'),
+      ckdStageVerifiedBy: { firstName: 'Ana', lastName: 'Reyes' },
+      dialysisStatus: 'none' as const,
+      onboardingStep: 0,
+      onboardingDoneAt: null,
+      reminderTime: null,
+      timezone: 'Asia/Manila',
+      updatedAt: new Date(),
+    };
+    vi.mocked(PatientProfileModel.update).mockResolvedValue(verified);
+    const view = await ProfileService.setStage('patient-1', '4', clinician, meta);
+    expect(PatientProfileModel.update).toHaveBeenCalledWith('patient-1', expect.objectContaining({ ckdStageSource: 'clinician_verified', ckdStageVerifiedById: 'd-1' }));
+    expect(view.ckdStage).toMatchObject({ value: '4', verified: { by: 'Dr. Ana Reyes' } });
+
+    vi.mocked(PatientProfileModel.findById).mockResolvedValue(verified);
+    await ProfileService.update('patient-1', { ckdStage: '5' }, 'u-patient', meta);
+    expect(vi.mocked(PatientProfileModel.update).mock.calls[1]![1]).toMatchObject({ ckdStageSource: 'patient_entered', ckdStageVerifiedById: null, ckdStageVerifiedAt: null });
   });
 });

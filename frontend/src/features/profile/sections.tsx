@@ -13,6 +13,7 @@ import {
   RESTRICTION_SUGGESTIONS,
   SEX_OPTIONS,
 } from './options';
+import { verifiedText } from '@/lib/verification';
 
 interface SectionProps<T> {
   onSubmit: (value: T) => Promise<unknown>;
@@ -160,12 +161,19 @@ export function KidneySection({ profile, ...p }: SectionProps<ProfilePatch> & { 
       {profile.ckdStage?.source === 'clinician_verified' && (
         <p className="flex items-center gap-1.5 text-[12.5px] text-muted">
           <Info className="size-3.5" aria-hidden />
-          Your clinician verified your stage. Changing it here marks it as entered by you.
+          {verifiedText(profile.ckdStage.verified)}. Changing it here marks it as entered by you.
         </p>
       )}
       <Footer busy={busy} submitLabel={p.submitLabel} actions={p.actions} error={error} />
     </form>
   );
+}
+
+function targetHint(t: Target | undefined): string | undefined {
+  if (!t) return undefined;
+  const note = t.note ? ` · “${t.note}”` : '';
+  if (t.source === 'clinician_verified') return `${verifiedText(t.verified)}${note}. Changing it marks it as entered by you.`;
+  return t.note ? `Your note: “${t.note}”` : undefined;
 }
 
 export type TargetChanges = Partial<Record<NutrientKey, number | null>>;
@@ -211,6 +219,7 @@ export function TargetsSection({ targets, ...p }: SectionProps<TargetChanges> & 
             <Input
               containerClassName="flex-1"
               label={`${NUTRIENTS[n].label}, daily maximum (${NUTRIENTS[n].unit})`}
+              hint={targetHint(targets.find((t) => t.nutrient === n))}
               inputMode="decimal"
               placeholder="No target"
               value={values[n]}

@@ -26,6 +26,7 @@ const lab = (over: Partial<Lab>): Lab => ({
   collectedOn: '2026-09-28',
   labName: null,
   source: 'patient_entered',
+  verified: null,
   createdAt: '2026-09-28T00:00:00Z',
   ...over,
 });

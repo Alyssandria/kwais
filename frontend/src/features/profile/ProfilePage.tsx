@@ -4,16 +4,17 @@ import { Copy, ShieldCheck, UserRound } from 'lucide-react';
 import { Badge, Card, ErrorState, IconButton, LoadingRegion, Notice, PageHeader, Skeleton, useToast } from '@/components/ui';
 import { useAuth } from '@/features/auth/AuthProvider';
 import { errorMessage } from '@/lib/api';
-import { useConsents, useProfile, useTargets, type ValueSource } from './api';
+import { verifiedText } from '@/lib/verification';
+import { useConsents, useProfile, useTargets, type ValueSource, type Verification } from './api';
 import { ckdLabel } from './options';
 import { AboutYouSection, DietSection, KidneySection, PreferencesSection, TargetsSection } from './sections';
 import { useSavers } from './useSavers';
 
-function SourceBadge({ source }: { source: ValueSource }) {
+function SourceBadge({ source, verified }: { source: ValueSource; verified: Verification | null }) {
   return source === 'clinician_verified' ? (
     <Badge tone="good">
       <ShieldCheck className="size-3" aria-hidden />
-      Verified by your clinician
+      {verifiedText(verified)}
     </Badge>
   ) : (
     <Badge>Entered by you</Badge>
@@ -127,7 +128,7 @@ export function ProfilePage() {
         id="kidney"
         title="Kidney health"
         subtitle={p.ckdStage ? `Current: ${ckdLabel(p.ckdStage.value)}` : 'No CKD stage entered'}
-        badge={p.ckdStage ? <SourceBadge source={p.ckdStage.source} /> : undefined}
+        badge={p.ckdStage ? <SourceBadge source={p.ckdStage.source} verified={p.ckdStage.verified} /> : undefined}
       >
         <KidneySection profile={p} submitLabel="Save changes" onSubmit={(v) => saveProfile(v).then(saved('Kidney health'))} />
       </Section>

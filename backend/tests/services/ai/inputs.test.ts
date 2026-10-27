@@ -30,6 +30,7 @@ const lab = (id: string, test: 'potassium' | 'other', collectedOn: string, value
   labName: 'Private lab name',
   source: 'patient_entered' as const,
   createdAt: '',
+  verified: null,
 });
 
 describe('buildAnalysisInput', () => {
@@ -54,8 +55,8 @@ describe('buildAnalysisInput', () => {
   it('includes profile details only when given', () => {
     const input = buildAnalysisInput(
       sources({
-        profile: { ckdStage: { value: '3b', source: 'clinician_verified' }, dialysisStatus: 'none', restrictions: ['Low-salt diet'], allergies: [], dietaryPreferences: [] },
-        targets: [{ nutrient: 'sodium', dailyMax: 2000, unit: 'mg', source: 'patient_entered', note: 'private note', since: '' }],
+        profile: { ckdStage: { value: '3b', source: 'clinician_verified', verified: null }, dialysisStatus: 'none', restrictions: ['Low-salt diet'], allergies: [], dietaryPreferences: [] },
+        targets: [{ nutrient: 'sodium', dailyMax: 2000, unit: 'mg', source: 'patient_entered', note: 'private note', since: '', verified: null }],
       }),
     );
     expect(input.supplied).toEqual({

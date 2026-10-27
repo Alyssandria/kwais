@@ -20,6 +20,8 @@ describe('describeActivity', () => {
     expect(describeActivity({ action: 'read', resourceType: 'lab_result', byYou: false, actorRole: 'doctor' })).toBe('Your clinician: viewed a lab result');
     expect(describeActivity({ action: 'read', resourceType: 'meal_history', byYou: false, actorRole: 'doctor' })).toBe('Your clinician: viewed your meal history');
     expect(describeActivity({ action: 'read', resourceType: 'patient_record', byYou: false, actorRole: 'doctor' })).toBe('Your clinician: viewed your record');
+    expect(describeActivity({ action: 'update', resourceType: 'ckd_stage', byYou: false, actorRole: 'doctor' })).toBe('Your clinician: changed your CKD stage');
+    expect(describeActivity({ action: 'create', resourceType: 'clinical_note', byYou: false, actorRole: 'doctor' })).toBe('Your clinician: added a note for you');
   });
 
   it('flags failed sign-ins and blocked tokens', () => {

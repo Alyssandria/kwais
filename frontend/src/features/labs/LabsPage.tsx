@@ -18,6 +18,7 @@ import {
 import { cn } from '@/lib/cn';
 import { errorMessage } from '@/lib/api';
 import { labStatus, labStatusText, rangeText } from '@/lib/nutrition';
+import { verifiedText } from '@/lib/verification';
 import { useCreateLab, useDeleteLab, useLabs, useUpdateLab, type Lab, type LabTest } from '@/features/profile/api';
 import { LabFormModal } from './LabForm';
 
@@ -269,7 +270,11 @@ function TestDetail({ items, onEdit, onDelete }: { items: Lab[]; onEdit: (l: Lab
                   </td>
                   <td className="px-3.5 py-2.5">{rangeText(l.refLow, l.refHigh)}</td>
                   <td className="px-3.5 py-2.5">
-                    {l.source === 'clinician_verified' ? <Badge tone="good">Clinician-verified</Badge> : <Badge>You · not verified</Badge>}
+                    {l.source === 'clinician_verified' ? (
+                      <Badge tone="good">{verifiedText(l.verified, 'a clinician')}</Badge>
+                    ) : (
+                      <Badge>You · not verified</Badge>
+                    )}
                   </td>
                   <td className="px-2 py-1.5 text-right whitespace-nowrap">
                     <IconButton label={`Edit ${l.label} result from ${shortDate(l.collectedOn)}`} variant="ghost" size="sm" icon={<Pencil className="size-4" />} onClick={() => onEdit(l)} />

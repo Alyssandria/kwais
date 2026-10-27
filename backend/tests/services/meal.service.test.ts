@@ -89,7 +89,7 @@ beforeEach(() => {
     updatedAt: '',
   });
   vi.mocked(TargetService.listActive).mockResolvedValue([
-    { nutrient: 'sodium', dailyMax: 2000, unit: 'mg', source: 'patient_entered', note: null, since: '' },
+    { nutrient: 'sodium', dailyMax: 2000, unit: 'mg', source: 'patient_entered', note: null, since: '', verified: null },
   ]);
   vi.mocked(LabService.list).mockResolvedValue([]);
 });

@@ -15,6 +15,7 @@ const TABS = [
   { to: 'meals', label: 'Meals', end: false },
   { to: 'trends', label: 'Trends', end: true },
   { to: 'labs', label: 'Labs and targets', end: true },
+  { to: 'notes', label: 'Notes', end: true },
 ];
 
 const SEX: Record<string, string> = { female: 'Female', male: 'Male', intersex: 'Intersex' };
@@ -121,7 +122,7 @@ export function PatientRecordLayout() {
           <Chips label="Allergies" items={r.profile.allergies} tone="warn" />
           <Chips label="Restrictions" items={r.profile.restrictions} tone="neutral" />
           <Chips label="Diet" items={r.profile.dietaryPreferences} tone="neutral" />
-          <p className="text-[12.5px] text-muted">Read-only. The patient can see that you viewed their record in their activity log.</p>
+          <p className="text-[12.5px] text-muted">The patient sees each view and each change in their activity log. Changes you make are marked as verified by you.</p>
         </Card>
 
         {error && (

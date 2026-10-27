@@ -11,6 +11,7 @@ let query: { data?: PatientDashboard; isPending: boolean; isError: boolean; erro
 };
 
 vi.mock('@/features/dashboard/useDashboard', () => ({ useDashboard: () => ({ ...query, refetch }) }));
+vi.mock('@/features/notes/api', () => ({ useMyNotes: () => ({ data: [] }) }));
 vi.mock('@/features/auth/AuthProvider', () => ({
   useAuth: () => ({ user: { firstName: 'Maria', onboardingComplete: true } }),
 }));

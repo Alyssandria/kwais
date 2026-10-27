@@ -1,12 +1,13 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { RouterProvider, createMemoryRouter } from 'react-router-dom';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { AxiosError, type AxiosResponse } from 'axios';
 import { ToastProvider } from '@/components/ui';
 import type { PatientDashboard } from '@/features/dashboard/types';
 import type { PatientRecord } from '@/features/doctor/patient/api';
 import type { Meal, MealAnalysis } from '@/features/meals/api';
 import type { Lab, Target } from '@/features/profile/api';
+import type { Note } from '@/features/notes/api';
 
 type Query<T> = { data?: T; isPending: boolean; isError: boolean; error?: unknown };
 let record: Query<PatientRecord>;
@@ -31,10 +32,30 @@ vi.mock('@/features/profile/api', () => ({
 }));
 vi.mock('@/features/meals/api', () => ({ useMeal: () => ({ ...meal, refetch: vi.fn() }) }));
 
+const setStage = vi.fn();
+const setTarget = vi.fn();
+const addLab = vi.fn();
+const verifyLab = vi.fn();
+const addNote = vi.fn();
+const deleteNote = vi.fn();
+let notes: Note[] = [];
+vi.mock('@/features/doctor/patient/clinical', () => ({
+  useSetStage: () => ({ mutateAsync: setStage }),
+  useSetPatientTarget: () => ({ mutateAsync: setTarget }),
+  useAddPatientLab: () => ({ mutateAsync: addLab }),
+  useCorrectPatientLab: () => ({ mutateAsync: vi.fn() }),
+  useVerifyPatientLab: () => ({ mutateAsync: verifyLab }),
+  usePatientNotes: () => ({ data: notes, isPending: false, isError: false, refetch: vi.fn() }),
+  useAddNote: () => ({ mutateAsync: addNote, isPending: false }),
+  useEditNote: () => ({ mutateAsync: vi.fn(), isPending: false }),
+  useDeleteNote: () => ({ mutateAsync: deleteNote, isPending: false }),
+}));
+
 const { PatientRecordLayout } = await import('@/features/doctor/patient/PatientRecordLayout');
 const { OverviewTab } = await import('@/features/doctor/patient/OverviewTab');
 const { MealDetailPage } = await import('@/features/doctor/patient/MealDetailPage');
 const { LabsTab } = await import('@/features/doctor/patient/LabsTab');
+const { NotesTab } = await import('@/features/doctor/patient/NotesTab');
 
 const PID = 'p1';
 
@@ -61,7 +82,7 @@ const ramon: PatientRecord = {
     dietaryPreferences: [],
     allergies: ['Shrimp'],
     restrictions: ['Low-salt diet'],
-    ckdStage: { value: '4', source: 'patient_entered' },
+    ckdStage: { value: '4', source: 'patient_entered', verified: null },
     dialysisStatus: 'none',
     reminderTime: null,
     timezone: 'Asia/Manila',
@@ -94,9 +115,9 @@ const dashboard: PatientDashboard = {
   insights: [],
 };
 
-const targets: Target[] = [{ nutrient: 'sodium', dailyMax: 2000, unit: 'mg', source: 'patient_entered', note: null, since: '2026-09-02T00:00:00Z' }];
+const targets: Target[] = [{ nutrient: 'sodium', dailyMax: 2000, unit: 'mg', source: 'patient_entered', note: null, since: '2026-09-02T00:00:00Z', verified: null }];
 const labs: Lab[] = [
-  { id: 'l1', test: 'potassium', label: 'Potassium', value: 5.8, refLow: 3.5, refHigh: 5.1, unit: 'mmol/L', collectedOn: '2026-10-03', labName: 'Sample Lab', source: 'clinician_verified', createdAt: '' },
+  { id: 'l1', test: 'potassium', label: 'Potassium', value: 5.8, refLow: 3.5, refHigh: 5.1, unit: 'mmol/L', collectedOn: '2026-10-03', labName: 'Sample Lab', source: 'clinician_verified', verified: { by: 'Dr. Ana Reyes', at: '2026-10-05T00:00:00Z' }, createdAt: '' },
 ];
 
 const analysis: MealAnalysis = {
@@ -135,27 +156,21 @@ const breakfast: Meal = {
 };
 
 function open(path: string) {
-  const router = createMemoryRouter(
-    [
-      { path: '/doctor/dashboard', element: <p>Patient list</p> },
-      {
-        path: '/doctor/patients/:patientId',
-        element: <PatientRecordLayout />,
-        children: [
-          { index: true, element: <OverviewTab /> },
-          { path: 'meals/:mealId', element: <MealDetailPage /> },
-          { path: 'labs', element: <LabsTab /> },
-        ],
-      },
-    ],
-    { initialEntries: [path] },
-  );
   render(
     <ToastProvider>
-      <RouterProvider router={router} />
+      <MemoryRouter initialEntries={[path]}>
+        <Routes>
+          <Route path="/doctor/dashboard" element={<p>Patient list</p>} />
+          <Route path="/doctor/patients/:patientId" element={<PatientRecordLayout />}>
+            <Route index element={<OverviewTab />} />
+            <Route path="meals/:mealId" element={<MealDetailPage />} />
+            <Route path="labs" element={<LabsTab />} />
+            <Route path="notes" element={<NotesTab />} />
+          </Route>
+        </Routes>
+      </MemoryRouter>
     </ToastProvider>,
   );
-  return router;
 }
 
 beforeEach(() => {
@@ -163,6 +178,8 @@ beforeEach(() => {
   scopes.length = 0;
   record = { data: ramon, isPending: false, isError: false };
   meal = { data: breakfast, isPending: false, isError: false };
+  notes = [];
+  labs.length = 1;
 });
 
 describe('patient record for doctors', () => {
@@ -193,11 +210,11 @@ describe('patient record for doctors', () => {
 
   it('stops following after confirming, then returns to the list', async () => {
     act.mockResolvedValue(undefined);
-    const router = open(`/doctor/patients/${PID}`);
+    open(`/doctor/patients/${PID}`);
     await userEvent.click(screen.getByRole('button', { name: 'Stop following Ramon dela Cruz' }));
     await userEvent.click(within(screen.getByRole('dialog', { name: 'Stop following Ramon dela Cruz?' })).getByRole('button', { name: 'Stop following' }));
     expect(act).toHaveBeenCalledWith({ id: 'link-1', action: 'end' });
-    await waitFor(() => expect(router.state.location.pathname).toBe('/doctor/dashboard'));
+    expect(await screen.findByText('Patient list')).toBeInTheDocument();
   });
 
   it('shows a meal read-only, in the doctor’s words', () => {
@@ -218,3 +235,55 @@ describe('patient record for doctors', () => {
     expect(labsTable).toHaveTextContent('Verified');
   });
 });
+
+describe('clinical actions', () => {
+  it('verifies the stage and the patient’s target as they are', async () => {
+    setStage.mockResolvedValue({});
+    setTarget.mockResolvedValue({});
+    open(`/doctor/patients/${PID}/labs`);
+    expect(screen.getByRole('region', { name: 'CKD stage' })).toHaveTextContent('Stage 4Entered by patient');
+    await userEvent.click(screen.getByRole('button', { name: 'Verify Stage 4' }));
+    expect(setStage).toHaveBeenCalledWith('4');
+    await userEvent.click(screen.getByRole('button', { name: 'Verify sodium target' }));
+    expect(setTarget).toHaveBeenCalledWith({ nutrient: 'sodium', dailyMax: 2000, note: null });
+  });
+
+  it('offers to verify only results the patient entered', async () => {
+    labs.push({ ...labs[0]!, id: 'l2', label: 'Creatinine', test: 'creatinine', unit: 'mg/dL', value: 3.1, source: 'patient_entered', verified: null });
+    verifyLab.mockResolvedValue({});
+    open(`/doctor/patients/${PID}/labs`);
+    expect(screen.queryByRole('button', { name: /Verify Potassium result/ })).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: /Verify Creatinine result/ }));
+    expect(verifyLab).toHaveBeenCalledWith('l2');
+    expect(screen.getByRole('button', { name: /Correct Potassium result/ })).toBeInTheDocument();
+  });
+
+  it('adds a lab result for the patient', async () => {
+    open(`/doctor/patients/${PID}/labs`);
+    await userEvent.click(screen.getByRole('button', { name: 'Add a result' }));
+    expect(screen.getByRole('dialog', { name: 'Add a result for Ramon dela Cruz' })).toHaveTextContent('marked as verified by you');
+  });
+
+  it('sends a note and lets the author manage only their own', async () => {
+    addNote.mockResolvedValue({});
+    notes = [
+      { id: 'n1', body: 'Keep sodium low this week.', author: 'Dr. Jose Reyes', createdAt: '2026-10-26T02:00:00Z', updatedAt: '2026-10-26T02:00:00Z', edited: false, mine: true },
+      { id: 'n2', body: 'Repeat potassium next month.', author: 'Dr. Ana Cruz', createdAt: '2026-10-20T02:00:00Z', updatedAt: '2026-10-20T02:00:00Z', edited: false, mine: false },
+    ];
+    open(`/doctor/patients/${PID}/notes`);
+    await userEvent.type(screen.getByRole('textbox', { name: 'Note' }), '  Bring your lab slip.  ');
+    await userEvent.click(screen.getByRole('button', { name: 'Send note' }));
+    expect(addNote).toHaveBeenCalledWith('Bring your lab slip.');
+
+    const mine = screen.getByRole('article', { name: 'Note from Dr. Jose Reyes' });
+    const theirs = screen.getByRole('article', { name: 'Note from Dr. Ana Cruz' });
+    expect(within(mine).getByRole('button', { name: 'Delete' })).toBeInTheDocument();
+    expect(within(theirs).queryByRole('button')).not.toBeInTheDocument();
+
+    deleteNote.mockResolvedValue(undefined);
+    await userEvent.click(within(mine).getByRole('button', { name: 'Delete' }));
+    await userEvent.click(within(screen.getByRole('dialog', { name: 'Delete this note?' })).getByRole('button', { name: 'Delete note' }));
+    expect(deleteNote).toHaveBeenCalledWith('n1');
+  });
+});
+

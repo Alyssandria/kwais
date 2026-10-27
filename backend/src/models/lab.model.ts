@@ -1,5 +1,6 @@
 import type { LabTest, Prisma, ValueSource } from '@prisma/client';
 import { prisma } from '../config/db.js';
+import { verifierSelect } from './verifier.js';
 
 const labSelect = {
   id: true,
@@ -13,6 +14,8 @@ const labSelect = {
   labName: true,
   source: true,
   keyVersion: true,
+  verifiedAt: true,
+  verifiedBy: verifierSelect,
   createdAt: true,
   updatedAt: true,
 } satisfies Prisma.LabResultSelect;
@@ -29,6 +32,8 @@ export interface EncryptedLabInput {
   collectedOn: Date;
   labName: string | null;
   source: ValueSource;
+  verifiedById: string | null;
+  verifiedAt: Date | null;
   keyVersion: number;
 }
 

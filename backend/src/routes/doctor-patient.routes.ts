@@ -1,9 +1,13 @@
 import { Router } from 'express';
+import { ClinicalController } from '../controllers/clinical.controller.js';
 import { DoctorPatientsController } from '../controllers/doctor.controller.js';
 import { AnalyticsController, DashboardController } from '../controllers/insights.controller.js';
 import { MealController } from '../controllers/meal.controller.js';
 import { LabController, ProfileController, TargetController } from '../controllers/patient.controller.js';
 import { auditRead, requireLinkedPatient } from '../middleware/require-linked-patient.js';
+import { validateBody } from '../middleware/validate.js';
+import { NoteSchema, StageSchema } from '../schemas/clinical.schemas.js';
+import { LabCreateSchema, LabUpdateSchema, TargetSchema } from '../schemas/patient.schemas.js';
 
 export const doctorPatientRoutes = Router({ mergeParams: true });
 doctorPatientRoutes.use(requireLinkedPatient);
@@ -15,3 +19,13 @@ doctorPatientRoutes.get('/labs', auditRead('lab_results'), LabController.list);
 doctorPatientRoutes.get('/analytics', auditRead('trends'), AnalyticsController.me);
 doctorPatientRoutes.get('/meals', auditRead('meal_history'), MealController.listShared);
 doctorPatientRoutes.get('/meals/:id', auditRead('meal', 'id'), MealController.getShared);
+
+doctorPatientRoutes.put('/ckd-stage', validateBody(StageSchema), ClinicalController.setStage);
+doctorPatientRoutes.put('/targets/:nutrient', validateBody(TargetSchema), ClinicalController.setTarget);
+doctorPatientRoutes.post('/labs', validateBody(LabCreateSchema), ClinicalController.addLab);
+doctorPatientRoutes.patch('/labs/:id', validateBody(LabUpdateSchema), ClinicalController.correctLab);
+doctorPatientRoutes.post('/labs/:id/verify', ClinicalController.verifyLab);
+doctorPatientRoutes.get('/notes', ClinicalController.notes);
+doctorPatientRoutes.post('/notes', validateBody(NoteSchema), ClinicalController.addNote);
+doctorPatientRoutes.patch('/notes/:id', validateBody(NoteSchema), ClinicalController.editNote);
+doctorPatientRoutes.delete('/notes/:id', ClinicalController.removeNote);

@@ -35,6 +35,7 @@ const target = (dailyMax: number, source: TargetView['source'] = 'clinician_veri
   source,
   note: null,
   since: '',
+  verified: null,
 });
 
 const lab = (test: LabView['test'], label: string, value: number, collectedOn: string, refLow: number | null = 3.5, refHigh: number | null = 5.1): LabView => ({
@@ -49,6 +50,7 @@ const lab = (test: LabView['test'], label: string, value: number, collectedOn: s
   labName: null,
   source: 'patient_entered',
   createdAt: '',
+  verified: null,
 });
 
 const base = { now, timeZone: TZ, meals: [] as MealFacts[], lastMealAt: null as Date | null, targets: [] as TargetView[], labs: [] as LabView[], hasCkdStage: true };

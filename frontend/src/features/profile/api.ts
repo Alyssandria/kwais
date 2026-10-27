@@ -6,6 +6,11 @@ import type { NutrientKey } from '@/lib/nutrition';
 export type ValueSource = 'patient_entered' | 'clinician_verified';
 export type CkdStage = '1' | '2' | '3a' | '3b' | '4' | '5' | 'not_sure';
 export type Dialysis = 'none' | 'hemodialysis' | 'peritoneal' | 'unknown';
+export interface Verification {
+  by: string | null;
+  at: string;
+}
+
 export type Sex = 'female' | 'male' | 'intersex' | 'prefer_not_to_say';
 
 export interface Profile {
@@ -17,7 +22,7 @@ export interface Profile {
   dietaryPreferences: string[];
   allergies: string[];
   restrictions: string[];
-  ckdStage: { value: CkdStage; source: ValueSource } | null;
+  ckdStage: { value: CkdStage; source: ValueSource; verified: Verification | null } | null;
   dialysisStatus: Dialysis;
   reminderTime: string | null;
   timezone: string;
@@ -46,6 +51,7 @@ export interface Target {
   source: ValueSource;
   note: string | null;
   since: string;
+  verified: Verification | null;
 }
 
 export type LabTest =
@@ -63,6 +69,7 @@ export interface Lab {
   collectedOn: string;
   labName: string | null;
   source: ValueSource;
+  verified: Verification | null;
   createdAt: string;
 }
 

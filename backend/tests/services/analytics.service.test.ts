@@ -5,7 +5,7 @@ import { facts } from '../fixtures/meal-facts.js';
 
 const TZ = 'Asia/Manila';
 const now = new Date('2026-10-16T05:00:00Z');
-const target = { nutrient: 'sodium' as const, dailyMax: 2000, unit: 'mg', source: 'patient_entered' as const, note: null, since: '' };
+const target = { nutrient: 'sodium' as const, dailyMax: 2000, unit: 'mg', source: 'patient_entered' as const, note: null, since: '', verified: null };
 
 describe('buildAnalytics', () => {
   const meals = [

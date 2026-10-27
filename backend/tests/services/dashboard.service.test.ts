@@ -9,7 +9,7 @@ const now = new Date('2026-10-16T05:00:00Z');
 const withDate = (m: MealFacts) => ({ ...m, date: localDate(m.eatenAt, TZ) });
 const meals = (...ms: MealFacts[]) => ms.map(withDate);
 
-const target = { nutrient: 'sodium' as const, dailyMax: 2000, unit: 'mg', source: 'patient_entered' as const, note: null, since: '' };
+const target = { nutrient: 'sodium' as const, dailyMax: 2000, unit: 'mg', source: 'patient_entered' as const, note: null, since: '', verified: null };
 const lab = (collectedOn: string, value: number) => ({
   id: collectedOn,
   test: 'potassium' as const,
@@ -22,6 +22,7 @@ const lab = (collectedOn: string, value: number) => ({
   labName: null,
   source: 'patient_entered' as const,
   createdAt: '',
+  verified: null,
 });
 
 describe('buildDashboard', () => {

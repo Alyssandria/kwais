@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { PatientCareController } from '../controllers/care.controller.js';
+import { PatientNotesController } from '../controllers/clinical.controller.js';
 import { ConsentController, LabController, ProfileController, TargetController } from '../controllers/patient.controller.js';
 import { careRequestLimiter } from '../middleware/rate-limits.js';
 import { requirePatient } from '../middleware/require-patient.js';
@@ -23,6 +24,7 @@ patientMeRoutes.put('/targets/:nutrient', validateBody(TargetSchema), TargetCont
 patientMeRoutes.delete('/targets/:nutrient', TargetController.remove);
 patientMeRoutes.get('/consents', ConsentController.current);
 patientMeRoutes.post('/consents', validateBody(ConsentChangeSchema), ConsentController.change);
+patientMeRoutes.get('/notes', PatientNotesController.list);
 patientMeRoutes.get('/care', PatientCareController.overview);
 patientMeRoutes.post('/care/invites', careRequestLimiter, validateBody(CareInviteSchema), PatientCareController.invite);
 patientMeRoutes.post('/care/invites/:id/cancel', PatientCareController.cancelInvite);

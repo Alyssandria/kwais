@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Card, ErrorState, LoadingRegion, Notice, Skeleton } from '@/components/ui';
 import { useAuth } from '@/features/auth/AuthProvider';
+import { CareNotesCard } from '@/features/notes/CareNotesCard';
 import { errorMessage } from '@/lib/api';
 import { NUTRIENT_KEYS } from '@/lib/nutrition';
 import { ConsistencyCard, InsightsCard, RecentMealsCard } from './components/ActivityCards';
@@ -37,6 +38,8 @@ export function DashboardPage() {
       {data.isSample && <Notice>You’re seeing fictional sample data.</Notice>}
 
       <WelcomeHero firstName={user?.firstName ?? ''} today={data.today} />
+
+      <CareNotesCard />
 
       <section aria-labelledby="today-title" className="flex flex-col gap-3">
         <h2 id="today-title" className="text-base font-bold">

@@ -258,5 +258,20 @@ patient ── invite by email ──┬─ doctor has an account ──► pend
 | Drafts stay private: the doctor meal routes return no drafts and 404 for a draft's id | A draft is unfinished and not part of the patient's log |
 | The frontend wraps the doctor's pages in a `PatientScopeProvider`. Shared hooks then call the doctor routes and add `['patient', id]` to their cache keys; outside a scope keys are unchanged | The patient's pages and cache updates work as before, and two patients never share cached data |
 | Overview, labs and targets are doctor pages; meal history, a meal's analysis and trends are the patient's components with doctor wording and no actions | Patient cards speak to the patient ("your target", "Log a meal"); the analysis and charts read the same for both |
-| Everything is read-only in this section | Changing stage, targets and labs, and notes, come with their own audit and notifications in Section 14 |
+| Section 13 is read-only | Changing stage, targets and labs, and notes, come with their own audit and notifications in Section 14 |
+
+## Section 14 decisions: clinical actions and notes
+
+| Decision | Why |
+| --- | --- |
+| A linked doctor can set or confirm the CKD stage, set or verify a daily target, add a lab result, correct one, or verify one as entered. Every one of these is stored as `clinician_verified` with the doctor (`verified_by`) and the time (`verified_at`) | The patient and other doctors see who vouched for each value and when |
+| A doctor cannot set "not sure" as a stage, delete a lab, remove a target, or edit allergies, restrictions or diet | Removing data stays the patient's call; the rest is outside a v1 nephrology review |
+| When the patient edits a verified stage, target or lab, it goes back to `patient_entered` and the verifier is cleared | A verification only ever covers the value the doctor saw |
+| Verifying a target saves it again with the same amount, so it starts a new row in the target history | One path for set and verify, and the history shows when it was verified |
+| Doctor writes reuse the patient services with an optional `Clinician`; `ClinicalService` adds the doctor lookup and the patient's notification | One place for validation, encryption and audit; patient routes are unchanged |
+| Every change notifies the patient in the app (`care_team`) and is audited against them with `actorRole: doctor` | Patients see "Dr. Reyes verified your sodium target" and "Your clinician: changed a daily target" in their activity |
+| Clinical notes are plain text, up to 2,000 characters, kept per patient. The patient and every doctor with an active link see all of them; only the author can edit or delete. A new note notifies the patient; edits are marked "edited" but not notified | A shared record of advice for the care team, without notification noise |
+| When a doctor deletes their account, their notes and verifications stay, shown as "a former care team member" | The patient keeps the advice they were given |
+| Notes are in the patient's data export; there is no email for any clinical action | Email stays for linking, where the other side may not be signed in |
+| Changing a target or stage does not rescore past meals | Past scores reflect what was known then, as with patient edits |
 

@@ -7,6 +7,7 @@ vi.mock('../../src/models/privacy.model.js', () => ({
 vi.mock('../../src/models/patient-profile.model.js', () => ({ PatientProfileModel: { findIdByUserId: vi.fn() } }));
 vi.mock('../../src/models/user.model.js', () => ({ UserModel: { findCredentialsById: vi.fn() } }));
 vi.mock('../../src/services/lab.service.js', () => ({ LabService: { list: vi.fn() } }));
+vi.mock('../../src/services/note.service.js', () => ({ NoteService: { list: vi.fn() } }));
 vi.mock('../../src/services/audit.service.js', () => ({ AuditService: { record: vi.fn() } }));
 vi.mock('../../src/lib/password.js', () => ({ verifyPassword: vi.fn(), hashPassword: vi.fn(), getDummyHash: vi.fn() }));
 
@@ -15,6 +16,7 @@ const { PrivacyModel } = await import('../../src/models/privacy.model.js');
 const { PatientProfileModel } = await import('../../src/models/patient-profile.model.js');
 const { UserModel } = await import('../../src/models/user.model.js');
 const { LabService } = await import('../../src/services/lab.service.js');
+const { NoteService } = await import('../../src/services/note.service.js');
 const { AuditService } = await import('../../src/services/audit.service.js');
 const { verifyPassword } = await import('../../src/lib/password.js');
 
@@ -50,6 +52,7 @@ describe('PrivacyService.exportData', () => {
       dataRequests: [{ id: 'req-1', type: 'export' }],
     } as never);
     vi.mocked(LabService.list).mockResolvedValue([{ id: 'lab-1', value: 5.6 }] as never);
+    vi.mocked(NoteService.list).mockResolvedValue([{ id: 'n1', body: 'Keep sodium low.' }] as never);
     vi.mocked(PrivacyModel.activity).mockResolvedValue([]);
 
     const { filename, body } = await PrivacyService.exportData('user-1', meta, new Date('2026-10-20T00:00:00Z'));
@@ -61,6 +64,7 @@ describe('PrivacyService.exportData', () => {
       profile: { patientCode: 'KW-000123', firstName: 'Ana' },
       targets: [{ nutrient: 'sodium' }],
       labs: [{ id: 'lab-1', value: 5.6 }],
+      clinicalNotes: [{ id: 'n1', body: 'Keep sodium low.' }],
       meals: [{ id: 'm1' }],
       consents: [{ consentType: 'terms' }],
       dataRequests: [{ id: 'req-1' }],

@@ -67,10 +67,14 @@ export function LabFormModal({
   defaultTest,
   onClose,
   onSave,
+  title,
+  description = 'Copy the numbers exactly as printed on your lab slip, including the reference range next to the result.',
 }: {
   open: boolean;
   editing: Lab | null;
   defaultTest?: LabTest;
+  title?: string;
+  description?: string;
   onClose: () => void;
   onSave: (input: LabInput) => Promise<unknown>;
 }) {
@@ -131,8 +135,8 @@ export function LabFormModal({
       open={open}
       onClose={onClose}
       size="lg"
-      title={editing ? `Edit ${editing.label} result` : 'Add a lab result'}
-      description="Copy the numbers exactly as printed on your lab slip, including the reference range next to the result."
+      title={title ?? (editing ? `Edit ${editing.label} result` : 'Add a lab result')}
+      description={description}
     >
       <form onSubmit={submit} noValidate className="flex flex-col gap-4">
         {formError && (

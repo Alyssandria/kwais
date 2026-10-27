@@ -18,6 +18,7 @@ import { MealPage } from '@/features/meals/MealPage';
 import { HistoryPage } from '@/features/meals/HistoryPage';
 import { AnalyticsPage } from '@/features/analytics/AnalyticsPage';
 import { NotificationsPage } from '@/features/notifications/NotificationsPage';
+import { NotesPage } from '@/features/notes/NotesPage';
 import { SettingsPage } from '@/features/settings/SettingsPage';
 import { DoctorLayout } from '@/pages/doctor/DoctorLayout';
 import { DoctorHomePage } from '@/features/doctor/DoctorHomePage';
@@ -27,6 +28,7 @@ import { PatientRecordLayout } from '@/features/doctor/patient/PatientRecordLayo
 import { OverviewTab } from '@/features/doctor/patient/OverviewTab';
 import { MealDetailPage } from '@/features/doctor/patient/MealDetailPage';
 import { LabsTab } from '@/features/doctor/patient/LabsTab';
+import { NotesTab } from '@/features/doctor/patient/NotesTab';
 import { ComponentGallery } from '@/pages/dev/ComponentGallery';
 import { StatusPage } from '@/pages/dev/StatusPage';
 
@@ -62,6 +64,7 @@ const patientRoutes: RouteObject = {
     { path: 'meals/:id', element: <MealPage /> },
     { path: 'analytics', element: <AnalyticsPage /> },
     { path: 'labs', element: <LabsPage /> },
+    { path: 'notes', element: <NotesPage /> },
     { path: 'notifications', element: <NotificationsPage /> },
     { path: 'profile', element: <ProfilePage /> },
     { path: 'settings', element: <SettingsPage /> },
@@ -91,6 +94,7 @@ const doctorRoutes: RouteObject = {
         { path: 'meals/:mealId', element: <MealDetailPage /> },
         { path: 'trends', element: <AnalyticsPage /> },
         { path: 'labs', element: <LabsTab /> },
+        { path: 'notes', element: <NotesTab /> },
       ],
     },
   ],

@@ -5,6 +5,7 @@ import { PatientProfileModel } from '../models/patient-profile.model.js';
 import { PrivacyModel } from '../models/privacy.model.js';
 import { AuditService, type RequestMeta } from './audit.service.js';
 import { verifyCurrentPassword } from './auth.service.js';
+import { NoteService } from './note.service.js';
 import { LabService } from './lab.service.js';
 
 export const EXPORT_FORMAT_VERSION = 1;
@@ -42,6 +43,7 @@ export const PrivacyService = {
     const patientId = patientProfile?.id ?? null;
     const { targets = [], meals = [], careLinks = [], careInvites = [], ...profile } = patientProfile ?? {};
     const labs = patientId ? await LabService.list(patientId) : [];
+    const clinicalNotes = patientId ? await NoteService.list(patientId) : [];
     const activity = await PrivacyService.activity(userId, 1000);
 
     await AuditService.record('export', 'account_data', meta, {
@@ -65,6 +67,7 @@ export const PrivacyService = {
       targets,
       careTeam: { links: careLinks, invites: careInvites },
       labs,
+      clinicalNotes,
       meals,
       consents,
       notifications,

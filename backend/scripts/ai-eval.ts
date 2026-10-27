@@ -68,9 +68,9 @@ async function main() {
         meal: { rawText: m.text, condiments: [{ name: 'toyo', amount: 'tsp' }], drinks: ['tubig'], cookingMethods: [], category: 'lunch', eatenAtLocal: '2026-10-16 12:30' },
         engine,
         day: { date: '2026-10-16', earlierMeals: 1, totalsBeforeMeal: { sodium: 600, potassium: 500, phosphorus: 300, protein: 15 } },
-        profile: { ckdStage: { value: '3b', source: 'patient_entered' }, dialysisStatus: 'none', restrictions: ['Low-salt diet'], allergies: ['Shrimp'], dietaryPreferences: [] },
-        targets: [{ nutrient: 'sodium', dailyMax: 2000, unit: 'mg', source: 'patient_entered', note: null, since: '' }],
-        labs: [{ id: 'x', test: 'potassium', label: 'Potassium', value: 5.6, refLow: 3.5, refHigh: 5.1, unit: 'mmol/L', collectedOn: '2026-09-28', labName: null, source: 'patient_entered', createdAt: '' }],
+        profile: { ckdStage: { value: '3b', source: 'patient_entered', verified: null }, dialysisStatus: 'none', restrictions: ['Low-salt diet'], allergies: ['Shrimp'], dietaryPreferences: [] },
+        targets: [{ nutrient: 'sodium', dailyMax: 2000, unit: 'mg', source: 'patient_entered', note: null, since: '', verified: null }],
+        labs: [{ id: 'x', test: 'potassium', label: 'Potassium', value: 5.6, refLow: 3.5, refHigh: 5.1, unit: 'mmol/L', collectedOn: '2026-09-28', labName: null, source: 'patient_entered', createdAt: '', verified: null }],
       });
       const out = checkAnalysis(await provider.analyseMeal(input), input);
       analysisOk++;

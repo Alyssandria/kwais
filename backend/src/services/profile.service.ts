@@ -2,6 +2,7 @@ import { HttpError } from '../lib/http-error.js';
 import { PatientProfileModel, type ProfileChanges, type ProfileRecord } from '../models/patient-profile.model.js';
 import type { ProfileUpdate } from '../schemas/patient.schemas.js';
 import { AuditService, type RequestMeta } from './audit.service.js';
+import { toVerification, verifiedFields, type Clinician, type Verification } from './verification.js';
 
 export interface ProfileView {
   patientCode: string;
@@ -12,7 +13,7 @@ export interface ProfileView {
   dietaryPreferences: string[];
   allergies: string[];
   restrictions: string[];
-  ckdStage: { value: string; source: 'patient_entered' | 'clinician_verified' } | null;
+  ckdStage: { value: string; source: 'patient_entered' | 'clinician_verified'; verified: Verification | null } | null;
   dialysisStatus: 'none' | 'hemodialysis' | 'peritoneal' | 'unknown';
   reminderTime: string | null;
   timezone: string;
@@ -30,7 +31,9 @@ export function toProfileView(p: ProfileRecord): ProfileView {
     dietaryPreferences: p.dietaryPreferences,
     allergies: p.allergies,
     restrictions: p.restrictions,
-    ckdStage: p.ckdStage ? { value: p.ckdStage, source: p.ckdStageSource ?? 'patient_entered' } : null,
+    ckdStage: p.ckdStage
+      ? { value: p.ckdStage, source: p.ckdStageSource ?? 'patient_entered', verified: toVerification(p.ckdStageVerifiedAt, p.ckdStageVerifiedBy) }
+      : null,
     dialysisStatus: p.dialysisStatus,
     reminderTime: p.reminderTime,
     timezone: p.timezone,
@@ -56,6 +59,8 @@ export const ProfileService = {
       if (stage !== current.ckdStage) {
         data.ckdStage = stage;
         data.ckdStageSource = stage ? 'patient_entered' : null;
+        data.ckdStageVerifiedById = null;
+        data.ckdStageVerifiedAt = null;
       }
     }
 
@@ -66,6 +71,18 @@ export const ProfileService = {
       resourceId: patientId,
       patientId,
     });
+    return toProfileView(updated);
+  },
+
+  async setStage(patientId: string, stage: string, clinician: Clinician, meta: RequestMeta): Promise<ProfileView> {
+    const v = verifiedFields(clinician);
+    const updated = await PatientProfileModel.update(patientId, {
+      ckdStage: stage,
+      ckdStageSource: v.source,
+      ckdStageVerifiedById: v.verifiedById,
+      ckdStageVerifiedAt: v.verifiedAt,
+    });
+    await AuditService.record('update', 'ckd_stage', meta, { actorId: clinician.userId, actorRole: 'doctor', resourceId: patientId, patientId });
     return toProfileView(updated);
   },
 

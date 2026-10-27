@@ -12,7 +12,7 @@ const profile: Profile = {
   dietaryPreferences: [],
   allergies: [],
   restrictions: ['Low-salt diet'],
-  ckdStage: { value: '3b', source: 'clinician_verified' },
+  ckdStage: { value: '3b', source: 'clinician_verified', verified: { by: 'Dr. Ana Reyes', at: '2026-10-01T04:00:00Z' } },
   dialysisStatus: 'none',
   reminderTime: null,
   timezone: 'Asia/Manila',
@@ -20,7 +20,7 @@ const profile: Profile = {
   updatedAt: '2026-10-15T00:00:00Z',
 };
 
-const sodium: Target = { nutrient: 'sodium', dailyMax: 2000, unit: 'mg', source: 'patient_entered', note: null, since: '2026-10-01' };
+const sodium: Target = { nutrient: 'sodium', dailyMax: 2000, unit: 'mg', source: 'patient_entered', note: null, since: '2026-10-01', verified: null };
 
 describe('TargetsSection', () => {
   it('sends only what changed, with null for a cleared target', async () => {
@@ -57,7 +57,7 @@ describe('KidneySection', () => {
     const onSubmit = vi.fn().mockResolvedValue(undefined);
     render(<KidneySection profile={profile} submitLabel="Save" onSubmit={onSubmit} />);
     expect(screen.getByText(/never works out a CKD stage/i)).toBeInTheDocument();
-    expect(screen.getByText(/your clinician verified your stage/i)).toBeInTheDocument();
+    expect(screen.getByText(/Verified by Dr. Ana Reyes, Oct 1, 2026. Changing it here marks it as entered by you./)).toBeInTheDocument();
 
     await userEvent.click(screen.getByLabelText('Stage 4'));
     await userEvent.click(screen.getByLabelText('Hemodialysis'));

@@ -12,6 +12,8 @@ const RESOURCE: Record<string, string> = {
   lab_results: 'your lab results',
   trends: 'your trends',
   meal_history: 'your meal history',
+  ckd_stage: 'your CKD stage',
+  clinical_note: 'a note for you',
 };
 
 const VERB: Record<string, string> = { create: 'Added', update: 'Changed', delete: 'Deleted', read: 'Viewed' };

@@ -3,6 +3,7 @@ import { HttpError } from '../lib/http-error.js';
 import { TargetModel, type TargetRecord } from '../models/target.model.js';
 import { NUTRIENT_LIMITS, type TargetBody } from '../schemas/patient.schemas.js';
 import { AuditService, type RequestMeta } from './audit.service.js';
+import { toVerification, verifiedFields, type Clinician, type Verification } from './verification.js';
 
 export interface TargetView {
   nutrient: Nutrient;
@@ -11,6 +12,7 @@ export interface TargetView {
   source: 'patient_entered' | 'clinician_verified';
   note: string | null;
   since: string;
+  verified: Verification | null;
 }
 
 function toView(t: TargetRecord): TargetView {
@@ -21,6 +23,7 @@ function toView(t: TargetRecord): TargetView {
     source: t.source,
     note: t.note,
     since: t.effectiveFrom.toISOString(),
+    verified: toVerification(t.verifiedAt, t.verifiedBy),
   };
 }
 
@@ -31,19 +34,24 @@ export const TargetService = {
     return rows.filter((r) => r.dailyMax != null && !seen.has(r.nutrient) && seen.add(r.nutrient)).map(toView);
   },
 
-  async set(patientId: string, nutrient: Nutrient, body: TargetBody, actorId: string, meta: RequestMeta): Promise<TargetView> {
+  async set(patientId: string, nutrient: Nutrient, body: TargetBody, actorId: string, meta: RequestMeta, clinician?: Clinician): Promise<TargetView> {
     const limit = NUTRIENT_LIMITS[nutrient];
     if (body.dailyMax > limit.max) {
-      throw HttpError.badRequest(`That is higher than any daily target K-WAIS accepts (${limit.max} ${limit.unit}). Check the number with your care team.`);
+      throw HttpError.badRequest(`That is higher than any daily target K-WAIS accepts (${limit.max} ${limit.unit}). ${clinician ? 'Check the number.' : 'Check the number with your care team.'}`);
     }
     const t = await TargetModel.replace(patientId, {
       nutrient,
       dailyMax: body.dailyMax,
       unit: limit.unit,
-      source: 'patient_entered',
       note: body.note ?? null,
+      ...verifiedFields(clinician),
     });
-    await AuditService.record('update', 'nutrition_target', meta, { actorId, actorRole: 'patient', resourceId: t.id, patientId });
+    await AuditService.record('update', 'nutrition_target', meta, {
+      actorId,
+      actorRole: clinician ? 'doctor' : 'patient',
+      resourceId: t.id,
+      patientId,
+    });
     return toView(t);
   },
 
