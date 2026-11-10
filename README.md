@@ -139,4 +139,4 @@ The work is split into sections so each can be reviewed and committed on its own
 
 ## Deployment
 
-See [`docs/deployment.md`](docs/deployment.md) for the production checklist, Docker setup and operations.
+See [`docs/deployment.md`](docs/deployment.md) for the production checklist, Docker setup and operations. For a single AWS EC2 instance with HTTPS, see [`docs/deployment-ec2.md`](docs/deployment-ec2.md).

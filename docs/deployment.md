@@ -1,5 +1,8 @@
 # Deployment
 
+Deploying on one AWS EC2 instance? Follow [deployment-ec2.md](deployment-ec2.md), which adds HTTPS with Caddy;
+the checklists and operations below still apply.
+
 K-WAIS ships as three containers: PostgreSQL, the API, and the web app (nginx serving the built
 frontend and proxying `/api` to the API). `docker-compose.prod.yml` at the repository root wires
 them together. Put a TLS-terminating proxy (Caddy, Traefik, a cloud load balancer) in front of
