@@ -23,6 +23,7 @@
     "db:reset": "prisma migrate reset",
     "db:seed": "prisma db seed",
     "db:import-foods": "tsx --env-file=.env prisma/import-foods.ts",
+    "db:build-philfct": "tsx prisma/build-philfct-base.ts",
     "ai:eval": "tsx --env-file=.env scripts/ai-eval.ts",
     "mail:test": "tsx --env-file=.env scripts/mail-test.ts"
   },

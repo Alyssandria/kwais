@@ -29,3 +29,6 @@ Thumbs.db
 
 # Local storage
 backend/storage/
+
+# Food data built from PhilFCT (FNRI-DOST). Kept out of this public repository; rebuild it with pnpm db:build-philfct
+backend/prisma/seed-data/philfct-base.csv

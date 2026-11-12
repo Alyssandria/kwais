@@ -1,0 +1,151 @@
+source_ref,local_names,category,portions
+A020,kanin|rice|white rice|cooked rice|steamed rice|sinaing,grain,tasa=160|sandok=80|mangkok=200|serving=160
+A021,sinangag|fried rice|garlic rice|garlic fried rice,grain,tasa=170|sandok=85|serving=170
+A042,pandesal|pan de sal|bread roll,bread,piraso=30
+A031,brown bread|wheat bread,bread,hiwa=28
+A138,bihon|rice noodles|rice vermicelli,grain,tasa=175|serving=175
+A135,sotanghon|glass noodles|vermicelli,grain,tasa=150|serving=150
+A147,miki|egg noodles,grain,tasa=150|serving=150
+A140,pancit canton|instant pancit canton|canton noodles|dry canton,grain,pakete=60
+A142,instant noodles|instant mami|noodle soup|cup noodles,grain,pakete=55
+A145,misua|miswa,grain,tasa=150
+A154,spaghetti|pasta,grain,tasa=140|serving=140
+A150,oatmeal|oats,grain,tasa=234|mangkok=250
+B002,kamoteng kahoy|balinghoy|cassava,starch,piraso=100|tasa=200
+B008,patatas|potato|boiled potato,starch,piraso=150|tasa=156
+B012,kamote|sweet potato|camote|nilagang kamote,starch,piraso=130|tasa=200
+A005,mais|corn|boiled corn|nilagang mais|corn on the cob,starch,piraso=90
+A177,puto|puto puti,snack,piraso=40
+A168,biko|sinukmani,snack,hiwa=60
+R011,arroz caldo|chicken lugaw|lugaw,dish,mangkok=300|tasa=240
+R013,goto|lugaw with goto|tripe congee,dish,mangkok=300
+R012,champorado,dish,mangkok=250|tasa=240
+D242,kangkong|water spinach|swamp cabbage,vegetable,tasa=40
+D094,malunggay|moringa|malunggay leaves,vegetable,tasa=20
+D232,sitaw|string beans|yard long beans,vegetable,tasa=100|piraso=12
+D018,ampalaya|bitter gourd|bitter melon,vegetable,piraso=200|tasa=95
+D050,sayote|chayote,vegetable,piraso=200|tasa=130
+D225,kalabasa|squash|pumpkin,vegetable,tasa=150
+D073,talong|eggplant,vegetable,piraso=120
+D160,pechay|petsay|bok choy,vegetable,tasa=70
+D054,pechay baguio|napa cabbage|wombok,vegetable,tasa=75
+D035,repolyo|cabbage,vegetable,tasa=70
+D039,karot|carrot|carrots,vegetable,piraso=70|tasa=120
+D257,kamatis|tomato|tomatoes,vegetable,piraso=60
+D141,sibuyas|onion|bombay onion,vegetable,piraso=110|tbsp=10
+D143,sibuyas tagalog|shallot|shallots,vegetable,piraso=10
+D084,bawang|garlic,vegetable,piraso=4|tsp=3
+D139,okra|ladyfinger,vegetable,piraso=12
+D025,upo|bottle gourd,vegetable,tasa=115
+D219,patola|sponge gourd|luffa,vegetable,tasa=100
+D272,sigarilyas|winged bean|winged beans,vegetable,tasa=100
+D131,toge|togue|bean sprouts|mung bean sprouts,vegetable,tasa=100
+D104,langka|unripe jackfruit|hilaw na langka,vegetable,tasa=150
+D304,luya|ginger,vegetable,tbsp=6
+D069,pipino|cucumber,vegetable,piraso=200|hiwa=8
+D173,talinum|philippine spinach|talinum leaves,vegetable,tasa=30
+C028,munggo|mung beans|monggo|boiled munggo,legume,tasa=200
+C034,mani|peanuts|peanut,legume,tbsp=9|tasa=145
+C063,tofu|soft tofu,legume,tasa=250|piraso=80
+C064,tokwa|firm tofu|hard tofu,legume,piraso=80
+C005,garbanzos|chickpeas|garbanzo,legume,tasa=160
+E011,saging|banana|lakatan,fruit,piraso=100
+E015,saba|nilagang saba|boiled saba|saging na saba,fruit,piraso=90
+E051,mangga|mango|hinog na mangga|ripe mango,fruit,piraso=200|hiwa=100
+E052,green mango|hilaw na mangga|unripe mango,fruit,piraso=180
+E069,papaya|ripe papaya,fruit,hiwa=150|tasa=145
+E073,pinya|pineapple,fruit,hiwa=80|tasa=165
+E064,pakwan|watermelon,fruit,hiwa=150|tasa=150
+E002,mansanas|apple|red apple,fruit,piraso=180
+E065,dalandan|native orange,fruit,piraso=100
+E023,kalamansi|calamansi|calamondin,fruit,piraso=5
+E031,bayabas|guava,fruit,piraso=90
+E030,ubas|grapes,fruit,tasa=150
+E089,atis|sugar apple,fruit,piraso=100
+G074,bangus|milkfish,fish,hiwa=80|serving=100
+G076,pritong bangus|fried bangus|fried milkfish,fish,hiwa=80|serving=100
+G180,daing na bangus|dried bangus|dried milkfish,fish,serving=80
+G105,galunggong|round scad,fish,piraso=80
+G207,daing na galunggong|dried galunggong,fish,piraso=40
+G208,tinapa|smoked fish|tinapang galunggong,fish,piraso=50
+G145,tilapia,fish,piraso=120
+G147,tambakol|yellowfin tuna|tuna steak,fish,serving=100
+G073,alumahan|mackerel,fish,piraso=100
+G071,pritong hasa-hasa|fried hasa-hasa|hasa-hasa,fish,piraso=60
+G007,dilis|anchovies|fresh dilis,fish,serving=50
+G113,hipon|shrimp|prawns,fish,piraso=10|serving=100
+G131,pusit|squid,fish,serving=100
+G085,tahong|mussels,fish,piraso=10|tasa=150
+G037,alimasag|crab|crab meat,fish,serving=60
+G161,fishball|fish balls|fish ball,fish,piraso=8|serving=80
+G203,sardinas|sardines|canned sardines|sardinas sa kamatis,fish,lata=155|serving=80
+G226,tuna flakes|canned tuna|tuna in brine,fish,lata=150|serving=80
+F179,baboy|pork|kasim|pork meat,meat,serving=80|hiwa=30
+F147,liempo|pork belly|baboy liempo,meat,hiwa=40|serving=100
+F149,lechon kawali|pritong liempo|fried pork belly,meat,serving=100
+F162,pork chop|porkchop,meat,piraso=120
+F093,manok|chicken|pitso|chicken breast,meat,piraso=120|serving=100
+F107,hita|hita ng manok|chicken thigh,meat,piraso=70
+F102,binti|binti ng manok|drumstick|chicken leg,meat,piraso=60
+F109,pakpak|pakpak ng manok|chicken wing|chicken wings,meat,piraso=35
+F112,fried chicken|pritong manok,meat,piraso=100|serving=100
+F265,lechon manok|roast chicken|rotisserie chicken,meat,serving=150
+F103,atay ng manok|chicken liver,meat,piraso=30|serving=60
+F015,baka|beef|lean beef,meat,serving=80
+F035,kenchi|beef shank,meat,serving=100
+F242,chicharon|chicharong baboy|pork rinds,meat,tasa=30|serving=30
+F245,tocino|pork tocino,meat,piraso=30|serving=90
+F249,longganisa|longanisa|chorizo|pork longganisa,meat,piraso=40
+F223,chicken longganisa|longganisang manok,meat,piraso=40
+F253,hotdog|hot dog,meat,piraso=45
+F226,corned beef|karne norte|canned corned beef,meat,lata=150|tbsp=15|serving=60
+F235,luncheon meat|spam|maling,meat,hiwa=40
+F261,vienna sausage,meat,piraso=15|lata=130
+R086,pork and beans|pork & beans,dish,lata=230|serving=120
+H003,itlog|egg|chicken egg|pritong itlog,egg,piraso=50
+H004,nilagang itlog|hard-boiled egg|boiled egg,egg,piraso=50
+H021,itlog na maalat|salted egg|itlog na pula|salted duck egg,egg,piraso=60
+H016,balut,egg,piraso=65
+H010,itlog ng pugo|quail egg|quail eggs,egg,piraso=10
+H020,penoy,egg,piraso=60
+J014,gatas|milk|fresh milk,drink,baso=240|tasa=240
+J015,evaporated milk|evap|gatas evaporada,dairy,tbsp=15|lata=370
+J025,condensed milk|kondensada|gatas kondensada,dairy,tbsp=20
+J020,powdered milk|gatas na pulbos|full cream milk powder,dairy,tbsp=7
+J004,kesong puti|white cheese,dairy,hiwa=30
+J001,cheese|keso|cheddar|processed cheese,dairy,hiwa=20
+K008,mantika|cooking oil|langis|coconut oil|oil,fat,tbsp=14|tsp=5
+K003,lard|mantika ng baboy|pork fat,fat,tbsp=13
+K002,gata|coconut milk|kakang gata,fat,tasa=240|tbsp=15
+K004,margarine|margarina,fat,tbsp=14
+K007,mayonnaise|mayo,fat,tbsp=14
+N011,patis|fish sauce,condiment,tbsp=18|tsp=6
+N023,toyo|soy sauce,condiment,tbsp=18|tsp=6
+N021,bagoong|bagoong alamang|shrimp paste|alamang,condiment,tbsp=18|tsp=6
+N031,ginisang bagoong|sauteed shrimp paste,condiment,tbsp=18
+N007,bagoong isda|bagoong dilis|anchovy paste|fish paste,condiment,tbsp=18
+N019,asin|salt|rock salt,condiment,tsp=6|tbsp=18
+N003,chicken cube|chicken bouillon|bouillon cube|broth cube,condiment,piraso=10
+N002,beef cube|beef bouillon,condiment,piraso=10
+N005,catsup|ketchup|tomato ketchup|tomato catsup,condiment,tbsp=17
+N004,banana catsup|banana ketchup,condiment,tbsp=17
+N025,tomato sauce,condiment,tbsp=15|tasa=245
+N027,suka|vinegar|coconut vinegar,condiment,tbsp=15
+N013,lechon sauce|sarsa|mang tomas,condiment,tbsp=17
+M042,asukal|sugar|brown sugar|asukal na pula,condiment,tsp=4|tbsp=12
+Q011,3 in 1 coffee|3-in-1|coffee mix|kape|coffee,drink,pakete=20
+Q062,tsaa|tea|plain tea,drink,tasa=240|baso=240
+Q053,softdrinks|soft drink|coke|cola|soda,drink,baso=240|lata=330
+Q054,orange soda|royal,drink,baso=240|lata=330
+Q010,buko juice|coconut water|sabaw ng buko,drink,baso=240
+Q045,mango juice,drink,baso=240
+Q046,orange juice,drink,baso=240
+Q044,calamansi juice|kalamansi juice,drink,baso=240
+Q002,chocolate drink|milo|choco|tsokolate,drink,baso=240|tasa=240
+Q051,iced tea|bottled iced tea|lemon iced tea,drink,baso=240
+R005,siopao|siopao asado|pork siopao,snack,piraso=120
+R101,siomai|pork siomai,snack,piraso=20
+R064,lumpiang shanghai|lumpia shanghai|lumpia,snack,piraso=20
+A113,crackers|skyflakes|biskwit|plain crackers,snack,piraso=8|pakete=25
+J008,sorbetes|ice cream|dirty ice cream,snack,sandok=70|tasa=130
+R077,munggo soup with shrimp|ginisang munggo with shrimp|monggo soup,dish,mangkok=250|tasa=240
