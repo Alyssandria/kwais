@@ -8,7 +8,7 @@ import { Card, CardHeader, EmptyState, ErrorState, LoadingRegion, PageHeader, Se
 import { errorMessage } from '@/lib/api';
 import { cn } from '@/lib/cn';
 import { usePatientScope } from '@/lib/patient-scope';
-import { fmt, NUTRIENTS, NUTRIENT_KEYS, percentOfTarget, targetStatus, type NutrientKey } from '@/lib/nutrition';
+import { FLUID_NOTE, fmt, isGoal, NUTRIENTS, NUTRIENT_KEYS, percentOfTarget, targetStatus, type NutrientKey } from '@/lib/nutrition';
 import { useAnalytics, type AnalyticsRange, type PatientAnalytics } from './api';
 
 const RANGES: { value: `${AnalyticsRange}`; label: string }[] = [
@@ -24,6 +24,8 @@ const SERIES: Record<Series, { label: string; color: string; unit: string }> = {
   potassium: { label: 'Potassium', color: NUTRIENTS.potassium.color, unit: 'mg' },
   phosphorus: { label: 'Phosphorus', color: NUTRIENTS.phosphorus.color, unit: 'mg' },
   protein: { label: 'Protein', color: NUTRIENTS.protein.color, unit: 'g' },
+  energy: { label: 'Calories', color: NUTRIENTS.energy.color, unit: 'kcal' },
+  fluid: { label: 'Fluid', color: NUTRIENTS.fluid.color, unit: 'mL' },
 };
 
 const shortDate = (iso: string) => new Date(`${iso}T12:00:00`).toLocaleDateString('en-PH', { day: 'numeric', month: 'short' });
@@ -90,9 +92,11 @@ function NutrientAverages({ a }: { a: PatientAnalytics }) {
       <h2 id="avg-title" className="text-base font-bold">
         Average per day
       </h2>
-      <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {NUTRIENT_KEYS.map((n) => {
           const v = a.summary.nutrients[n];
+          if (!v) return null;
+          const goal = isGoal(n);
           const pct = v.averagePerDay == null ? null : percentOfTarget(v.averagePerDay, v.target);
           return (
             <li key={n}>
@@ -105,19 +109,28 @@ function NutrientAverages({ a }: { a: PatientAnalytics }) {
                   {v.averagePerDay == null ? '—' : amount(v.averagePerDay, v.unit)} <span className="text-sm font-semibold text-muted">{v.unit}</span>
                 </p>
                 {v.target != null && v.averagePerDay != null ? (
-                  <StatusLabel kind={targetStatus(pct)}>
-                    {pct}% of {whose} {fmt(v.target)} {v.unit} target
-                  </StatusLabel>
+                  goal ? (
+                    <p className="text-[12.5px] text-muted">
+                      {pct}% of {whose} {fmt(v.target)} {v.unit} goal
+                    </p>
+                  ) : (
+                    <StatusLabel kind={targetStatus(pct)}>
+                      {pct}% of {whose} {fmt(v.target)} {v.unit} target
+                    </StatusLabel>
+                  )
                 ) : (
-                  <p className="text-[12.5px] text-muted">{v.target == null ? 'No target set' : 'No analysed meals'}</p>
+                  <p className="text-[12.5px] text-muted">{v.target == null ? `No ${goal ? 'goal' : 'target'} set` : 'No analysed meals'}</p>
                 )}
                 <p className="text-[12px] text-muted">
                   {v.daysWithData === 0
                     ? 'No days with analysed meals'
                     : v.daysOverTarget == null
                       ? `From ${v.daysWithData} ${v.daysWithData === 1 ? 'day' : 'days'} with analysed meals`
-                      : `Over target on ${v.daysOverTarget} of ${v.daysWithData} ${v.daysWithData === 1 ? 'day' : 'days'}`}
+                      : goal
+                        ? `Reached the goal on ${v.daysOverTarget} of ${v.daysWithData} ${v.daysWithData === 1 ? 'day' : 'days'}`
+                        : `Over target on ${v.daysOverTarget} of ${v.daysWithData} ${v.daysWithData === 1 ? 'day' : 'days'}`}
                 </p>
+                {n === 'fluid' && <p className="text-[12px] text-muted">{FLUID_NOTE}</p>}
               </Card>
             </li>
           );

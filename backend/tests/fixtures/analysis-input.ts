@@ -1,9 +1,9 @@
 import { guidanceWithout } from '../../src/services/ai/guidance.js';
 import type { AnalysisInput } from '../../src/services/ai/types.js';
 
-const totals = (sodium: number, potassium: number, phosphorus: number, protein: number) => ({ sodium, potassium, phosphorus, protein });
+const totals = (sodium: number, potassium: number, phosphorus: number, protein: number, energy = 0, fluid = 0) => ({ sodium, potassium, phosphorus, protein, energy, fluid });
 
-export function sampleInput(over: Partial<AnalysisInput['supplied']> = {}, withMeal = totals(900, 500, 300, 25)): AnalysisInput {
+export function sampleInput(over: Partial<AnalysisInput['supplied']> = {}, withMeal: Partial<ReturnType<typeof totals>> = totals(900, 500, 300, 25)): AnalysisInput {
   const supplied: AnalysisInput['supplied'] = {
     targets: { sodium: { dailyMax: 2000, unit: 'mg', source: 'patient_entered' } },
     restrictions: ['Low-salt diet'],
@@ -29,10 +29,12 @@ export function sampleInput(over: Partial<AnalysisInput['supplied']> = {}, withM
         potassium: { value: 300, unit: 'mg', complete: true },
         phosphorus: { value: 250, unit: 'mg', complete: true },
         protein: { value: 25, unit: 'g', complete: true },
+        energy: { value: 450, unit: 'kcal', complete: true },
+        fluid: { value: 0, unit: 'mL', complete: true },
       },
       dataNotes: [],
     },
-    day: { date: '2026-10-16', earlierMeals: 1, totalsBeforeMeal: totals(500, 200, 50, 0), totalsWithMeal: withMeal },
+    day: { date: '2026-10-16', earlierMeals: 1, totalsBeforeMeal: totals(500, 200, 50, 0), totalsWithMeal: { ...totals(0, 0, 0, 0), ...withMeal } },
     supplied,
     guidance,
     allowedInputs,

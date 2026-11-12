@@ -35,9 +35,11 @@ export const NUTRIENT_LIMITS = {
   potassium: { unit: 'mg', max: 10_000 },
   phosphorus: { unit: 'mg', max: 5_000 },
   protein: { unit: 'g', max: 300 },
+  energy: { unit: 'kcal', max: 6_000 },
+  fluid: { unit: 'mL', max: 5_000 },
 } as const;
 
-export const NutrientParam = z.enum(['sodium', 'potassium', 'phosphorus', 'protein']);
+export const NutrientParam = z.enum(['sodium', 'potassium', 'phosphorus', 'protein', 'energy', 'fluid']);
 
 export const TargetSchema = z.object({
   dailyMax: z.number().positive('Enter an amount above zero').finite(),

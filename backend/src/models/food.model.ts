@@ -13,6 +13,7 @@ const catalogSelect = {
   potassiumMg: true,
   phosphorusMg: true,
   proteinG: true,
+  energyKcal: true,
   portions: { select: { unit: true, grams: true } },
   recipeComponents: { select: { ingredientId: true, gramsPer100gDish: true } },
 } satisfies Prisma.FoodItemSelect;
@@ -31,6 +32,7 @@ const searchSelect = {
   potassiumMg: true,
   phosphorusMg: true,
   proteinG: true,
+  energyKcal: true,
   portions: { select: { unit: true, grams: true }, orderBy: { unit: 'asc' } },
 } satisfies Prisma.FoodItemSelect;
 
@@ -47,6 +49,7 @@ export interface FoodUpsert {
   potassiumMg: number | null;
   phosphorusMg: number | null;
   proteinG: number | null;
+  energyKcal?: number | null;
   portions: { unit: string; grams: number }[];
 }
 
@@ -78,6 +81,8 @@ export const FoodModel = {
       potassiumMg: dec(f.potassiumMg),
       phosphorusMg: dec(f.phosphorusMg),
       proteinG: dec(f.proteinG),
+      // only overwrite energy when the import supplied it, so older files do not clear it
+      ...(f.energyKcal !== undefined ? { energyKcal: dec(f.energyKcal) } : {}),
     };
     return prisma.$transaction(async (tx) => {
       const row = await tx.foodItem.upsert({

@@ -1,10 +1,10 @@
 import { parseMealText } from '../nutrition/text-parser.js';
-import { NUTRIENT_KEYS, type NutrientKey } from '../nutrition/types.js';
+import { SCORED_KEYS, type NutrientKey } from '../nutrition/types.js';
 import { hasScoreBasis } from './rubric.js';
 import type { AnalysisOutput } from './schemas.js';
 import type { AiProvider, AnalysisInput, InputKey, ParsedFood } from './types.js';
 
-const LABEL: Record<NutrientKey, string> = { sodium: 'Sodium', potassium: 'Potassium', phosphorus: 'Phosphorus', protein: 'Protein' };
+const LABEL: Record<NutrientKey, string> = { sodium: 'Sodium', potassium: 'Potassium', phosphorus: 'Phosphorus', protein: 'Protein', energy: 'Calories', fluid: 'Fluid' };
 const SALTY = ['toyo', 'toyo_mansi', 'patis', 'bagoong', 'asin', 'oyster_sauce'];
 const SALTY_WORDS = /\b(maalat|sobrang alat|salty|tuyo|daing|longganisa|tocino|hotdog|corned beef|instant|de lata|bagoong)\b/i;
 const MEAL_SHARE = 0.4;
@@ -28,7 +28,7 @@ export function mockAnalysis(input: AnalysisInput): AnalysisOutput {
     });
   }
 
-  for (const n of NUTRIENT_KEYS) {
+  for (const n of SCORED_KEYS) {
     const target = targets[n];
     const guide = guidance[n];
     const limit = target ?? (input.meal.totals[n].value != null ? guide : undefined);
@@ -36,7 +36,8 @@ export function mockAnalysis(input: AnalysisInput): AnalysisOutput {
     const today = input.day.totalsWithMeal[n];
 
     if (!limit) {
-      if (basis) reasons.push({ title: `${LABEL[n]} not scored`, detail: `Add a ${n} target from your care team to have it scored.`, deduction: null, basis: 'not_scored' });
+      // fluid is only scored against a limit from the care team; without one it is not worth a line
+      if (basis && n !== 'fluid') reasons.push({ title: `${LABEL[n]} not scored`, detail: `Add a ${n} target from your care team to have it scored.`, deduction: null, basis: 'not_scored' });
       continue;
     }
     used.add(target ? `target.${n}` : `guide.${n}`);

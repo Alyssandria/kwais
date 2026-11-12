@@ -1,7 +1,7 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, ApiError, streamLines } from '@/lib/api';
 import { scopedApiPath, scopedKey, usePatientScope } from '@/lib/patient-scope';
-import type { NutrientKey } from '@/lib/nutrition';
+import type { NutrientKey, NutrientUnit } from '@/lib/nutrition';
 
 export type MealCategory = 'breakfast' | 'lunch' | 'dinner' | 'snack';
 export type MealStatus = 'draft' | 'saved' | 'analysed';
@@ -13,9 +13,19 @@ export interface MealCondiment {
   amount: CondimentAmount;
 }
 
+export type DrinkUnit = 'baso' | 'tasa' | 'lata' | 'ml';
+
+export interface MealDrink {
+  name: string;
+  quantity: number;
+  unit: DrinkUnit;
+  // true for drinks logged before amounts were asked for: one glass was assumed
+  assumed?: boolean;
+}
+
 export interface NutrientTotal {
   value: number | null;
-  unit: 'mg' | 'g';
+  unit: NutrientUnit;
   source: Provenance;
   complete: boolean;
 }
@@ -29,7 +39,8 @@ export interface AnalysedItem {
   preparation: string | null;
   amountGuessed: boolean;
   match: { foodId: string; name: string; source: string; sourceRef: string; verified: boolean; confidence: number } | null;
-  nutrients: Record<NutrientKey, { value: number | null; source: Provenance }>;
+  // items analysed before calories and fluid were tracked have no energy or fluid entry
+  nutrients: Partial<Record<NutrientKey, { value: number | null; source: Provenance }>>;
 }
 
 export interface DataNote {
@@ -57,14 +68,15 @@ export interface AiAnalysis {
   scoreBasis?: 'personal' | 'general' | null;
 }
 
-type Totals = Record<NutrientKey, number>;
+type Totals = Partial<Record<NutrientKey, number>>;
 
 export interface MealAnalysis {
   id: string;
   version: number;
   engineVersion: string;
   createdAt: string;
-  totals: Record<NutrientKey, NutrientTotal>;
+  // analyses saved before calories and fluid were tracked have no energy or fluid entry
+  totals: Partial<Record<NutrientKey, NutrientTotal>>;
   items: AnalysedItem[];
   notes: DataNote[];
   day: { date: string; earlierMeals: number; totalsBeforeMeal: Totals; totalsWithMeal: Totals } | null;
@@ -86,7 +98,7 @@ export interface Meal {
   eatenAt: string;
   rawText: string;
   condiments: MealCondiment[];
-  drinks: string[];
+  drinks: MealDrink[];
   cookingMethods: string[];
   notes: string | null;
   status: MealStatus;
@@ -101,7 +113,7 @@ export interface RecentMeal {
   eatenAt: string;
   rawText: string;
   condiments: MealCondiment[];
-  drinks: string[];
+  drinks: MealDrink[];
   cookingMethods: string[];
 }
 
@@ -110,7 +122,7 @@ export interface MealInput {
   eatenAt: string;
   rawText: string;
   condiments: MealCondiment[];
-  drinks: string[];
+  drinks: Omit<MealDrink, 'assumed'>[];
   cookingMethods: string[];
   notes: string | null;
   status: 'draft' | 'saved';

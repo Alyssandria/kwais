@@ -1,6 +1,6 @@
 import { FoodModel, type FoodRow, type FoodSearchRow } from '../models/food.model.js';
 import { buildCatalog } from './nutrition/catalog.js';
-import type { Catalog, CatalogFood, NutrientKey } from './nutrition/types.js';
+import type { Catalog, CatalogFood, FoodNutrientKey } from './nutrition/types.js';
 
 const CATALOG_TTL_MS = 5 * 60 * 1000;
 let cached: { catalog: Catalog; at: number } | null = null;
@@ -16,7 +16,7 @@ export function toCatalogFood(r: FoodRow): CatalogFood {
     source: r.source,
     sourceRef: r.sourceRef,
     verified: r.verified,
-    per100g: { sodium: num(r.sodiumMg), potassium: num(r.potassiumMg), phosphorus: num(r.phosphorusMg), protein: num(r.proteinG) },
+    per100g: { sodium: num(r.sodiumMg), potassium: num(r.potassiumMg), phosphorus: num(r.phosphorusMg), protein: num(r.proteinG), energy: num(r.energyKcal) },
     portions: Object.fromEntries(r.portions.map((p) => [p.unit, Number(p.grams)])),
     ingredients: r.recipeComponents.length
       ? r.recipeComponents.map((c) => ({ foodId: c.ingredientId, gramsPer100g: Number(c.gramsPer100gDish) }))
@@ -32,7 +32,7 @@ export interface FoodView {
   source: FoodSearchRow['source'];
   sourceRef: string;
   verified: boolean;
-  per100g: Record<NutrientKey, number | null>;
+  per100g: Record<FoodNutrientKey, number | null>;
   portions: { unit: string; grams: number }[];
 }
 
@@ -66,6 +66,7 @@ export const FoodService = {
         potassium: num(r.potassiumMg),
         phosphorus: num(r.phosphorusMg),
         protein: num(r.proteinG),
+        energy: num(r.energyKcal),
       },
       portions: r.portions.map((p) => ({ unit: p.unit, grams: Number(p.grams) })),
     }));

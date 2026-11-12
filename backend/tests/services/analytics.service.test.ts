@@ -20,7 +20,7 @@ describe('buildAnalytics', () => {
     const a = buildAnalytics({ now, timeZone: TZ, range: 7, meals, targets: [target] });
     expect(a).toMatchObject({ range: 7, from: '2026-10-10', to: '2026-10-16' });
     expect(a.days).toHaveLength(7);
-    expect(a.days[6]).toEqual({ date: '2026-10-16', meals: 2, analysedMeals: 2, score: 7, totals: { sodium: 2500, potassium: 600, phosphorus: 400, protein: 40 } });
+    expect(a.days[6]).toEqual({ date: '2026-10-16', meals: 2, analysedMeals: 2, score: 7, totals: { sodium: 2500, potassium: 600, phosphorus: 400, protein: 40, energy: 0, fluid: 0 } });
     expect(a.days[3]).toMatchObject({ date: '2026-10-13', meals: 1, analysedMeals: 0, totals: null });
     expect(a.summary).toMatchObject({ daysLogged: 3, mealsLogged: 4, analysedMeals: 3, averageScore: 6, scoreBands: { good: 1, mixed: 1, attention: 1 } });
   });

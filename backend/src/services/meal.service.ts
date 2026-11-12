@@ -14,6 +14,7 @@ import { estimateMeal } from './nutrition/engine.js';
 import { NUTRIENT_KEYS, type DataNote, type ItemResult, type MealInput, type NutrientKey, type NutrientTotal } from './nutrition/types.js';
 import { ProfileService } from './profile.service.js';
 import { TargetService } from './target.service.js';
+import type { StoredTotals } from './meal-summary.js';
 
 type Totals = Record<NutrientKey, number>;
 
@@ -22,7 +23,8 @@ export interface AnalysisView {
   version: number;
   engineVersion: string;
   createdAt: string;
-  totals: Record<NutrientKey, NutrientTotal>;
+  // older analyses have no energy or fluid entry, and their items no fluid value
+  totals: StoredTotals;
   items: ItemResult[];
   notes: DataNote[];
   day: { date: string; earlierMeals: number; totalsBeforeMeal: Totals; totalsWithMeal: Totals } | null;
@@ -44,7 +46,7 @@ export interface MealView {
   eatenAt: string;
   rawText: string;
   condiments: { name: string; amount: MealRecord['condiments'][number]['amount'] }[];
-  drinks: string[];
+  drinks: DrinkView[];
   cookingMethods: string[];
   notes: string | null;
   status: MealRecord['status'];
@@ -53,13 +55,23 @@ export interface MealView {
   analysis: AnalysisView | null;
 }
 
+export interface DrinkView {
+  name: string;
+  quantity: number;
+  unit: MealRecord['drinks'][number]['unit'];
+  assumed: boolean;
+}
+
+const toDrinks = (m: Pick<MealRecord, 'drinks'>): DrinkView[] =>
+  m.drinks.map((d) => ({ name: d.name, quantity: Number(d.quantity), unit: d.unit, assumed: d.assumed }));
+
 export interface RecentMeal {
   mealId: string;
   category: MealRecord['category'];
   eatenAt: string;
   rawText: string;
   condiments: MealView['condiments'];
-  drinks: string[];
+  drinks: DrinkView[];
   cookingMethods: string[];
 }
 
@@ -86,7 +98,7 @@ function analysisView(a: AnalysisRecord): AnalysisView {
     version: a.version,
     engineVersion: a.engineVersion,
     createdAt: a.createdAt.toISOString(),
-    totals: a.totals as unknown as Record<NutrientKey, NutrientTotal>,
+    totals: a.totals as unknown as StoredTotals,
     items: breakdown.items ?? [],
     notes: breakdown.notes ?? [],
     day: snap.day ?? null,
@@ -111,7 +123,7 @@ export function toMealView(m: MealRecord): MealView {
     eatenAt: m.eatenAt.toISOString(),
     rawText: m.rawText,
     condiments: m.condiments.map((c) => ({ name: c.name, amount: c.amount })),
-    drinks: m.drinks,
+    drinks: toDrinks(m),
     cookingMethods: m.cookingMethods,
     notes: m.notes,
     status: m.status,
@@ -123,14 +135,14 @@ export function toMealView(m: MealRecord): MealView {
 
 const json = (v: unknown) => v as Prisma.InputJsonValue;
 
-const zero = (): Totals => ({ sodium: 0, potassium: 0, phosphorus: 0, protein: 0 });
+const zero = (): Totals => Object.fromEntries(NUTRIENT_KEYS.map((n) => [n, 0])) as Totals;
 
 async function dayContext(meal: MealRecord, patientId: string, timeZone: string) {
   const start = localDayStart(meal.eatenAt, timeZone);
   const earlier = await MealModel.earlierAnalysedTotals(patientId, start, meal.eatenAt, meal.id);
   const before = zero();
   for (const t of earlier) {
-    const totals = t as unknown as Record<NutrientKey, NutrientTotal>;
+    const totals = t as unknown as StoredTotals;
     for (const n of NUTRIENT_KEYS) before[n] += totals[n]?.value ?? 0;
   }
   for (const n of NUTRIENT_KEYS) before[n] = Math.round(before[n] * 10) / 10;
@@ -149,7 +161,7 @@ async function analyse(meal: MealRecord, patientId: string, userId: string, meta
   const mealInput: MealInput = {
     rawText: meal.rawText,
     condiments: meal.condiments,
-    drinks: meal.drinks,
+    drinks: toDrinks(meal),
     cookingMethods: meal.cookingMethods,
   };
 
@@ -242,7 +254,7 @@ export const MealService = {
         eatenAt: m.eatenAt.toISOString(),
         rawText: m.rawText,
         condiments: m.condiments.map((c) => ({ name: c.name, amount: c.amount })),
-        drinks: m.drinks,
+        drinks: toDrinks(m),
         cookingMethods: m.cookingMethods,
       });
       if (out.length >= limit) break;
@@ -257,12 +269,12 @@ export const MealService = {
         category: body.category,
         eatenAt: body.eatenAt,
         rawText: body.rawText,
-        drinks: body.drinks,
         cookingMethods: body.cookingMethods,
         notes: body.notes || null,
         status: body.status,
       },
       body.condiments,
+      body.drinks,
     );
     await AuditService.record('create', 'meal', meta, { actorId, actorRole: 'patient', resourceId: meal.id, patientId });
     if (body.status === 'saved' && body.analyse) {
@@ -281,7 +293,6 @@ export const MealService = {
     if (body.category !== undefined) next.category = body.category;
     if (body.eatenAt !== undefined) next.eatenAt = body.eatenAt;
     if (body.rawText !== undefined) next.rawText = body.rawText;
-    if (body.drinks !== undefined) next.drinks = body.drinks;
     if (body.cookingMethods !== undefined) next.cookingMethods = body.cookingMethods;
     if (body.notes !== undefined) next.notes = body.notes || null;
     if (body.status !== undefined) next.status = body.status;
@@ -291,7 +302,7 @@ export const MealService = {
       throw HttpError.badRequest('Tell us what you ate', [{ path: 'rawText', message: 'Tell us what you ate' }]);
     }
 
-    const meal = await MealModel.update(id, next, body.condiments);
+    const meal = await MealModel.update(id, next, body.condiments, body.drinks);
     await AuditService.record('update', 'meal', meta, { actorId, actorRole: 'patient', resourceId: id, patientId });
     if (meal.status === 'saved' && body.analyse) {
       await analyse(meal, patientId, actorId, meta);

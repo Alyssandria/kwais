@@ -85,6 +85,10 @@ describe('POST /meals', () => {
       { condiments: [{ name: 'ketchup_ni_lola', amount: 'konti' }] },
       { condiments: [{ name: 'toyo', amount: 'konti' }, { name: 'toyo', amount: 'tbsp' }] },
       { drinks: ['beer'] },
+      { drinks: [{ name: 'tubig', quantity: 0, unit: 'baso' }] },
+      { drinks: [{ name: 'tubig', quantity: 11, unit: 'baso' }] },
+      { drinks: [{ name: 'tubig', quantity: 1, unit: 'bote' }] },
+      { drinks: [{ name: 'tubig', quantity: 1, unit: 'baso' }, 'tubig'] },
       { eatenAt: new Date(Date.now() + 60 * 60_000).toISOString() },
       { eatenAt: new Date(Date.now() - 8 * 86_400_000).toISOString() },
       { patientId: 'someone-else' },
@@ -94,6 +98,21 @@ describe('POST /meals', () => {
       expect(res.status, JSON.stringify(extra)).toBe(400);
     }
     expect(MealService.create).not.toHaveBeenCalled();
+  });
+});
+
+describe('drinks', () => {
+  it('takes an amount for each drink, and reads a bare name as one assumed glass', async () => {
+    vi.mocked(MealService.create).mockResolvedValue({ id: MEAL_ID } as never);
+    const res = await request(app)
+      .post('/api/v1/meals')
+      .set('Authorization', auth())
+      .send({ ...valid(), drinks: [{ name: 'kape', quantity: 150, unit: 'ml' }, 'tubig'] });
+    expect(res.status).toBe(201);
+    expect(vi.mocked(MealService.create).mock.calls[0]![1].drinks).toEqual([
+      { name: 'kape', quantity: 150, unit: 'ml', assumed: false },
+      { name: 'tubig', quantity: 1, unit: 'baso', assumed: true },
+    ]);
   });
 });
 

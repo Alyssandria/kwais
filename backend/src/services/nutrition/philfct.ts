@@ -19,7 +19,7 @@ const SOURCE_COLUMNS = {
 
 const SELECTION_COLUMNS = ['source_ref', 'local_names', 'category', 'portions'] as const;
 
-// Not read by the importer yet. Kept so energy can be loaded once foods store it.
+// energy_kcal is read by the importer; the other two are for checking against PhilFCT.
 export const PHILFCT_EXTRA_COLUMNS = ['energy_kcal', 'fnri_alternate_name', 'edible_portion_pct'] as const;
 
 const NOT_REPORTED = new Set(['', '-', 'n/a', 'na', 'tr']);

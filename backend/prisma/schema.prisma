@@ -39,6 +39,15 @@ enum Nutrient {
   potassium
   phosphorus
   protein
+  energy // kcal, a goal rather than a limit
+  fluid // mL, from logged drinks
+}
+
+enum DrinkUnit {
+  baso
+  tasa
+  lata
+  ml
 }
 
 enum FoodSource {
@@ -373,6 +382,7 @@ model FoodItem {
   potassiumMg  Decimal?   @map("potassium_mg") @db.Decimal(10, 2)
   phosphorusMg Decimal?   @map("phosphorus_mg") @db.Decimal(10, 2)
   proteinG     Decimal?   @map("protein_g") @db.Decimal(10, 2)
+  energyKcal   Decimal?   @map("energy_kcal") @db.Decimal(10, 2)
   verified     Boolean    @default(false)
   createdAt    DateTime   @default(now()) @map("created_at")
 
@@ -418,7 +428,6 @@ model Meal {
   eatenAt        DateTime     @map("eaten_at")
   category       MealCategory
   rawText        String       @map("raw_text")
-  drinks         String[]     @default([])
   cookingMethods String[]     @default([]) @map("cooking_methods")
   notes          String?
   status         MealStatus   @default(draft)
@@ -428,6 +437,7 @@ model Meal {
 
   patient    PatientProfile  @relation(fields: [patientId], references: [id], onDelete: Cascade)
   condiments MealCondiment[]
+  drinks     MealDrink[]
   items      MealItem[]
   analyses   MealAnalysis[]
 
@@ -446,6 +456,21 @@ model MealCondiment {
 
   @@unique([mealId, name])
   @@map("meal_condiments")
+}
+
+// A drink and how much of it. Fluid totals come from these.
+model MealDrink {
+  id       String    @id @default(uuid()) @db.Uuid
+  mealId   String    @map("meal_id") @db.Uuid
+  name     String
+  quantity Decimal   @db.Decimal(7, 2)
+  unit     DrinkUnit
+  assumed  Boolean   @default(false) // amount not given; meals logged before amounts were asked for
+
+  meal Meal @relation(fields: [mealId], references: [id], onDelete: Cascade)
+
+  @@unique([mealId, name])
+  @@map("meal_drinks")
 }
 
 model MealItem {

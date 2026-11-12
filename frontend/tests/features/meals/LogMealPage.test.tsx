@@ -76,7 +76,7 @@ describe('LogMealPage', () => {
 
     const summary = screen.getByRole('region', { name: 'Check before saving' });
     expect(summary).toHaveTextContent(
-      'Dinner: 1 tasa kanin, inihaw na liempo; with Toyo-mansi (1 tsp); drinks: tubig; cooked: inihaw.',
+      'Dinner: 1 tasa kanin, inihaw na liempo; with Toyo-mansi (1 tsp); drinks: tubig (1 baso); cooked: inihaw.',
     );
   });
 
@@ -88,6 +88,27 @@ describe('LogMealPage', () => {
     expect(create).not.toHaveBeenCalled();
   });
 
+  it('asks how much of each drink, keeping the volume when the unit changes', async () => {
+    create.mockResolvedValue(saved({ id: 'm9' }));
+    analyse.mockResolvedValue(saved({ id: 'm9', status: 'analysed' }));
+    renderPage();
+    await userEvent.type(foodBox(), '2 pandesal');
+    await userEvent.click(within(screen.getByRole('group', { name: 'Drinks' })).getByRole('button', { name: /Tubig/ }));
+    const howMuch = screen.getByRole('spinbutton', { name: 'How much Tubig' });
+    expect(howMuch).toHaveValue(1);
+    await userEvent.click(within(screen.getByRole('radiogroup', { name: 'Unit for Tubig' })).getByRole('radio', { name: 'mL' }));
+    expect(howMuch).toHaveValue(240);
+
+    await userEvent.clear(howMuch);
+    await userEvent.click(screen.getByRole('button', { name: /save and analyse/i }));
+    expect(screen.getByRole('alert')).toHaveTextContent('Enter how much you drank for each drink.');
+    expect(create).not.toHaveBeenCalled();
+
+    await userEvent.type(howMuch, '350');
+    await userEvent.click(screen.getByRole('button', { name: /save and analyse/i }));
+    expect(create).toHaveBeenCalledWith(expect.objectContaining({ drinks: [{ name: 'tubig', quantity: 350, unit: 'ml' }] }));
+  });
+
   it('saves the meal, then analyses it and opens the result', async () => {
     create.mockResolvedValue(saved({ id: 'm9' }));
     analyse.mockResolvedValue(saved({ id: 'm9', status: 'analysed' }));
@@ -97,7 +118,7 @@ describe('LogMealPage', () => {
     await userEvent.click(screen.getByRole('button', { name: /save and analyse/i }));
 
     expect(create).toHaveBeenCalledWith(
-      expect.objectContaining({ rawText: '2 pandesal', drinks: ['kape'], condiments: [], status: 'saved', analyse: false, notes: null }),
+      expect.objectContaining({ rawText: '2 pandesal', drinks: [{ name: 'kape', quantity: 1, unit: 'baso' }], condiments: [], status: 'saved', analyse: false, notes: null }),
     );
     expect(analyse).toHaveBeenCalledWith({ id: 'm9', onStep: expect.any(Function) });
     expect(await screen.findByText('Meal page')).toBeInTheDocument();
@@ -164,7 +185,7 @@ describe('LogMealPage', () => {
         eatenAt: new Date().toISOString(),
         rawText: 'Sinigang na baboy, 1 tasa kanin',
         condiments: [{ name: 'patis', amount: 'tsp' }],
-        drinks: ['tubig'],
+        drinks: [{ name: 'tubig', quantity: 2, unit: 'baso' }],
         cookingMethods: ['nilaga'],
       },
     ];
@@ -173,7 +194,7 @@ describe('LogMealPage', () => {
     expect(foodBox()).toHaveValue('Sinigang na baboy, 1 tasa kanin');
     expect(screen.getByRole('radio', { name: /Dinner/ })).toHaveAttribute('aria-checked', 'true');
     expect(within(screen.getByRole('group', { name: 'Condiments' })).getByRole('button', { name: /Patis/ })).toHaveAttribute('aria-pressed', 'true');
-    expect(screen.getByRole('region', { name: 'Check before saving' })).toHaveTextContent('with Patis (1 tsp); drinks: tubig; cooked: nilaga.');
+    expect(screen.getByRole('region', { name: 'Check before saving' })).toHaveTextContent('with Patis (1 tsp); drinks: tubig (2 baso); cooked: nilaga.');
   });
 
   it('saves a draft, then updates the same draft', async () => {

@@ -8,7 +8,7 @@ import { errorMessage } from '@/lib/api';
 import { Actions, AnalysisFooter, Contribution, DataQuality, Insights, ItemsTable, NutrientTotals, ScoreCard } from './analysis';
 import { useAnalyseMeal, useDeleteMeal, useMeal, type Meal } from './api';
 import { ProgressDialog, type ProgressKind, type ProgressStep } from './ProgressDialog';
-import { amountLabel, condimentLabel, cookingLabel, drinkLabel, mealLabel, whenText } from './options';
+import { amountLabel, condimentLabel, cookingLabel, drinkText, mealLabel, whenText } from './options';
 
 export function StatusBadge({ status }: { status: Meal['status'] }) {
   if (status === 'draft') return <Badge tone="warn">Draft</Badge>;
@@ -19,7 +19,7 @@ export function StatusBadge({ status }: { status: Meal['status'] }) {
 export function LoggedCard({ meal, title = 'What you logged' }: { meal: Meal; title?: string }) {
   const rows: [string, string][] = [];
   if (meal.condiments.length) rows.push(['Condiments', meal.condiments.map((c) => `${condimentLabel(c.name)} (${amountLabel(c.amount).toLowerCase()})`).join(', ')]);
-  if (meal.drinks.length) rows.push(['Drinks', meal.drinks.map(drinkLabel).join(', ')]);
+  if (meal.drinks.length) rows.push(['Drinks', meal.drinks.map(drinkText).join(', ')]);
   if (meal.cookingMethods.length) rows.push(['Cooked', meal.cookingMethods.map(cookingLabel).join(', ')]);
   if (meal.notes) rows.push(['Note', meal.notes]);
   return (

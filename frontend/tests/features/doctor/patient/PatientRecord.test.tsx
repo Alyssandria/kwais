@@ -8,6 +8,7 @@ import type { PatientRecord } from '@/features/doctor/patient/api';
 import type { Meal, MealAnalysis } from '@/features/meals/api';
 import type { Lab, Target } from '@/features/profile/api';
 import type { Note } from '@/features/notes/api';
+import type { NutrientUnit } from '@/lib/nutrition';
 
 type Query<T> = { data?: T; isPending: boolean; isError: boolean; error?: unknown };
 let record: Query<PatientRecord>;
@@ -91,7 +92,7 @@ const ramon: PatientRecord = {
   },
 };
 
-const n = (value: number, target: number | null, unit: 'mg' | 'g' = 'mg') => ({ value, unit, target, targetSource: target ? ('patient_entered' as const) : null, hasEstimates: true });
+const n = (value: number, target: number | null, unit: NutrientUnit = 'mg') => ({ value, unit, target, targetSource: target ? ('patient_entered' as const) : null, hasEstimates: true });
 const dashboard: PatientDashboard = {
   isSample: false,
   sampleInsights: false,
@@ -102,12 +103,12 @@ const dashboard: PatientDashboard = {
     streakDays: 3,
     averageScore: 5,
     scoredMeals: 1,
-    nutrients: { sodium: n(1100, 2000), potassium: n(500, null), phosphorus: n(300, null), protein: n(20, null, 'g') },
+    nutrients: { sodium: n(1100, 2000), potassium: n(500, null), phosphorus: n(300, null), protein: n(20, null, 'g'), energy: n(900, 1800, 'kcal'), fluid: n(480, 1000, 'mL') },
     byMeal: [],
   },
   week: [
-    { date: '2026-10-26', score: 4, totals: { sodium: 2900, potassium: 1400, phosphorus: 700, protein: 55 } },
-    { date: '2026-10-27', score: 5, totals: { sodium: 1100, potassium: 500, phosphorus: 300, protein: 20 } },
+    { date: '2026-10-26', score: 4, totals: { sodium: 2900, potassium: 1400, phosphorus: 700, protein: 55, energy: 2100, fluid: 1200 } },
+    { date: '2026-10-27', score: 5, totals: { sodium: 1100, potassium: 500, phosphorus: 300, protein: 20, energy: 900, fluid: 480 } },
   ],
   labs: [{ test: 'potassium', label: 'Potassium', unit: 'mmol/L', refLow: 3.5, refHigh: 5.1, source: 'patient_entered', history: [{ collectedOn: '2026-10-03', value: 5.8 }] }],
   consistency: [],

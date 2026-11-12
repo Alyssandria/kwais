@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { scopedApiPath, scopedKey, usePatientScope } from '@/lib/patient-scope';
-import type { NutrientKey } from '@/lib/nutrition';
+import type { NutrientKey, NutrientUnit } from '@/lib/nutrition';
 
 export type AnalyticsRange = 7 | 30 | 90;
 type Totals = Record<NutrientKey, number>;
@@ -19,7 +19,7 @@ export interface PatientAnalytics {
     scoreBands: { good: number; mixed: number; attention: number };
     nutrients: Record<
       NutrientKey,
-      { unit: 'mg' | 'g'; averagePerDay: number | null; daysWithData: number; target: number | null; daysOverTarget: number | null }
+      { unit: NutrientUnit; averagePerDay: number | null; daysWithData: number; target: number | null; daysOverTarget: number | null }
     >;
   };
 }

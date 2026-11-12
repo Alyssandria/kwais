@@ -4,7 +4,7 @@ import { useDashboard } from '@/features/dashboard/useDashboard';
 import type { PatientDashboard } from '@/features/dashboard/types';
 import { mealLabel } from '@/features/meals/options';
 import { errorMessage } from '@/lib/api';
-import { NUTRIENTS, NUTRIENT_KEYS, fmt, labStatus, labStatusText, percentOfTarget, rangeText, targetStatus } from '@/lib/nutrition';
+import { NUTRIENTS, NUTRIENT_KEYS, fmt, isGoal, labStatus, labStatusText, percentOfTarget, rangeText, targetStatus } from '@/lib/nutrition';
 import { lastMealText, sodiumText } from '../PatientList';
 import type { Severity } from '../patients';
 import { usePatientRecordContext } from './PatientRecordLayout';
@@ -50,10 +50,11 @@ function Today({ d }: { d: PatientDashboard }) {
         title="Today so far"
         subtitle={`${d.today.mealsLogged.length} ${d.today.mealsLogged.length === 1 ? 'meal' : 'meals'} logged · in the patient’s time zone`}
       />
-      <ul className="grid gap-3 sm:grid-cols-2">
+      <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {NUTRIENT_KEYS.map((n) => {
           const v = d.today.nutrients[n];
           const pct = percentOfTarget(v.value, v.target);
+          const who = v.targetSource === 'clinician_verified' ? 'verified' : 'entered by patient';
           return (
             <li key={n} className="rounded-card border border-line p-3">
               <p className="text-[13px] font-semibold text-muted">{NUTRIENTS[n].label}</p>
@@ -61,12 +62,19 @@ function Today({ d }: { d: PatientDashboard }) {
                 {amount(v.value, v.unit)} <span className="text-[13px] font-semibold text-muted">{v.unit}</span>
               </p>
               {v.target != null ? (
-                <StatusLabel kind={targetStatus(pct)}>
-                  {pct}% of {fmt(v.target)} {v.unit} · {v.targetSource === 'clinician_verified' ? 'verified' : 'entered by patient'}
-                </StatusLabel>
+                isGoal(n) ? (
+                  <p className="text-[12.5px] text-muted">
+                    {pct}% of {fmt(v.target)} {v.unit} goal · {who}
+                  </p>
+                ) : (
+                  <StatusLabel kind={targetStatus(pct)}>
+                    {pct}% of {fmt(v.target)} {v.unit} · {who}
+                  </StatusLabel>
+                )
               ) : (
-                <p className="text-[12.5px] text-muted">No target set</p>
+                <p className="text-[12.5px] text-muted">No {isGoal(n) ? 'goal' : 'target'} set</p>
               )}
+              {n === 'fluid' && <p className="text-[12px] text-muted">From logged drinks only</p>}
             </li>
           );
         })}
@@ -82,7 +90,7 @@ function Week({ d }: { d: PatientDashboard }) {
         <CardHeader id="week-title" title="Last 7 days" subtitle="Daily totals from analysed meals" />
       </div>
       <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Last 7 days table, scrolls sideways">
-        <table className="w-full min-w-[560px] text-left text-[13.5px]">
+        <table className="w-full min-w-[760px] text-left text-[13.5px]">
           <caption className="sr-only">Average meal score and nutrient totals for each of the last 7 days</caption>
           <thead className="bg-[#f8fafc] text-[12px] text-muted">
             <tr>
@@ -103,7 +111,8 @@ function Week({ d }: { d: PatientDashboard }) {
                 </th>
                 <td className="px-3 py-2.5 text-right tabular-nums">{w.score ?? <span className="text-muted">—</span>}</td>
                 {NUTRIENT_KEYS.map((n) => {
-                  const target = d.today.nutrients[n].target;
+                  // a calorie goal is not a limit, so going past it is not marked
+                  const target = isGoal(n) ? null : d.today.nutrients[n].target;
                   const v = w.totals?.[n];
                   return (
                     <td key={n} className="px-3 py-2.5 text-right tabular-nums">

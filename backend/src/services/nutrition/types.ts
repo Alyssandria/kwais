@@ -1,11 +1,25 @@
-export type NutrientKey = 'sodium' | 'potassium' | 'phosphorus' | 'protein';
-export const NUTRIENT_KEYS: readonly NutrientKey[] = ['sodium', 'potassium', 'phosphorus', 'protein'];
-export const NUTRIENT_UNITS: Record<NutrientKey, 'mg' | 'g'> = {
+// Values a food composition table gives per 100 g.
+export type FoodNutrientKey = 'sodium' | 'potassium' | 'phosphorus' | 'protein' | 'energy';
+export const FOOD_NUTRIENT_KEYS: readonly FoodNutrientKey[] = ['sodium', 'potassium', 'phosphorus', 'protein', 'energy'];
+
+// Everything K-WAIS totals for a meal or a day. Fluid comes from logged drinks, not from food tables.
+export type NutrientKey = FoodNutrientKey | 'fluid';
+export const NUTRIENT_KEYS: readonly NutrientKey[] = ['sodium', 'potassium', 'phosphorus', 'protein', 'energy', 'fluid'];
+export type NutrientUnit = 'mg' | 'g' | 'kcal' | 'mL';
+export const NUTRIENT_UNITS: Record<NutrientKey, NutrientUnit> = {
   sodium: 'mg',
   potassium: 'mg',
   phosphorus: 'mg',
   protein: 'g',
+  energy: 'kcal',
+  fluid: 'mL',
 };
+
+// Energy is shown, never scored: in CKD a calorie target is a goal to reach, not a limit.
+export const SCORED_KEYS: readonly NutrientKey[] = ['sodium', 'potassium', 'phosphorus', 'protein', 'fluid'];
+
+export type DrinkUnit = 'baso' | 'tasa' | 'lata' | 'ml';
+export const DRINK_UNIT_ML: Record<DrinkUnit, number> = { baso: 240, tasa: 240, lata: 330, ml: 1 };
 
 export type Provenance = 'verified' | 'estimated' | 'missing';
 
@@ -19,7 +33,7 @@ export interface CatalogFood {
   source: FoodSourceKind;
   sourceRef: string;
   verified: boolean;
-  per100g: Record<NutrientKey, number | null>;
+  per100g: Record<FoodNutrientKey, number | null>;
   portions: Record<string, number>;
   ingredients?: { foodId: string; gramsPer100g: number }[];
 }
@@ -40,10 +54,17 @@ export interface ParsedItem {
 
 export type CondimentAmount = 'konti' | 'tsp' | 'tbsp' | 'marami';
 
+export interface MealDrinkInput {
+  name: string;
+  quantity: number;
+  unit: DrinkUnit;
+  assumed: boolean;
+}
+
 export interface MealInput {
   rawText: string;
   condiments: { name: string; amount: CondimentAmount }[];
-  drinks: string[];
+  drinks: MealDrinkInput[];
   cookingMethods: string[];
 }
 
@@ -75,7 +96,7 @@ export interface ItemResult {
 
 export interface NutrientTotal {
   value: number | null;
-  unit: 'mg' | 'g';
+  unit: NutrientUnit;
   source: Provenance;
   complete: boolean;
 }

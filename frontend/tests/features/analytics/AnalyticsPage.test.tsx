@@ -30,7 +30,7 @@ function analytics(over: Partial<PatientAnalytics['summary']> = {}): PatientAnal
     range: 30,
     from: '2026-09-17',
     to: '2026-10-16',
-    days: [{ date: '2026-10-16', meals: 2, analysedMeals: 2, score: 7, totals: { sodium: 2500, potassium: 600, phosphorus: 400, protein: 40 } }],
+    days: [{ date: '2026-10-16', meals: 2, analysedMeals: 2, score: 7, totals: { sodium: 2500, potassium: 600, phosphorus: 400, protein: 40, energy: 1600, fluid: 900 } }],
     summary: {
       daysLogged: 5,
       mealsLogged: 9,
@@ -42,6 +42,8 @@ function analytics(over: Partial<PatientAnalytics['summary']> = {}): PatientAnal
         potassium: nutrient(),
         phosphorus: nutrient(),
         protein: { ...nutrient({ averagePerDay: 42.5 }), unit: 'g' },
+        energy: { ...nutrient({ averagePerDay: 1650, target: 1800, daysOverTarget: 2 }), unit: 'kcal' },
+        fluid: { ...nutrient({ averagePerDay: 900, target: 1000, daysOverTarget: 1 }), unit: 'mL' },
       },
       ...over,
     },

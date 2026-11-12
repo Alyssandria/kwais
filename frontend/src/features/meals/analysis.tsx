@@ -6,11 +6,11 @@ import { Badge, Button, Card, CardHeader, SourceTag, StatusLabel, useToast } fro
 import { useTargets } from '@/features/profile/api';
 import { cn } from '@/lib/cn';
 import { usePatientScope } from '@/lib/patient-scope';
-import { NUTRIENTS, NUTRIENT_KEYS, fmt, percentOfTarget, targetStatus, type NutrientKey } from '@/lib/nutrition';
+import { FLUID_NOTE, NUTRIENTS, NUTRIENT_KEYS, fmt, isGoal, percentOfTarget, targetStatus, type NutrientKey, type NutrientUnit } from '@/lib/nutrition';
 import type { AnalysedItem, MealAnalysis } from './api';
 import { amountLabel } from './options';
 
-export const amount = (n: number, unit: 'mg' | 'g') => (unit === 'g' ? n.toFixed(1) : fmt(n));
+export const amount = (n: number, unit: NutrientUnit) => (unit === 'g' ? n.toFixed(1) : fmt(n));
 
 function AiLabel({ status }: { status: MealAnalysis['ai']['status'] }) {
   if (status === 'mock') return <Badge>Sample text, not AI · numbers from the food tables</Badge>;
@@ -157,9 +157,11 @@ export function NutrientTotals({ analysis }: { analysis: MealAnalysis }) {
       <h2 id="totals-title" className="text-lg font-extrabold">
         Estimated nutrients in this meal
       </h2>
-      <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {NUTRIENT_KEYS.map((n) => {
           const t = analysis.totals[n];
+          // analyses saved before calories and fluid were tracked do not have them
+          if (!t) return null;
           const meta = NUTRIENTS[n];
           const target = targetFor(n);
           const today = analysis.day?.totalsWithMeal[n];
@@ -184,14 +186,21 @@ export function NutrientTotals({ analysis }: { analysis: MealAnalysis }) {
                 </p>
                 <SourceTag kind={t.source} />
                 {today != null && target != null ? (
-                  <StatusLabel kind={targetStatus(pct)}>
-                    Today {amount(today, meta.unit)} of {fmt(target)} {meta.unit}
-                  </StatusLabel>
+                  isGoal(n) ? (
+                    <p className="text-[12.5px] text-muted">
+                      Today {amount(today, meta.unit)} of your {fmt(target)} {meta.unit} goal ({pct}%)
+                    </p>
+                  ) : (
+                    <StatusLabel kind={targetStatus(pct)}>
+                      Today {amount(today, meta.unit)} of {fmt(target)} {meta.unit}
+                    </StatusLabel>
+                  )
                 ) : (
                   <p className="text-[12.5px] text-muted">
-                    {today != null ? `Today ${amount(today, meta.unit)} ${meta.unit} · ` : ''}no target set
+                    {today != null ? `Today ${amount(today, meta.unit)} ${meta.unit} · ` : ''}no {isGoal(n) ? 'goal' : 'target'} set
                   </p>
                 )}
+                {n === 'fluid' && <p className="text-[12px] text-muted">{FLUID_NOTE}</p>}
               </Card>
             </li>
           );
@@ -214,8 +223,8 @@ export function Contribution({ items }: { items: AnalysedItem[] }) {
   if (counted.length < 2) return null;
   const shown = counted.slice(0, SERIES.length);
   const share = (n: NutrientKey) => {
-    const total = shown.reduce((s, i) => s + (i.nutrients[n].value ?? 0), 0);
-    return shown.map((i) => (total > 0 ? ((i.nutrients[n].value ?? 0) / total) * 100 : 0));
+    const total = shown.reduce((s, i) => s + (i.nutrients[n]?.value ?? 0), 0);
+    return shown.map((i) => (total > 0 ? ((i.nutrients[n]?.value ?? 0) / total) * 100 : 0));
   };
   const sodium = share('sodium');
   const top = sodium.indexOf(Math.max(...sodium));
@@ -235,6 +244,7 @@ export function Contribution({ items }: { items: AnalysedItem[] }) {
       <div className="flex flex-col gap-2.5">
         {NUTRIENT_KEYS.map((n) => {
           const parts = share(n);
+          if (parts.every((p) => p === 0)) return null;
           const label = `${NUTRIENTS[n].label}: ${shown.map((i, k) => `${i.label} ${Math.round(parts[k]!)} percent`).join(', ')}`;
           return (
             <div key={n} className="grid grid-cols-[90px_1fr] items-center gap-3">
@@ -254,25 +264,27 @@ export function Contribution({ items }: { items: AnalysedItem[] }) {
 
 function itemAmount(i: AnalysedItem): string {
   if (i.kind === 'condiment') return amountLabel(i.unit);
-  return `${Math.round(i.quantity * 100) / 100} ${i.unit}`;
+  return `${Math.round(i.quantity * 100) / 100} ${i.unit === 'ml' ? 'mL' : i.unit}`;
 }
 
 export function ItemsTable({ items }: { items: AnalysedItem[] }) {
   if (items.length === 0) return null;
+  // older analyses have no calorie or fluid column
+  const keys = NUTRIENT_KEYS.filter((n) => items.some((i) => i.nutrients[n] !== undefined));
   return (
     <Card as="section" aria-labelledby="items-title" padding="none" className="overflow-hidden">
       <div className="px-5 pt-5">
         <CardHeader id="items-title" title="Food by food" subtitle="How each food was matched and weighed. Amounts marked “assumed” were not in what you typed." />
       </div>
       <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Food by food table, scrolls sideways">
-        <table className="w-full min-w-[720px] text-left text-[13.5px]">
+        <table className="w-full min-w-[880px] text-left text-[13.5px]">
           <caption className="sr-only">Nutrients for each food in this meal</caption>
           <thead className="bg-[#f8fafc] text-[12px] text-muted">
             <tr>
               <th scope="col" className="px-5 py-2.5 font-semibold">Food</th>
               <th scope="col" className="px-3 py-2.5 font-semibold">Amount</th>
               <th scope="col" className="px-3 py-2.5 font-semibold">Matched to</th>
-              {NUTRIENT_KEYS.map((n) => (
+              {keys.map((n) => (
                 <th key={n} scope="col" className="px-3 py-2.5 text-right font-semibold">
                   {NUTRIENTS[n].label} ({NUTRIENTS[n].unit})
                 </th>
@@ -288,7 +300,12 @@ export function ItemsTable({ items }: { items: AnalysedItem[] }) {
                 </th>
                 <td className="px-3 py-3">
                   {itemAmount(i)}
-                  {i.grams != null && <span className="block text-[12px] text-muted">≈ {fmt(i.grams)} g{i.amountGuessed ? ' · assumed' : ''}</span>}
+                  {i.grams != null && (
+                    <span className="block text-[12px] text-muted">
+                      ≈ {fmt(i.grams)} {i.kind === 'drink' ? 'mL' : 'g'}
+                      {i.amountGuessed ? ' · assumed' : ''}
+                    </span>
+                  )}
                 </td>
                 <td className="px-3 py-3">
                   {i.match ? (
@@ -302,8 +319,8 @@ export function ItemsTable({ items }: { items: AnalysedItem[] }) {
                     <span className="text-muted">Not found · not counted</span>
                   )}
                 </td>
-                {NUTRIENT_KEYS.map((n) => {
-                  const v = i.nutrients[n].value;
+                {keys.map((n) => {
+                  const v = i.nutrients[n]?.value ?? null;
                   return (
                     <td key={n} className="px-3 py-3 text-right tabular-nums">
                       {v == null ? <span className="text-muted">—</span> : amount(v, NUTRIENTS[n].unit)}

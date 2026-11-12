@@ -30,12 +30,30 @@ const condiments = z
   .max(CONDIMENT_KEYS.length)
   .refine((cs) => new Set(cs.map((c) => c.name)).size === cs.length, 'Each condiment can be added once');
 
+export const DRINK_UNITS = ['baso', 'tasa', 'lata', 'ml'] as const;
+const DRINK_MAX: Record<(typeof DRINK_UNITS)[number], number> = { baso: 10, tasa: 10, lata: 6, ml: 3000 };
+
+// { name, quantity, unit }. A bare drink name (sent by older versions of the app) means one glass, marked as assumed.
+const drink = z.union([
+  z.enum(DRINK_KEYS).transform((name) => ({ name, quantity: 1, unit: 'baso' as const, assumed: true })),
+  z
+    .object({ name: z.enum(DRINK_KEYS), quantity: z.number().positive('Enter how much you drank'), unit: z.enum(DRINK_UNITS) })
+    .strict()
+    .refine((d) => d.quantity <= DRINK_MAX[d.unit], { message: 'That is more than K-WAIS accepts for one meal', path: ['quantity'] })
+    .transform((d) => ({ ...d, assumed: false })),
+]);
+
+const drinks = z
+  .array(drink)
+  .max(DRINK_KEYS.length)
+  .refine((ds) => new Set(ds.map((d) => d.name)).size === ds.length, 'Each drink can be added once');
+
 const fields = {
   category: z.enum(MEAL_CATEGORIES),
   eatenAt,
   rawText: z.string().trim().max(1000, 'Keep it under 1,000 characters'),
   condiments,
-  drinks: uniqueKeys(DRINK_KEYS),
+  drinks,
   cookingMethods: uniqueKeys(COOKING_KEYS),
   notes: z.string().trim().max(300, 'Keep the note under 300 characters').nullable().optional(),
 };

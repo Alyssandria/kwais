@@ -3,7 +3,7 @@ import { Info } from 'lucide-react';
 import { Button, Input, Notice, RadioCards, Select, Switch, TagPicker } from '@/components/ui';
 import { NutrientIcon } from '@/components/domain/NutrientIcon';
 import { errorMessage } from '@/lib/api';
-import { NUTRIENT_KEYS, NUTRIENTS, type NutrientKey } from '@/lib/nutrition';
+import { NUTRIENT_KEYS, NUTRIENTS, isGoal, type NutrientKey } from '@/lib/nutrition';
 import type { CkdStage, Consents, Dialysis, Profile, ProfilePatch, Sex, Target } from './api';
 import {
   ALLERGY_SUGGESTIONS,
@@ -218,10 +218,10 @@ export function TargetsSection({ targets, ...p }: SectionProps<TargetChanges> & 
             <NutrientIcon nutrient={n} />
             <Input
               containerClassName="flex-1"
-              label={`${NUTRIENTS[n].label}, daily maximum (${NUTRIENTS[n].unit})`}
+              label={`${NUTRIENTS[n].label}, ${isGoal(n) ? 'daily goal' : 'daily maximum'} (${NUTRIENTS[n].unit})`}
               hint={targetHint(targets.find((t) => t.nutrient === n))}
               inputMode="decimal"
-              placeholder="No target"
+              placeholder={isGoal(n) ? 'No goal' : 'No target'}
               value={values[n]}
               onChange={(e) => setValues((v) => ({ ...v, [n]: e.target.value.replace(/[^\d.]/g, '') }))}
               error={errs[n]}

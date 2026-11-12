@@ -3,7 +3,7 @@ import { Button, Input, Modal, Notice, Select, Textarea } from '@/components/ui'
 import { CKD_STAGE_OPTIONS } from '@/features/profile/options';
 import type { CkdStage, Target } from '@/features/profile/api';
 import { errorMessage, fieldErrors } from '@/lib/api';
-import { NUTRIENTS, NUTRIENT_KEYS, type NutrientKey } from '@/lib/nutrition';
+import { NUTRIENTS, NUTRIENT_KEYS, isGoal, type NutrientKey } from '@/lib/nutrition';
 
 export type DefiniteStage = Exclude<CkdStage, 'not_sure'>;
 export const STAGES = CKD_STAGE_OPTIONS.filter((o): o is { value: DefiniteStage; label: string } => o.value !== 'not_sure');
@@ -154,7 +154,8 @@ export function TargetModal({
           </Select>
         )}
         <Input
-          label={`Daily maximum (${unit})`}
+          label={`${isGoal(nutrient) ? 'Daily goal' : 'Daily maximum'} (${unit})`}
+          hint={isGoal(nutrient) ? 'A calorie goal is shown as progress only. It never lowers a meal score.' : undefined}
           inputMode="decimal"
           value={amount}
           onChange={(e) => setAmount(e.target.value.replace(/[^\d.]/g, ''))}

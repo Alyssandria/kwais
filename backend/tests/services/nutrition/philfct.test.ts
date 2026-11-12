@@ -34,6 +34,7 @@ describe('buildPhilFctBase', () => {
       potassiumMg: null,
       phosphorusMg: 40,
       proteinG: 2.5,
+      energyKcal: 120,
       verified: false,
       portions: [
         { unit: 'tasa', grams: 160 },

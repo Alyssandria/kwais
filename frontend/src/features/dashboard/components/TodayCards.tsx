@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { Badge, Card, NoTargetBar, ProgressBar, StatusLabel } from '@/components/ui';
 import { NutrientIcon } from '@/components/domain/NutrientIcon';
 import { ScoreRing } from '@/components/domain/ScoreRing';
-import { fmt, NUTRIENTS, percentOfTarget, targetStatus, targetStatusText, type NutrientKey } from '@/lib/nutrition';
+import { FLUID_NOTE, fmt, goalStatusText, isGoal, NUTRIENTS, percentOfTarget, targetStatus, targetStatusText, type NutrientKey } from '@/lib/nutrition';
 import type { TodayNutrient } from '../types';
 
 export function TodayScoreCard({ score, scoredMeals }: { score: number | null; scoredMeals: number }) {
@@ -36,9 +36,11 @@ export function TodayScoreCard({ score, scoredMeals }: { score: number | null; s
 
 export function NutrientCard({ nutrient, data }: { nutrient: NutrientKey; data: TodayNutrient }) {
   const meta = NUTRIENTS[nutrient];
+  const goal = isGoal(nutrient);
   const pct = percentOfTarget(data.value, data.target);
   const kind = targetStatus(pct);
-  const barTone = kind === 'above' ? 'bad' : kind === 'near' ? 'warn' : 'primary';
+  // a calorie goal is something to reach, so it is never shown in warning colours
+  const barTone = goal ? 'primary' : kind === 'above' ? 'bad' : kind === 'near' ? 'warn' : 'primary';
 
   return (
     <Card as="article" className="flex flex-col gap-2.5" aria-labelledby={`nutrient-${nutrient}`}>
@@ -58,21 +60,22 @@ export function NutrientCard({ nutrient, data }: { nutrient: NutrientKey; data: 
       {pct == null ? (
         <>
           <NoTargetBar />
-          <StatusLabel kind="none">Estimate only · no target set</StatusLabel>
+          <StatusLabel kind="none">Estimate only · no {goal ? 'goal' : 'target'} set</StatusLabel>
           <Link to="/patient/profile" className="text-[12.5px] font-semibold">
-            Add a target
+            Add a {goal ? 'goal' : 'target'}
           </Link>
         </>
       ) : (
         <>
-          <ProgressBar value={pct} tone={barTone} label={`${meta.label}: ${pct} percent of your daily target`} />
-          <StatusLabel kind={kind}>{targetStatusText(pct)}</StatusLabel>
+          <ProgressBar value={pct} tone={barTone} label={`${meta.label}: ${pct} percent of your daily ${goal ? 'goal' : 'target'}`} />
+          {goal ? <p className="text-[13px] font-semibold">{goalStatusText(pct)}</p> : <StatusLabel kind={kind}>{targetStatusText(pct)}</StatusLabel>}
           <p className="text-[12px] text-muted">
-            Target {fmt(data.target ?? 0)} {data.unit}/day ·{' '}
+            {goal ? 'Goal' : 'Target'} {fmt(data.target ?? 0)} {data.unit}/day ·{' '}
             {data.targetSource === 'clinician_verified' ? 'set by your clinician' : 'entered by you'}
           </p>
         </>
       )}
+      {nutrient === 'fluid' && <p className="text-[12px] text-muted">{FLUID_NOTE}</p>}
     </Card>
   );
 }

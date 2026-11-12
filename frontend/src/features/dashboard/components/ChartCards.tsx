@@ -77,6 +77,8 @@ const SERIES: Record<Series, { label: string; color: string; unit: string; sub: 
   potassium: { label: 'Potassium', color: NUTRIENTS.potassium.color, unit: 'mg', sub: 'Estimated potassium per day, mg' },
   phosphorus: { label: 'Phosphorus', color: NUTRIENTS.phosphorus.color, unit: 'mg', sub: 'Estimated phosphorus per day, mg' },
   protein: { label: 'Protein', color: NUTRIENTS.protein.color, unit: 'g', sub: 'Estimated protein per day, g' },
+  energy: { label: 'Calories', color: NUTRIENTS.energy.color, unit: 'kcal', sub: 'Estimated calories per day, kcal' },
+  fluid: { label: 'Fluid', color: NUTRIENTS.fluid.color, unit: 'mL', sub: 'Fluid from logged drinks per day, mL' },
 };
 
 const dayLabel = (iso: string, isToday: boolean) =>

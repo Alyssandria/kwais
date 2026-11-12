@@ -6,6 +6,8 @@ const PATHS: Record<NutrientKey, string> = {
   potassium: 'M5 13c2 5 10 6 15-3M5 13c4 1 9 0 12-5M17 8l1.5-3',
   phosphorus: 'M8 3h8v3l2 3v12H6V9l2-3zM6 13h12',
   protein: 'M12 3c4 0 7 6 7 11a7 7 0 0 1-14 0c0-5 3-11 7-11z',
+  energy: 'M13 2 4 14h7l-1 8 9-12h-7z',
+  fluid: 'M7 3h10l-1.5 17a1.5 1.5 0 0 1-1.5 1.4h-4.5a1.5 1.5 0 0 1-1.5-1.4zM7.5 9h9',
 };
 
 export function NutrientIcon({ nutrient, size = 'md' }: { nutrient: NutrientKey; size?: 'sm' | 'md' }) {

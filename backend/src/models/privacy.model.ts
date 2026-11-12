@@ -43,6 +43,7 @@ export const PrivacyModel = {
               omit: { patientId: true },
               include: {
                 condiments: { omit: { mealId: true } },
+                drinks: { omit: { mealId: true } },
                 items: { omit: { mealId: true } },
                 analyses: { orderBy: { version: 'asc' }, omit: { mealId: true, patientId: true } },
               },

@@ -1,4 +1,4 @@
-import type { CondimentAmount, MealCategory, MealCondiment } from './api';
+import type { CondimentAmount, DrinkUnit, MealCategory, MealCondiment, MealDrink } from './api';
 
 export const MEAL_TYPES: { value: MealCategory; label: string; hint: string }[] = [
   { value: 'breakfast', label: 'Breakfast', hint: 'Almusal' },
@@ -40,6 +40,16 @@ export const DRINKS: { value: string; label: string }[] = [
   { value: 'milk_tea', label: 'Milk tea' },
 ];
 
+export const DRINK_UNITS: { value: DrinkUnit; label: string }[] = [
+  { value: 'baso', label: 'Baso' },
+  { value: 'tasa', label: 'Tasa' },
+  { value: 'lata', label: 'Lata' },
+  { value: 'ml', label: 'mL' },
+];
+
+// Standard sizes used to switch between units in the form. Matches the backend.
+export const DRINK_UNIT_ML: Record<DrinkUnit, number> = { baso: 240, tasa: 240, lata: 330, ml: 1 };
+
 export const COOKING: { value: string; label: string }[] = [
   { value: 'prito', label: 'Prito' },
   { value: 'inihaw', label: 'Inihaw' },
@@ -55,6 +65,10 @@ export const condimentLabel = labelIn(CONDIMENTS);
 export const amountLabel = labelIn(AMOUNTS);
 export const drinkLabel = labelIn(DRINKS);
 export const cookingLabel = labelIn(COOKING);
+
+const unitWord = (d: Pick<MealDrink, 'quantity' | 'unit'>) => (d.unit === 'ml' ? 'mL' : d.unit);
+export const drinkText = (d: MealDrink) =>
+  `${drinkLabel(d.name)} (${d.assumed ? 'amount not given' : `${Math.round(d.quantity * 100) / 100} ${unitWord(d)}`})`;
 export const mealLabel = (c: MealCategory) => MEAL_TYPES.find((m) => m.value === c)!.label;
 
 export function defaultCategory(d: Date): MealCategory {
@@ -69,7 +83,7 @@ export interface MealForm {
   category: MealCategory;
   rawText: string;
   condiments: MealCondiment[];
-  drinks: string[];
+  drinks: MealDrink[];
   cookingMethods: string[];
   notes: string;
 }
@@ -80,7 +94,7 @@ export function summaryOf(f: MealForm): string {
   if (f.condiments.length) {
     parts.push(`with ${f.condiments.map((c) => `${condimentLabel(c.name)} (${amountLabel(c.amount).toLowerCase()})`).join(', ')}`);
   }
-  if (f.drinks.length) parts.push(`drinks: ${f.drinks.map(drinkLabel).join(', ').toLowerCase()}`);
+  if (f.drinks.length) parts.push(`drinks: ${f.drinks.map(drinkText).join(', ').toLowerCase()}`);
   if (f.cookingMethods.length) parts.push(`cooked: ${f.cookingMethods.map(cookingLabel).join(', ').toLowerCase()}`);
   if (f.notes.trim()) parts.push(`note: ${f.notes.trim()}`);
   return parts.length ? `${parts.join('; ')}.` : 'Nothing entered yet.';

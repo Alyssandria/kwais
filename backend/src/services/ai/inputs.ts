@@ -20,9 +20,11 @@ export function buildAnalysisInput(src: InputSources): AnalysisInput {
   const allowed: InputKey[] = ['meal', 'day'];
   const supplied: AnalysisInput['supplied'] = {};
 
-  if (src.targets.length) {
+  // a calorie target is a goal, not a limit, so it is never sent for scoring
+  const scoredTargets = src.targets.filter((t) => t.nutrient !== 'energy');
+  if (scoredTargets.length) {
     supplied.targets = {};
-    for (const t of src.targets) {
+    for (const t of scoredTargets) {
       supplied.targets[t.nutrient] = { dailyMax: t.dailyMax, unit: t.unit, source: t.source };
       allowed.push(`target.${t.nutrient}`);
     }
@@ -56,7 +58,7 @@ export function buildAnalysisInput(src: InputSources): AnalysisInput {
       eatenAtLocal: src.meal.eatenAtLocal,
       text: src.meal.rawText,
       condiments: src.meal.condiments,
-      drinks: src.meal.drinks,
+      drinks: src.meal.drinks.map((d) => `${d.name.replace(/_/g, ' ')}: ${d.quantity} ${d.unit}${d.assumed ? ' (amount assumed)' : ''}`),
       cookingMethods: src.meal.cookingMethods,
       items: src.engine.items.map((i) => ({
         food: i.label,

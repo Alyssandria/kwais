@@ -5,6 +5,9 @@ export const FOOD_CSV_COLUMNS = [
   'sodium_mg', 'potassium_mg', 'phosphorus_mg', 'protein_g', 'verified', 'portions',
 ] as const;
 
+// Optional: files without it still import, and leave stored energy values alone.
+export const FOOD_CSV_OPTIONAL_COLUMNS = ['energy_kcal'] as const;
+
 const SOURCES = ['PH_FCT', 'USDA_FDC', 'custom'] as const;
 
 export interface FoodCsvRow {
@@ -17,6 +20,7 @@ export interface FoodCsvRow {
   potassiumMg: number | null;
   phosphorusMg: number | null;
   proteinG: number | null;
+  energyKcal?: number | null;
   verified: boolean;
   portions: { unit: string; grams: number }[];
 }
@@ -51,7 +55,7 @@ export function splitCsv(text: string): string[][] {
   return rows;
 }
 
-const MAX_PER_100G = { sodiumMg: 40000, potassiumMg: 10000, phosphorusMg: 5000, proteinG: 100 } as const;
+const MAX_PER_100G = { sodiumMg: 40000, potassiumMg: 10000, phosphorusMg: 5000, proteinG: 100, energyKcal: 900 } as const;
 
 export function parseFoodCsv(text: string): { rows: FoodCsvRow[]; errors: string[] } {
   const [header, ...lines] = splitCsv(text.replace(/^﻿/, ''));
@@ -61,7 +65,8 @@ export function parseFoodCsv(text: string): { rows: FoodCsvRow[]; errors: string
   const cols = header.map((h) => h.trim().toLowerCase());
   const missing = FOOD_CSV_COLUMNS.filter((c) => !cols.includes(c));
   if (missing.length) return { rows: [], errors: [`Missing columns: ${missing.join(', ')}`] };
-  const at = (r: string[], c: (typeof FOOD_CSV_COLUMNS)[number]) => (r[cols.indexOf(c)] ?? '').trim();
+  const at = (r: string[], c: (typeof FOOD_CSV_COLUMNS)[number] | (typeof FOOD_CSV_OPTIONAL_COLUMNS)[number]) => (r[cols.indexOf(c)] ?? '').trim();
+  const hasEnergy = cols.includes('energy_kcal');
 
   const rows: FoodCsvRow[] = [];
   const seen = new Set<string>();
@@ -79,7 +84,7 @@ export function parseFoodCsv(text: string): { rows: FoodCsvRow[]; errors: string
     if (seen.has(key)) rowErrors.push(`duplicate ${key}`);
     seen.add(key);
 
-    const value = (c: 'sodium_mg' | 'potassium_mg' | 'phosphorus_mg' | 'protein_g', max: number): number | null => {
+    const value = (c: 'sodium_mg' | 'potassium_mg' | 'phosphorus_mg' | 'protein_g' | 'energy_kcal', max: number): number | null => {
       const raw = at(r, c);
       if (raw === '') return null;
       const n = Number(raw);
@@ -93,6 +98,7 @@ export function parseFoodCsv(text: string): { rows: FoodCsvRow[]; errors: string
     const potassiumMg = value('potassium_mg', MAX_PER_100G.potassiumMg);
     const phosphorusMg = value('phosphorus_mg', MAX_PER_100G.phosphorusMg);
     const proteinG = value('protein_g', MAX_PER_100G.proteinG);
+    const energyKcal = hasEnergy ? value('energy_kcal', MAX_PER_100G.energyKcal) : undefined;
 
     const verifiedRaw = at(r, 'verified').toLowerCase();
     if (!['true', 'false', ''].includes(verifiedRaw)) rowErrors.push('verified must be true or false');
@@ -122,6 +128,7 @@ export function parseFoodCsv(text: string): { rows: FoodCsvRow[]; errors: string
       potassiumMg,
       phosphorusMg,
       proteinG,
+      ...(energyKcal !== undefined ? { energyKcal } : {}),
       verified,
       portions,
     });

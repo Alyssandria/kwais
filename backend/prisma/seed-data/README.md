@@ -39,6 +39,7 @@ pnpm db:seed      # load or refresh the sample tables (also runs after pnpm db:r
    | `local_names` | Other names people type, separated by `\|` (Tagalog, English, regional) |
    | `verified` | `true` only after you have checked the row against the source |
    | `portions` | Household units, `unit=grams` separated by `\|`. Units: `tasa`, `sandok`, `mangkok`, `piraso`, `hiwa`, `baso`, `lata`, `pakete`, `tbsp`, `tsp`, `serving` |
+   | `energy_kcal` | Optional. Calories per 100 g. Files without this column still import and keep any stored values |
 
 3. Import it. The file is checked first, and nothing is written if any row has a problem.
 
@@ -96,7 +97,7 @@ Things to know about this set:
   recipes. Cooked records are used where people name the cooking ("pritong bangus", "nilagang itlog").
 - **Home-cooked dishes are not in PhilFCT** (adobo, sinigang, tinola). Its mixed dishes are mostly canned,
   so those stay as recipes. Canned dishes in this set do not use generic names like "adobo".
-- The extra columns `energy_kcal`, `fnri_alternate_name` and `edible_portion_pct` are kept for
-  calorie tracking and checking. The importer ignores them for now.
+- `energy_kcal` is imported as calories. The extra columns `fnri_alternate_name` and
+  `edible_portion_pct` are only for checking rows against PhilFCT; the importer ignores them.
 - Cite PhilFCT (DOST-FNRI) with the food ID wherever values are shown, and ask FNRI for written
   permission to use the data in the study.

@@ -11,7 +11,7 @@ import { ProfileService, type ProfileView } from './profile.service.js';
 import { TargetService, type TargetView } from './target.service.js';
 import { doctorDisplayName, type Clinician } from './verification.js';
 
-const NUTRIENT: Record<Nutrient, string> = { sodium: 'sodium', potassium: 'potassium', phosphorus: 'phosphorus', protein: 'protein' };
+const NUTRIENT: Record<Nutrient, string> = { sodium: 'sodium', potassium: 'potassium', phosphorus: 'phosphorus', protein: 'protein', energy: 'calorie', fluid: 'fluid' };
 const number = (n: number) => new Intl.NumberFormat('en-PH', { maximumFractionDigits: 2 }).format(n);
 const day = (iso: string) => new Date(`${iso}T00:00:00Z`).toLocaleDateString('en-PH', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
 

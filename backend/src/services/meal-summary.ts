@@ -4,8 +4,10 @@ import type { AnalysisOutput } from './ai/schemas.js';
 import { NUTRIENT_KEYS, type NutrientKey, type NutrientTotal } from './nutrition/types.js';
 
 export type Totals = Record<NutrientKey, number>;
+export type StoredTotals = Partial<Record<NutrientKey, NutrientTotal>>;
 
-export const zeroTotals = (): Totals => ({ sodium: 0, potassium: 0, phosphorus: 0, protein: 0 });
+export const zeroTotals = (): Totals => Object.fromEntries(NUTRIENT_KEYS.map((n) => [n, 0])) as Totals;
+const noEstimates = () => Object.fromEntries(NUTRIENT_KEYS.map((n) => [n, false])) as Record<NutrientKey, boolean>;
 export const round1 = (n: number) => Math.round(n * 10) / 10;
 
 export interface MealFacts {
@@ -15,7 +17,8 @@ export interface MealFacts {
   category: MealSummaryRecord['category'];
   rawText: string;
   status: 'saved' | 'analysed';
-  totals: Record<NutrientKey, NutrientTotal> | null;
+  // analyses saved before calories and fluid were tracked have no energy or fluid entry
+  totals: StoredTotals | null;
   score: number | null;
   aiStatus: 'ok' | 'unavailable' | 'mock' | null;
   ai: AnalysisOutput | null;
@@ -30,7 +33,7 @@ export function toFacts(m: MealSummaryRecord, timeZone: string): MealFacts {
     category: m.category,
     rawText: m.rawText,
     status: m.status === 'analysed' ? 'analysed' : 'saved',
-    totals: (a?.totals as unknown as Record<NutrientKey, NutrientTotal>) ?? null,
+    totals: (a?.totals as unknown as StoredTotals) ?? null,
     score: a?.score ?? null,
     aiStatus: a?.aiStatus ?? null,
     ai: (a?.aiOutput as AnalysisOutput | null) ?? null,
@@ -50,7 +53,7 @@ export function rollupByDay(dates: string[], meals: MealFacts[]): Map<string, Da
   const days = new Map<string, DayRollup>(
     dates.map((date) => [
       date,
-      { date, meals: 0, analysed: 0, scores: [], totals: zeroTotals(), estimated: { sodium: false, potassium: false, phosphorus: false, protein: false } },
+      { date, meals: 0, analysed: 0, scores: [], totals: zeroTotals(), estimated: noEstimates() },
     ]),
   );
   for (const m of meals) {
@@ -62,7 +65,8 @@ export function rollupByDay(dates: string[], meals: MealFacts[]): Map<string, Da
     d.analysed++;
     for (const n of NUTRIENT_KEYS) {
       d.totals[n] += m.totals[n]?.value ?? 0;
-      if (m.totals[n] && m.totals[n].source !== 'verified') d.estimated[n] = true;
+      // an analysis saved before a measure was tracked has no entry for it: treat the day's value as an estimate
+      if (!m.totals[n] || m.totals[n].source !== 'verified') d.estimated[n] = true;
     }
   }
   for (const d of days.values()) for (const n of NUTRIENT_KEYS) d.totals[n] = round1(d.totals[n]);

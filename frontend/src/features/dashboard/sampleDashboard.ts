@@ -10,11 +10,14 @@ function daysAgo(n: number, h = 12, m = 0): Date {
   return d;
 }
 
-const t = (sodium: number, potassium: number, phosphorus: number, protein: number): Record<NutrientKey, number> => ({
+// fictional numbers; calories and fluid default to typical values for one meal
+const t = (sodium: number, potassium: number, phosphorus: number, protein: number, energy = 520, fluid = 240): Record<NutrientKey, number> => ({
   sodium,
   potassium,
   phosphorus,
   protein,
+  energy,
+  fluid,
 });
 
 export function buildSampleDashboard(): PatientDashboard {
@@ -60,6 +63,8 @@ export function buildSampleDashboard(): PatientDashboard {
         potassium: { value: 1135, unit: 'mg', target: 2000, targetSource: 'patient_entered', hasEstimates: true },
         phosphorus: { value: 530, unit: 'mg', target: null, targetSource: null, hasEstimates: true },
         protein: { value: 44, unit: 'g', target: 50, targetSource: 'patient_entered', hasEstimates: false },
+        energy: { value: 1040, unit: 'kcal', target: null, targetSource: null, hasEstimates: true },
+        fluid: { value: 480, unit: 'mL', target: 1000, targetSource: 'clinician_verified', hasEstimates: false },
       },
       byMeal: [
         { category: 'breakfast', values: breakfast },

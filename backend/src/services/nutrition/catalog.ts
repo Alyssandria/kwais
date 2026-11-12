@@ -1,4 +1,4 @@
-import { NUTRIENT_KEYS, type Catalog, type CatalogFood, type NutrientKey } from './types.js';
+import { FOOD_NUTRIENT_KEYS, type Catalog, type CatalogFood, type FoodNutrientKey } from './types.js';
 
 export function buildCatalog(foods: CatalogFood[]): Catalog {
   const byId = new Map(foods.map((f) => [f.id, { ...f, per100g: { ...f.per100g } }]));
@@ -9,13 +9,13 @@ export function buildCatalog(foods: CatalogFood[]): Catalog {
     if (trail.has(food.id)) throw new Error(`Recipe ${food.name} contains itself`);
     trail.add(food.id);
 
-    const per100g = {} as Record<NutrientKey, number | null>;
-    for (const n of NUTRIENT_KEYS) per100g[n] = 0;
+    const per100g = {} as Record<FoodNutrientKey, number | null>;
+    for (const n of FOOD_NUTRIENT_KEYS) per100g[n] = 0;
     for (const ing of food.ingredients) {
       const part = byId.get(ing.foodId);
       if (!part) throw new Error(`Recipe ${food.name} uses an unknown ingredient ${ing.foodId}`);
       const p = resolve(part, trail);
-      for (const n of NUTRIENT_KEYS) {
+      for (const n of FOOD_NUTRIENT_KEYS) {
         const v = p.per100g[n];
         per100g[n] = v == null || per100g[n] == null ? null : per100g[n]! + (v * ing.gramsPer100g) / 100;
       }

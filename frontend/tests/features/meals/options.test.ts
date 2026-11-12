@@ -30,11 +30,11 @@ describe('summaryOf', () => {
           { name: 'toyo_mansi', amount: 'konti' },
           { name: 'bagoong', amount: 'tsp' },
         ],
-        drinks: ['buko_juice'],
+        drinks: [{ name: 'buko_juice', quantity: 1, unit: 'baso' }, { name: 'tubig', quantity: 1, unit: 'baso', assumed: true }],
         cookingMethods: ['adobo'],
         notes: 'shared',
       }),
-    ).toBe('1 tasa kanin; with Toyo-mansi (konti), Bagoong (1 tsp); drinks: buko juice; cooked: adobo-style; note: shared.');
+    ).toBe('1 tasa kanin; with Toyo-mansi (konti), Bagoong (1 tsp); drinks: buko juice (1 baso), tubig (amount not given); cooked: adobo-style; note: shared.');
   });
 });
 

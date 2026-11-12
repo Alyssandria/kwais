@@ -10,7 +10,7 @@ function sources(over: Partial<InputSources> = {}): InputSources {
   return {
     meal: { ...meal, category: 'lunch', eatenAtLocal: '2026-10-16 12:30' },
     engine: estimateMeal(meal, testCatalog()),
-    day: { date: '2026-10-16', earlierMeals: 1, totalsBeforeMeal: { sodium: 1000, potassium: 0, phosphorus: 0, protein: 0 } },
+    day: { date: '2026-10-16', earlierMeals: 1, totalsBeforeMeal: { sodium: 1000, potassium: 0, phosphorus: 0, protein: 0, energy: 0, fluid: 0 } },
     profile: { ckdStage: null, dialysisStatus: 'unknown', restrictions: [], allergies: [], dietaryPreferences: [] },
     targets: [],
     ...over,

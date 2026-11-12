@@ -1,4 +1,4 @@
-import { Prisma, type AiStatus, type CondimentAmount, type MealCategory, type MealStatus } from '@prisma/client';
+import { Prisma, type AiStatus, type CondimentAmount, type DrinkUnit, type MealCategory, type MealStatus } from '@prisma/client';
 import { prisma } from '../config/db.js';
 
 const analysisSelect = {
@@ -22,13 +22,13 @@ const mealSelect = {
   eatenAt: true,
   category: true,
   rawText: true,
-  drinks: true,
   cookingMethods: true,
   notes: true,
   status: true,
   createdAt: true,
   updatedAt: true,
   condiments: { select: { name: true, amount: true }, orderBy: { name: 'asc' } },
+  drinks: { select: { name: true, quantity: true, unit: true, assumed: true }, orderBy: { name: 'asc' } },
   analyses: { select: analysisSelect, orderBy: { version: 'desc' }, take: 1 },
 } satisfies Prisma.MealSelect;
 
@@ -50,7 +50,6 @@ export interface MealData {
   category: MealCategory;
   eatenAt: Date;
   rawText: string;
-  drinks: string[];
   cookingMethods: string[];
   notes: string | null;
   status: MealStatus;
@@ -59,6 +58,13 @@ export interface MealData {
 export interface CondimentData {
   name: string;
   amount: CondimentAmount;
+}
+
+export interface DrinkData {
+  name: string;
+  quantity: number;
+  unit: DrinkUnit;
+  assumed: boolean;
 }
 
 export interface MealItemData {
@@ -89,9 +95,14 @@ const live = { deletedAt: null } as const;
 const dec = (n: number | null) => (n == null ? null : new Prisma.Decimal(n));
 
 export const MealModel = {
-  create(patientId: string, meal: MealData, condiments: CondimentData[]): Promise<MealRecord> {
+  create(patientId: string, meal: MealData, condiments: CondimentData[], drinks: DrinkData[]): Promise<MealRecord> {
     return prisma.meal.create({
-      data: { ...meal, patientId, condiments: { create: condiments } },
+      data: {
+        ...meal,
+        patientId,
+        condiments: { create: condiments },
+        drinks: { create: drinks.map((d) => ({ ...d, quantity: new Prisma.Decimal(d.quantity) })) },
+      },
       select: mealSelect,
     });
   },
@@ -124,11 +135,15 @@ export const MealModel = {
     });
   },
 
-  update(id: string, meal: Partial<MealData>, condiments?: CondimentData[]): Promise<MealRecord> {
+  update(id: string, meal: Partial<MealData>, condiments?: CondimentData[], drinks?: DrinkData[]): Promise<MealRecord> {
     return prisma.$transaction(async (tx) => {
       if (condiments) {
         await tx.mealCondiment.deleteMany({ where: { mealId: id } });
         if (condiments.length) await tx.mealCondiment.createMany({ data: condiments.map((c) => ({ ...c, mealId: id })) });
+      }
+      if (drinks) {
+        await tx.mealDrink.deleteMany({ where: { mealId: id } });
+        if (drinks.length) await tx.mealDrink.createMany({ data: drinks.map((d) => ({ ...d, quantity: new Prisma.Decimal(d.quantity), mealId: id })) });
       }
       return tx.meal.update({ where: { id }, data: meal, select: mealSelect });
     });

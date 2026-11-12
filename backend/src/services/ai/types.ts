@@ -1,4 +1,4 @@
-import type { NutrientKey } from '../nutrition/types.js';
+import type { NutrientKey, NutrientUnit } from '../nutrition/types.js';
 import type { AnalysisOutput } from './schemas.js';
 
 export type InputKey =
@@ -31,7 +31,7 @@ export interface AnalysisInput {
       amountAssumed: boolean;
       nutrients: Record<NutrientKey, number | null>;
     }[];
-    totals: Record<NutrientKey, { value: number | null; unit: 'mg' | 'g'; complete: boolean }>;
+    totals: Record<NutrientKey, { value: number | null; unit: NutrientUnit; complete: boolean }>;
     dataNotes: string[];
   };
   day: {

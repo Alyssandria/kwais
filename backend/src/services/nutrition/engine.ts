@@ -1,6 +1,8 @@
 import { matchFood } from './matcher.js';
 import { parseMealText } from './text-parser.js';
 import {
+  DRINK_UNIT_ML,
+  FOOD_NUTRIENT_KEYS,
   NUTRIENT_KEYS,
   NUTRIENT_UNITS,
   type Catalog,
@@ -18,7 +20,7 @@ import {
 } from './types.js';
 import { DRINK_GLASS_GRAMS, STANDARD_GRAMS } from './units.js';
 
-export const ENGINE_VERSION = 'nutrition-engine@1';
+export const ENGINE_VERSION = 'nutrition-engine@2';
 
 export const CONDIMENT_GRAMS: Record<CondimentAmount, { grams: number; guessed: boolean; label: string }> = {
   konti: { grams: 2.5, guessed: true, label: 'konti (about ½ tsp)' },
@@ -55,8 +57,14 @@ export const DRINK_FOODS: Record<string, string> = {
 
 const round1 = (n: number) => Math.round(n * 10) / 10;
 
+// Fluid counts only logged drinks, so foods and condiments always add 0 mL.
+const NO_FLUID: NutrientValue = { value: 0, source: 'verified' };
+
 const emptyNutrients = (): Record<NutrientKey, NutrientValue> =>
-  Object.fromEntries(NUTRIENT_KEYS.map((n) => [n, { value: null, source: 'missing' }])) as Record<NutrientKey, NutrientValue>;
+  ({
+    ...Object.fromEntries(FOOD_NUTRIENT_KEYS.map((n) => [n, { value: null, source: 'missing' }])),
+    fluid: NO_FLUID,
+  }) as Record<NutrientKey, NutrientValue>;
 
 function gramsFor(
   food: CatalogFood,
@@ -87,7 +95,7 @@ function gramsFor(
 function nutrientsFor(food: CatalogFood, grams: number, guessed: boolean): Record<NutrientKey, NutrientValue> {
   const fromVerifiedTable = food.verified && (food.source === 'PH_FCT' || food.source === 'USDA_FDC');
   const out = emptyNutrients();
-  for (const n of NUTRIENT_KEYS) {
+  for (const n of FOOD_NUTRIENT_KEYS) {
     const per100 = food.per100g[n];
     if (per100 == null) continue;
     out[n] = { value: round1((per100 * grams) / 100), source: fromVerifiedTable && !guessed ? 'verified' : 'estimated' };
@@ -140,7 +148,14 @@ export function estimateMeal(input: MealInput, catalog: Catalog, parsed: ParsedI
       preparation: p.preparation,
       amountGuessed: g.guessed,
       match,
-      nutrients: g.grams == null ? emptyNutrients() : nutrientsFor(food, g.grams, g.guessed),
+      nutrients:
+        g.grams == null
+          ? emptyNutrients()
+          : {
+              ...nutrientsFor(food, g.grams, g.guessed),
+              // a drink written in the meal text ("1 baso kape") counts toward fluid too
+              ...(food.category === 'drink' ? { fluid: { value: round1(g.grams), source: g.guessed ? 'estimated' : 'verified' } as NutrientValue } : {}),
+            },
     });
   }
 
@@ -170,27 +185,31 @@ export function estimateMeal(input: MealInput, catalog: Catalog, parsed: ParsedI
   }
 
   for (const d of input.drinks) {
-    const phrase = DRINK_FOODS[d] ?? d.replace(/_/g, ' ');
+    const phrase = DRINK_FOODS[d.name] ?? d.name.replace(/_/g, ' ');
     const match = matchFood(phrase, catalog);
     const food = match ? catalog.byId.get(match.foodId) : undefined;
+    // a food's own glass or can size wins over the standard one; 1 mL is counted as 1 g
+    const perUnit = (d.unit !== 'ml' ? food?.portions[d.unit] : undefined) ?? DRINK_UNIT_ML[d.unit];
+    const ml = round1(d.quantity * perUnit);
+    // the volume is known even when the drink is not in the food tables
+    const fluid: NutrientValue = { value: ml, source: d.assumed ? 'estimated' : 'verified' };
+    if (d.assumed) guessed.push(phrase);
     if (!match || !food) {
       unmatched.push(phrase);
-      items.push({ kind: 'drink', label: phrase, quantity: 1, unit: 'baso', grams: null, preparation: null, amountGuessed: true, match: null, nutrients: emptyNutrients() });
+      items.push({ kind: 'drink', label: phrase, quantity: d.quantity, unit: d.unit, grams: ml, preparation: null, amountGuessed: d.assumed, match: null, nutrients: { ...emptyNutrients(), fluid } });
       continue;
     }
-    const grams = food.portions.baso ?? food.portions.serving ?? DRINK_GLASS_GRAMS;
-    guessed.push(phrase);
     if (!food.verified) unverified.add(food.name);
     items.push({
       kind: 'drink',
       label: phrase,
-      quantity: 1,
-      unit: 'baso',
-      grams: round1(grams),
+      quantity: d.quantity,
+      unit: d.unit,
+      grams: ml,
       preparation: null,
-      amountGuessed: true,
+      amountGuessed: d.assumed,
       match: toMatch(food, match.confidence),
-      nutrients: nutrientsFor(food, grams, true),
+      nutrients: { ...nutrientsFor(food, ml, d.assumed), fluid },
     });
   }
 
@@ -205,7 +224,9 @@ export function estimateMeal(input: MealInput, catalog: Catalog, parsed: ParsedI
     totals[n] = { value, unit: NUTRIENT_UNITS[n], source, complete };
 
     const noValue = items.filter((i) => i.match && i.grams != null && i.nutrients[n].value == null).map((i) => i.label);
-    if (noValue.length) {
+    if (n === 'energy' && noValue.length && known.length === 0) {
+      notes.push({ code: 'no_value', nutrient: n, items: noValue, message: 'The food tables used for this meal have no calorie values, so calories are not counted.' });
+    } else if (noValue.length) {
       notes.push({ code: 'no_value', nutrient: n, items: noValue, message: `The food tables have no ${n} value for: ${noValue.join(', ')}. The ${n} total leaves them out.` });
     }
   }

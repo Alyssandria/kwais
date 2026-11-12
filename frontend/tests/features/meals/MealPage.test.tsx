@@ -237,6 +237,31 @@ describe('MealPage', () => {
     expect(screen.getByText(/counts this meal and 1 earlier analysed meal/)).toBeInTheDocument();
   });
 
+  it('shows calories and fluid, and leaves them out of older analyses that lack them', () => {
+    renderPage();
+    expect(screen.queryByRole('article', { name: 'Calories' })).toBeNull();
+    expect(screen.queryByRole('article', { name: 'Fluid' })).toBeNull();
+    expect(screen.queryByRole('columnheader', { name: /Calories/ })).toBeNull();
+
+    const base = analysis();
+    query.data = meal({
+      analysis: analysis({
+        totals: {
+          ...base.totals,
+          energy: { value: 520, unit: 'kcal', source: 'estimated', complete: true },
+          fluid: { value: 240, unit: 'mL', source: 'verified', complete: true },
+        },
+        items: base.items.map((i) => ({ ...i, nutrients: { ...i.nutrients, energy: { value: 260, source: 'estimated' as const }, fluid: { value: 0, source: 'verified' as const } } })),
+        day: { ...base.day!, totalsWithMeal: { ...base.day!.totalsWithMeal, energy: 1300, fluid: 720 } },
+      }),
+    });
+    renderPage();
+    expect(screen.getByRole('article', { name: 'Calories' })).toHaveTextContent('520 kcal');
+    expect(screen.getByRole('article', { name: 'Calories' })).toHaveTextContent('no goal set');
+    expect(screen.getByRole('article', { name: 'Fluid' })).toHaveTextContent('From the drinks you logged. Soup broth is not counted.');
+    expect(screen.getByRole('columnheader', { name: 'Calories (kcal)' })).toBeInTheDocument();
+  });
+
   it('shows what each food contributed', () => {
     renderPage();
     const contrib = screen.getByRole('region', { name: 'What each food contributed' });

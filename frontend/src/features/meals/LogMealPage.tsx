@@ -15,12 +15,13 @@ import {
   type Meal,
   type MealCategory,
   type MealCondiment,
+  type MealDrink,
   type MealInput,
   type RecentMeal,
 } from './api';
 import { ChipGroup, ChipSection, WhenPicker } from './components';
 import { ProgressDialog, type ProgressKind, type ProgressStep } from './ProgressDialog';
-import { AMOUNTS, CONDIMENTS, COOKING, DRINKS, MEAL_TYPES, condimentLabel, defaultCategory, summaryOf, whenText } from './options';
+import { AMOUNTS, CONDIMENTS, COOKING, DRINKS, DRINK_UNITS, DRINK_UNIT_ML, MEAL_TYPES, condimentLabel, defaultCategory, drinkLabel, summaryOf, whenText } from './options';
 
 const MEAL_ICONS = { breakfast: Sunrise, lunch: Sun, dinner: Moon, snack: Apple } as const;
 
@@ -39,7 +40,7 @@ export function LogMealPage() {
   const [category, setCategory] = useState<MealCategory>(() => defaultCategory(new Date()));
   const [rawText, setRawText] = useState('');
   const [condiments, setCondiments] = useState<MealCondiment[]>([]);
-  const [drinks, setDrinks] = useState<string[]>([]);
+  const [drinks, setDrinks] = useState<MealDrink[]>([]);
   const [cookingMethods, setCookingMethods] = useState<string[]>([]);
   const [notes, setNotes] = useState('');
   const [analyse, setAnalyse] = useState(true);
@@ -67,7 +68,7 @@ export function LogMealPage() {
     setCategory(m.category);
     setRawText(m.rawText);
     setCondiments(m.condiments.map((c) => ({ name: c.name, amount: c.amount })));
-    setDrinks(m.drinks);
+    setDrinks(m.drinks.map((d) => ({ name: d.name, quantity: d.quantity, unit: d.unit })));
     setCookingMethods(m.cookingMethods);
     if (m.notes !== undefined) setNotes(m.notes ?? '');
     setTextError(null);
@@ -94,7 +95,7 @@ export function LogMealPage() {
     eatenAt: eatenAt.toISOString(),
     rawText: rawText.trim(),
     condiments,
-    drinks,
+    drinks: drinks.map((d) => ({ name: d.name, quantity: d.quantity, unit: d.unit })),
     cookingMethods,
     notes: notes.trim() || null,
     status,
@@ -117,6 +118,7 @@ export function LogMealPage() {
 
   const saveDraft = async () => {
     setFormError(null);
+    if (drinks.some((d) => !(d.quantity > 0))) return;
     try {
       const m = await persist('draft');
       setDraftId(m.id);
@@ -135,6 +137,7 @@ export function LogMealPage() {
       textRef.current?.focus();
       return;
     }
+    if (drinks.some((d) => !(d.quantity > 0))) return;
     setProgress(analyse ? 'analyse' : 'save');
     setStep('saving');
     let saved: Meal;
@@ -179,6 +182,21 @@ export function LogMealPage() {
     setCondiments((cs) => (cs.some((c) => c.name === name) ? cs.filter((c) => c.name !== name) : [...cs, { name, amount: 'konti' }]));
   const setAmount = (name: string, amount: MealCondiment['amount']) =>
     setCondiments((cs) => cs.map((c) => (c.name === name ? { ...c, amount } : c)));
+
+  const toggleDrink = (name: string) =>
+    setDrinks((ds) => (ds.some((d) => d.name === name) ? ds.filter((d) => d.name !== name) : [...ds, { name, quantity: 1, unit: 'baso' }]));
+  const setDrinkQuantity = (name: string, quantity: number) => setDrinks((ds) => ds.map((d) => (d.name === name ? { ...d, quantity } : d)));
+  // switching units keeps roughly the same volume: 1 baso becomes 240 mL, 250 mL becomes 1 baso
+  const setDrinkUnit = (name: string, unit: MealDrink['unit']) =>
+    setDrinks((ds) =>
+      ds.map((d) => {
+        if (d.name !== name || d.unit === unit) return d;
+        const ml = d.quantity * DRINK_UNIT_ML[d.unit];
+        const quantity = unit === 'ml' ? Math.round(ml / 10) * 10 : Math.max(0.5, Math.round((ml / DRINK_UNIT_ML[unit]) * 2) / 2);
+        return { ...d, unit, quantity };
+      }),
+    );
+  const drinkInvalid = drinks.some((d) => !(d.quantity > 0));
 
   return (
     <div className="mx-auto flex max-w-[920px] flex-col gap-5 pb-4">
@@ -333,9 +351,36 @@ export function LogMealPage() {
           icon={<CupSoda className="size-[22px]" />}
           tile="bg-phosphorus-soft text-phosphorus"
           title="Drinks"
-          hint="Some drinks add phosphorus or potassium."
+          hint="Some drinks add phosphorus or potassium. How much you drank counts toward your fluid total."
         >
-          <ChipGroup label="Drinks" options={DRINKS} selected={drinks} onToggle={(v) => setDrinks((d) => toggle(d, v))} />
+          <ChipGroup label="Drinks" options={DRINKS} selected={drinks.map((d) => d.name)} onToggle={toggleDrink} />
+          {drinks.length > 0 && (
+            <div className="flex flex-col gap-2 rounded-card bg-[#f8fafc] p-3">
+              <p className="text-[12.5px] font-bold text-[#475569]">How much?</p>
+              {drinks.map((d) => (
+                <div key={d.name} className="flex flex-wrap items-center gap-2.5">
+                  <span className="min-w-[90px] font-bold">{drinkLabel(d.name)}</span>
+                  <input
+                    type="number"
+                    inputMode="decimal"
+                    min={d.unit === 'ml' ? 10 : 0.5}
+                    step={d.unit === 'ml' ? 10 : 0.5}
+                    value={Number.isFinite(d.quantity) ? d.quantity : ''}
+                    onChange={(e) => setDrinkQuantity(d.name, e.target.valueAsNumber)}
+                    aria-label={`How much ${drinkLabel(d.name)}`}
+                    aria-invalid={!(d.quantity > 0)}
+                    className="h-10 w-[84px] rounded-field border border-line bg-surface px-2.5 text-right tabular-nums aria-invalid:border-bad"
+                  />
+                  <Segmented label={`Unit for ${drinkLabel(d.name)}`} value={d.unit} options={DRINK_UNITS} onChange={(u) => setDrinkUnit(d.name, u)} />
+                </div>
+              ))}
+              {drinkInvalid && (
+                <p role="alert" className="text-[12.5px] font-semibold text-bad">
+                  Enter how much you drank for each drink.
+                </p>
+              )}
+            </div>
+          )}
         </ChipSection>
         <ChipSection
           id="cook-title"

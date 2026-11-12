@@ -1,3 +1,4 @@
+import { Prisma } from '@prisma/client';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { testCatalog } from '../fixtures/food-catalog.js';
 import type { AnalysisRecord, MealRecord } from '../../src/models/meal.model.js';
@@ -59,7 +60,7 @@ const body = {
   eatenAt: at,
   rawText: '1 tasa kanin',
   condiments: [{ name: 'patis' as const, amount: 'tsp' as const }],
-  drinks: ['tubig' as const],
+  drinks: [{ name: 'tubig' as const, quantity: 2, unit: 'baso' as const, assumed: false }],
   cookingMethods: [],
   notes: '',
   status: 'saved' as const,
@@ -111,11 +112,12 @@ describe('MealService.create', () => {
       'patient-1',
       expect.objectContaining({ rawText: '1 tasa kanin', status: 'saved', notes: null }),
       [{ name: 'patis', amount: 'tsp' }],
+      [{ name: 'tubig', quantity: 2, unit: 'baso', assumed: false }],
     );
   });
 
   it('without AI consent, reads the text with rules and sends nothing to AI', async () => {
-    const saved = mealRow({ condiments: [{ name: 'patis', amount: 'tsp' }], drinks: ['tubig'] });
+    const saved = mealRow({ condiments: [{ name: 'patis', amount: 'tsp' }], drinks: [{ name: 'tubig', quantity: new Prisma.Decimal(2), unit: 'baso', assumed: false }] });
     vi.mocked(MealModel.create).mockResolvedValue(saved);
     vi.mocked(MealModel.findOwned).mockResolvedValue({ ...saved, status: 'analysed' });
 
@@ -129,7 +131,7 @@ describe('MealService.create', () => {
     expect(items.map((i) => [i.foodItemId, i.label, i.grams])).toEqual([
       ['kanin', 'kanin', 160],
       ['patis', 'patis', 5],
-      ['tubig', 'tubig', 240],
+      ['tubig', 'tubig', 480],
     ]);
     expect(AuditModel.create).not.toHaveBeenCalledWith(expect.objectContaining({ resourceType: 'ai_processing' }));
   });
@@ -147,7 +149,7 @@ describe('MealService.create', () => {
 
     const analysis = vi.mocked(MealModel.saveAnalysis).mock.calls[0]![2];
     // 1800 earlier + 403.2 now > 2000 target: −2; low-salt diet with patis: −2
-    expect(analysis).toMatchObject({ aiStatus: 'mock', score: 6, scoreBand: 'mixed', promptVersion: 'v4', model: 'mock-rules' });
+    expect(analysis).toMatchObject({ aiStatus: 'mock', score: 6, scoreBand: 'mixed', promptVersion: 'v5', model: 'mock-rules' });
     expect(LabService.list).not.toHaveBeenCalled();
     expect(analysis.aiOutput).toMatchObject({ scoreBasis: 'personal', actions: [expect.objectContaining({ title: 'Keep the rest of today low in sodium' }), expect.objectContaining({ title: 'Swap the sawsawan' })] });
     const snap = analysis.inputsSnapshot as Record<string, any>;
@@ -209,7 +211,7 @@ describe('MealService.update', () => {
     vi.mocked(MealModel.findOwned).mockResolvedValue(mealRow({ status: 'draft' }));
     vi.mocked(MealModel.update).mockResolvedValue(mealRow({ status: 'draft' }));
     await MealService.update('patient-1', 'meal-1', { notes: 'shared', condiments: [] }, 'user-1', meta);
-    expect(MealModel.update).toHaveBeenCalledWith('meal-1', { notes: 'shared' }, []);
+    expect(MealModel.update).toHaveBeenCalledWith('meal-1', { notes: 'shared' }, [], undefined);
   });
 
   it('finishes and analyses a draft', async () => {

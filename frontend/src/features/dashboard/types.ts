@@ -1,4 +1,4 @@
-import type { NutrientKey } from '@/lib/nutrition';
+import type { NutrientKey, NutrientUnit } from '@/lib/nutrition';
 
 export interface PatientDashboard {
   isSample: boolean;
@@ -24,7 +24,7 @@ export type MealCategory = 'breakfast' | 'lunch' | 'dinner' | 'snack';
 
 export interface TodayNutrient {
   value: number;
-  unit: 'mg' | 'g';
+  unit: NutrientUnit;
   target: number | null;
   targetSource: 'patient_entered' | 'clinician_verified' | null;
   hasEstimates: boolean;

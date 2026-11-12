@@ -50,7 +50,7 @@ describe('buildDashboard', () => {
       ['lunch', 1700],
     ]);
     expect(d.week).toHaveLength(7);
-    expect(d.week[5]).toEqual({ date: '2026-10-15', score: null, totals: { sodium: 900, potassium: 300, phosphorus: 200, protein: 20 } });
+    expect(d.week[5]).toEqual({ date: '2026-10-15', score: null, totals: { sodium: 900, potassium: 300, phosphorus: 200, protein: 20, energy: 0, fluid: 0 } });
     expect(d.week[4]!.totals).toBeNull();
   });
 
