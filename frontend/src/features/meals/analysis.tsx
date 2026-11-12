@@ -99,18 +99,18 @@ export function ScoreCard({
             {forDoctor ? (
               <p className="text-[12.5px] text-muted">
                 {out?.scoreBasis === 'general'
-                  ? 'Scored against general CKD guidance: the patient had no targets or labs with ranges at the time.'
-                  : 'Starts at 10. Points come off for the patient’s targets, restrictions, allergies and lab ranges, general CKD guidance where there is no target, and a little for what they wrote.'}
+                  ? 'Scored against general CKD guidance: the patient had no targets at the time.'
+                  : 'Starts at 10. Points come off for the patient’s targets, restrictions and allergies, general CKD guidance where there is no target, and a little for what they wrote. Lab results are not used.'}
               </p>
             ) : out?.scoreBasis === 'general' ? (
               <p className="rounded-field bg-info-soft px-3 py-2 text-[12.5px] text-info">
                 Scored against general guidance for people with CKD. Add your{' '}
-                <Link to="/patient/profile">daily targets</Link> or <Link to="/patient/labs">lab results</Link> for a score that fits you.
+                <Link to="/patient/profile">daily targets</Link> from your care team for a score that fits you.
               </p>
             ) : (
               <p className="text-[12.5px] text-muted">
-                Starts at 10. Points come off for your targets, restrictions, allergies and lab ranges, general CKD guidance where you have no
-                target, and a little for what you wrote, like “maalat”.
+                Starts at 10. Points come off for your targets, restrictions and allergies, general CKD guidance where you have no target,
+                and a little for what you wrote, like “maalat”. Lab results are not used.
               </p>
             )}
           </>
@@ -118,11 +118,10 @@ export function ScoreCard({
           <>
             <p className="text-[22px] font-extrabold">No score yet</p>
             {forDoctor ? (
-              <p className="text-[13px] text-muted">The patient had no targets or lab ranges when this meal was analysed.</p>
+              <p className="text-[13px] text-muted">The patient had no targets when this meal was analysed.</p>
             ) : (
               <p className="text-[13px] text-muted">
-                Add a <Link to="/patient/profile">daily target</Link> or a <Link to="/patient/labs">lab result</Link> with its range, and
-                the next analysis will include a score.
+                Add a <Link to="/patient/profile">daily target</Link> from your care team, and the next analysis will include a score.
               </p>
             )}
           </>

@@ -6,7 +6,6 @@ export type InputKey =
   | 'day'
   | `target.${NutrientKey}`
   | `guide.${NutrientKey}`
-  | `lab.${string}`
   | 'ckdStage'
   | 'dialysisStatus'
   | 'restrictions'
@@ -43,7 +42,6 @@ export interface AnalysisInput {
   };
   supplied: {
     targets?: PerNutrient<{ dailyMax: number; unit: string; source: string }>;
-    labs?: Record<string, { label: string; value: number; unit: string; refLow: number | null; refHigh: number | null; collectedOn: string; source: string }>;
     ckdStage?: { value: string; source: string };
     dialysisStatus?: string;
     restrictions?: string[];

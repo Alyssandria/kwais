@@ -124,7 +124,7 @@ export function DisclaimerPage() {
         <h2>What the numbers mean</h2>
         <ul>
           <li>Nutrient amounts are estimates from food composition tables and standard recipes.</li>
-          <li>Scores compare those estimates only with targets and lab ranges you entered. K-WAIS does not set targets or decide what is safe for you.</li>
+          <li>Scores compare those estimates with targets you entered, or with general CKD guidance where you have none. Lab results are not used in scores. K-WAIS does not set targets or decide what is safe for you.</li>
           <li>K-WAIS never works out your CKD stage from your answers or lab values.</li>
           <li>AI-written text is labelled and may contain mistakes.</li>
         </ul>

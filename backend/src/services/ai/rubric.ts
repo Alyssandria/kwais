@@ -10,14 +10,12 @@ export function bandFor(score: number | null): ScoreBand | null {
   return 'attention';
 }
 
-const SCORED_LABS = ['sodium', 'potassium', 'phosphorus'];
-
 export type ScoreBasis = 'personal' | 'general';
 
+// Personal means the patient has daily targets. Lab results never make a score personal.
 export function scoreBasis(input: AnalysisInput): ScoreBasis | null {
-  const { targets, labs } = input.supplied;
+  const { targets } = input.supplied;
   if (targets && Object.keys(targets).length > 0) return 'personal';
-  if (Object.entries(labs ?? {}).some(([test, l]) => SCORED_LABS.includes(test) && (l.refLow != null || l.refHigh != null))) return 'personal';
   const guided = Object.keys(input.guidance ?? {}) as (keyof AnalysisInput['meal']['totals'])[];
   return guided.some((n) => input.meal.totals[n]?.value != null) ? 'general' : null;
 }
@@ -31,7 +29,7 @@ export function capDeductions(reasons: AnalysisOutput['scoreReasons']): Analysis
   let descriptionLeft = DESCRIPTION_CAP;
   return reasons.map((r) => {
     if (r.deduction == null) return r;
-    if (r.basis === 'not_scored') return { ...r, deduction: null };
+    if (r.basis === 'not_scored' || r.basis === 'lab') return { ...r, deduction: null };
     let d = Math.min(r.deduction, PER_REASON_CAP[r.basis] ?? r.deduction);
     if (r.basis === 'description') {
       d = Math.min(d, descriptionLeft);

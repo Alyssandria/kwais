@@ -82,7 +82,7 @@ function HeroPreview() {
         </div>
         <div className="mb-5 rounded-card bg-primary-soft p-4">
           <ScoreRing score={6} size={76} />
-          <p className="mt-2 text-[12px] text-muted">Scored against the targets and lab ranges you entered</p>
+          <p className="mt-2 text-[12px] text-muted">Scored against the targets you entered</p>
         </div>
         <div className="grid grid-cols-2 gap-3">
           <MiniNutrient name="Sodium" value="1,580 mg" pct={79} kind="within" status="79% of your target" />
@@ -149,7 +149,7 @@ const features: { icon: LucideIcon; title: string; body: string; tile: string }[
   {
     icon: FlaskConical,
     title: 'Your targets, your lab results',
-    body: 'Scores use only what you entered: your care team’s targets and the ranges on your lab slip. Nothing is guessed.',
+    body: 'Scores use your care team’s targets, or general CKD guidance where you have none, and say which. Lab results are kept for reference only.',
     tile: 'bg-phosphorus-soft text-phosphorus',
   },
   {
@@ -195,7 +195,7 @@ const steps = [
   },
   {
     title: 'AI explains what it means',
-    body: 'You get a 1–10 score with reasons, based only on the targets and lab values you supplied, plus questions for your care team.',
+    body: 'You get a 1–10 score with reasons, based on the targets you supplied or general CKD guidance, plus questions for your care team.',
   },
 ];
 
@@ -312,7 +312,7 @@ function ReasonRow({ pts, tone, text }: { pts: string; tone: 'bad' | 'neutral'; 
 function Limits() {
   const items: { icon: LucideIcon; title: string; body: string }[] = [
     { icon: ClipboardList, title: 'Not a diagnosis', body: 'K-WAIS never works out your CKD stage or tells you a food is safe. Those calls belong to your care team.' },
-    { icon: FlaskConical, title: 'Nothing assumed', body: 'Without a target or lab range from you, you see the estimate only, with no score and no warning colours.' },
+    { icon: FlaskConical, title: 'Nothing assumed', body: 'Without a target from you, scores use general CKD guidance and say so. Lab results are never used in scores.' },
     { icon: Lock, title: 'Your data, protected', body: 'Lab values are encrypted at rest. Health data is handled under the Philippine Data Privacy Act of 2012.' },
     { icon: ShieldCheck, title: 'Honest about uncertainty', body: 'Every number shows where it came from: verified food data, an estimate, or missing.' },
   ];
@@ -347,7 +347,7 @@ const faqs = [
   },
   {
     q: 'Do I need lab results or targets to use it?',
-    a: 'No. You can log meals and see nutrient estimates right away. The 1–10 score appears once you add a target from your care team or lab results with the reference ranges printed on your slip.',
+    a: 'No. You can log meals and see nutrient estimates and a 1–10 score right away. Without targets, the score uses general CKD guidance. Add targets from your care team for a score that fits you.',
   },
   {
     q: 'Can I log a meal without AI analysis?',

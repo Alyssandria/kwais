@@ -18,8 +18,11 @@ export const ParseOutputSchema = z.object({
     .max(20),
 });
 
+// 'lab' is accepted only so analyses saved before labs were taken out of scoring still read.
+// The model is never offered it, and a 'lab' reason never takes points off (see rubric.ts).
 export const REASON_BASES = ['target', 'guidance', 'lab', 'restriction', 'allergy', 'meal_share', 'description', 'not_scored'] as const;
 export type ReasonBasis = (typeof REASON_BASES)[number];
+const OUTPUT_BASES = REASON_BASES.filter((b) => b !== 'lab');
 
 export const AnalysisOutputSchema = z.object({
   score: z.number().int().min(1).max(10).nullable(),
@@ -81,7 +84,7 @@ export const ANALYSIS_RESPONSE_SCHEMA = S('OBJECT', {
           title: S('STRING'),
           detail: S('STRING'),
           deduction: nullable(S('INTEGER')),
-          basis: S('STRING', { enum: REASON_BASES }),
+          basis: S('STRING', { enum: OUTPUT_BASES }),
         },
         required: ['title', 'detail', 'deduction', 'basis'],
       }),

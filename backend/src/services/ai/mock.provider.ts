@@ -11,7 +11,7 @@ const MEAL_SHARE = 0.4;
 const fmt = (n: number, unit: string) => `${Math.round(n).toLocaleString('en-PH')} ${unit}`;
 
 export function mockAnalysis(input: AnalysisInput): AnalysisOutput {
-  const { targets = {}, labs = {}, restrictions = [], allergies = [] } = input.supplied;
+  const { targets = {}, restrictions = [], allergies = [] } = input.supplied;
   const guidance = input.guidance ?? {};
   const used = new Set<InputKey>(['meal', 'day']);
   const reasons: AnalysisOutput['scoreReasons'] = [];
@@ -22,7 +22,7 @@ export function mockAnalysis(input: AnalysisInput): AnalysisOutput {
   if (!basis) {
     reasons.push({
       title: 'No score yet',
-      detail: 'The food tables had no sodium value for this meal. Add a daily target or a lab result with its range for a fuller analysis.',
+      detail: 'The food tables had no sodium value for this meal. Add the daily targets from your care team for a fuller analysis.',
       deduction: null,
       basis: 'not_scored',
     });
@@ -34,13 +34,9 @@ export function mockAnalysis(input: AnalysisInput): AnalysisOutput {
     const limit = target ?? (input.meal.totals[n].value != null ? guide : undefined);
     const unit = input.meal.totals[n].unit;
     const today = input.day.totalsWithMeal[n];
-    const lab = labs[n];
-    const labHigh = lab && lab.refHigh != null && lab.value > lab.refHigh;
-    if (lab) used.add(`lab.${n}`);
-    if (labHigh) concerns.push(`Your ${lab.label.toLowerCase()} result (${lab.value} ${lab.unit}, ${lab.collectedOn}) is above the range on your slip.`);
 
     if (!limit) {
-      if (basis) reasons.push({ title: `${LABEL[n]} not scored`, detail: `Add a ${n} target or lab result to have it scored.`, deduction: null, basis: 'not_scored' });
+      if (basis) reasons.push({ title: `${LABEL[n]} not scored`, detail: `Add a ${n} target from your care team to have it scored.`, deduction: null, basis: 'not_scored' });
       continue;
     }
     used.add(target ? `target.${n}` : `guide.${n}`);
@@ -50,8 +46,8 @@ export function mockAnalysis(input: AnalysisInput): AnalysisOutput {
     if (pct > 100) {
       reasons.push({
         title: `${LABEL[n]} is over ${target ? 'your target' : 'general guidance'}`,
-        detail: `${ofLimit}${labHigh ? ' Your latest lab for it is also above its range.' : ''}`,
-        deduction: labHigh ? 3 : 2,
+        detail: ofLimit,
+        deduction: 2,
         basis: target ? 'target' : 'guidance',
       });
       concerns.push(`Today's ${n} is above ${target ? 'the target you entered' : 'general guidance for people with CKD'}.`);

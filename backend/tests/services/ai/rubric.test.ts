@@ -36,14 +36,14 @@ describe('checkAnalysis', () => {
   });
 
   it('still scores against general guidance when no targets or labs were supplied', () => {
-    const input = sampleInput({ targets: undefined, labs: undefined });
+    const input = sampleInput({ targets: undefined });
     const out = checkAnalysis(output({ usedInputs: ['meal', 'guide.sodium', 'restrictions'] }), input);
     expect(out.score).toBe(6);
     expect(out.scoreBasis).toBe('general');
   });
 
   it('removes the score only when even the sodium number is missing', () => {
-    const input = sampleInput({ targets: undefined, labs: undefined });
+    const input = sampleInput({ targets: undefined });
     input.meal.totals.sodium.value = null;
     const out = checkAnalysis(output({ usedInputs: ['meal', 'restrictions'] }), input);
     expect(out.score).toBeNull();
@@ -75,11 +75,16 @@ describe('limits on judgement deductions', () => {
 });
 
 describe('scoreBasis and bands', () => {
-  it('is personal with a target or a sodium, potassium or phosphorus lab with a range, else general', () => {
+  it('is personal only with a target, else general', () => {
     expect(scoreBasis(sampleInput())).toBe('personal');
-    expect(scoreBasis(sampleInput({ targets: undefined }))).toBe('personal');
-    const noRange = { potassium: { label: 'Potassium', value: 5.6, unit: 'mmol/L', refLow: null, refHigh: null, collectedOn: '2026-09-28', source: 'patient_entered' } };
-    expect(scoreBasis(sampleInput({ targets: undefined, labs: noRange }))).toBe('general');
+    expect(scoreBasis(sampleInput({ targets: undefined }))).toBe('general');
+  });
+
+  it('takes no points off for a lab reason in an older analysis', () => {
+    const reason = (basis: 'lab' | 'target', deduction: number) => ({ title: 't', detail: 'd', deduction, basis });
+    const out = checkAnalysis(output({ scoreReasons: [reason('lab', 1), reason('target', 2)] }), sampleInput());
+    expect(out.scoreReasons[0]?.deduction).toBeNull();
+    expect(out.score).toBe(8);
   });
 
   it.each([
@@ -95,21 +100,22 @@ describe('scoreBasis and bands', () => {
 });
 
 describe('mock analysis (offline stand-in for Gemini)', () => {
-  it('follows the rubric: over target, high lab, salty condiment with a low-salt diet', () => {
+  it('follows the rubric: over target, salty condiment with a low-salt diet, and no lab results', () => {
     const input = sampleInput(
       { targets: { sodium: { dailyMax: 2000, unit: 'mg', source: 'patient_entered' }, potassium: { dailyMax: 2000, unit: 'mg', source: 'patient_entered' } } },
       { sodium: 2100, potassium: 2100, phosphorus: 300, protein: 25 },
     );
     input.allowedInputs.push('target.potassium');
     const out = checkAnalysis(mockAnalysis(input), input);
-    // sodium over −2, potassium over with high lab −3, toyo with low-salt diet −2
-    expect(out.score).toBe(3);
-    expect(out.scoreReasons.map((r) => r.deduction)).toEqual([2, 3, null, null, 2]);
-    expect(out.usedInputs).toEqual(expect.arrayContaining(['target.sodium', 'target.potassium', 'lab.potassium', 'restrictions']));
+    // sodium over −2, potassium over −2, toyo with low-salt diet −2
+    expect(out.score).toBe(4);
+    expect(out.scoreReasons.map((r) => r.deduction)).toEqual([2, 2, null, null, 2]);
+    expect(out.usedInputs).toEqual(expect.arrayContaining(['target.sodium', 'target.potassium', 'restrictions']));
+    expect(out.usedInputs.some((k) => k.startsWith('lab'))).toBe(false);
   });
 
   it('scores against general sodium guidance and suggests adding targets when nothing was supplied', () => {
-    const input = sampleInput({ targets: undefined, labs: undefined, restrictions: undefined }, { sodium: 2300, potassium: 500, phosphorus: 300, protein: 25 });
+    const input = sampleInput({ targets: undefined, restrictions: undefined }, { sodium: 2300, potassium: 500, phosphorus: 300, protein: 25 });
     const out = checkAnalysis(mockAnalysis(input), input);
     expect(out.score).toBe(8);
     expect(out.scoreBasis).toBe('general');
@@ -119,7 +125,7 @@ describe('mock analysis (offline stand-in for Gemini)', () => {
   });
 
   it('gives no score and says so when the meal has no sodium value', () => {
-    const input = sampleInput({ targets: undefined, labs: undefined, restrictions: undefined });
+    const input = sampleInput({ targets: undefined, restrictions: undefined });
     input.meal.totals.sodium.value = null;
     const out = checkAnalysis(mockAnalysis(input), input);
     expect(out.score).toBeNull();
@@ -127,7 +133,7 @@ describe('mock analysis (offline stand-in for Gemini)', () => {
   });
 
   it('takes points off for a salty description and a meal that is a big share of the day', () => {
-    const input = sampleInput({ targets: undefined, labs: undefined, restrictions: undefined });
+    const input = sampleInput({ targets: undefined, restrictions: undefined });
     input.meal.text = 'maalat na sinigang na baboy';
     input.meal.condiments = [];
     input.meal.totals.sodium.value = 900;

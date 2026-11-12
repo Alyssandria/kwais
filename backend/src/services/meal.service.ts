@@ -10,7 +10,6 @@ import { buildAnalysisInput } from './ai/inputs.js';
 import type { AnalysisOutput } from './ai/schemas.js';
 import type { AnalysisInput } from './ai/types.js';
 import { ConsentService } from './consent.service.js';
-import { LabService } from './lab.service.js';
 import { estimateMeal } from './nutrition/engine.js';
 import { NUTRIENT_KEYS, type DataNote, type ItemResult, type MealInput, type NutrientKey, type NutrientTotal } from './nutrition/types.js';
 import { ProfileService } from './profile.service.js';
@@ -141,11 +140,10 @@ async function dayContext(meal: MealRecord, patientId: string, timeZone: string)
 export type AnalysisStep = 'reading' | 'calculating' | 'scoring' | 'storing';
 
 async function analyse(meal: MealRecord, patientId: string, userId: string, meta: RequestMeta, onStep?: (step: AnalysisStep) => void): Promise<void> {
-  const [aiAllowed, profile, targets, labs, catalog] = await Promise.all([
+  const [aiAllowed, profile, targets, catalog] = await Promise.all([
     ConsentService.hasAiConsent(userId),
     ProfileService.get(patientId),
     TargetService.listActive(patientId),
-    LabService.list(patientId),
     FoodService.catalog(),
   ]);
   const mealInput: MealInput = {
@@ -166,7 +164,6 @@ async function analyse(meal: MealRecord, patientId: string, userId: string, meta
     day,
     profile,
     targets,
-    labs,
   });
   if (aiAllowed) onStep?.('scoring');
   const ai = await AiService.analyse(input, aiAllowed);

@@ -395,7 +395,7 @@ export function LogMealPage() {
           />
           <p className="hidden max-w-[340px] text-[12.5px] text-[#d7eeeb] lg:block">
             {analyse
-              ? 'Compared only with the targets and lab results you entered. Nothing else is assumed.'
+              ? 'Compared only with the targets you entered, or general CKD guidance where you have none. Lab results are not used.'
               : 'Counts toward your history and streak. You can analyse it later.'}
           </p>
           <div className="ml-auto flex flex-wrap items-center gap-2.5">

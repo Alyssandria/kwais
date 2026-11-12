@@ -13,7 +13,7 @@ export function TodayScoreCard({ score, scoredMeals }: { score: number | null; s
         <div className="flex flex-1 flex-col justify-center gap-2">
           <p className="font-bold">No score yet</p>
           <p className="text-[13px] text-muted">
-            Scores appear once you add a target or lab results, and analyse a meal.
+            Scores appear once you analyse a meal. Add targets from your care team for a score that fits you.
           </p>
           <Link to="/patient/labs" className="text-[13px] font-semibold">
             Add lab results
@@ -28,7 +28,7 @@ export function TodayScoreCard({ score, scoredMeals }: { score: number | null; s
         </>
       )}
       <p className="mt-auto border-t border-primary-line pt-2.5 text-[12px] text-muted">
-        Scored only against the targets and lab ranges you entered
+        Scored against the targets you entered, or general CKD guidance
       </p>
     </Card>
   );

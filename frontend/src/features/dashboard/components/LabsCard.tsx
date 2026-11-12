@@ -46,7 +46,7 @@ export function LabsCard({ labs }: { labs: LabSummary[] }) {
           <EmptyState
             icon={FlaskConical}
             title="No lab results yet"
-            description="Add values from your latest lab slip to see them here and to get meal scores."
+            description="Add values from your latest lab slip to keep a record next to the range printed on it."
           />
         </Card>
       ) : (

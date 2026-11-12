@@ -13,25 +13,9 @@ function sources(over: Partial<InputSources> = {}): InputSources {
     day: { date: '2026-10-16', earlierMeals: 1, totalsBeforeMeal: { sodium: 1000, potassium: 0, phosphorus: 0, protein: 0 } },
     profile: { ckdStage: null, dialysisStatus: 'unknown', restrictions: [], allergies: [], dietaryPreferences: [] },
     targets: [],
-    labs: [],
     ...over,
   };
 }
-
-const lab = (id: string, test: 'potassium' | 'other', collectedOn: string, value: number, label = 'Potassium') => ({
-  id,
-  test,
-  label,
-  value,
-  refLow: 3.5,
-  refHigh: 5.1,
-  unit: 'mmol/L',
-  collectedOn,
-  labName: 'Private lab name',
-  source: 'patient_entered' as const,
-  createdAt: '',
-  verified: null,
-});
 
 describe('buildAnalysisInput', () => {
   it('sends only the meal and day when the patient supplied nothing else', () => {
@@ -43,13 +27,12 @@ describe('buildAnalysisInput', () => {
     expect(input.day.totalsWithMeal.sodium).toBe(1403.2);
   });
 
-  it('keeps the newest lab per test, without the lab name', () => {
-    const input = buildAnalysisInput(
-      sources({ labs: [lab('a', 'potassium', '2026-06-20', 5.0), lab('b', 'potassium', '2026-09-28', 5.6), lab('c', 'other', '2026-09-28', 7, 'Uric acid panel')] }),
-    );
-    expect(input.supplied.labs?.potassium).toMatchObject({ value: 5.6, collectedOn: '2026-09-28' });
-    expect(JSON.stringify(input)).not.toContain('Private lab name');
-    expect(input.allowedInputs).toEqual(['meal', 'day', 'lab.potassium', 'lab.other:uric acid panel', 'guide.sodium']);
+  it('never sends lab results, even when sources carry them', () => {
+    const withLabs = { ...sources(), labs: [{ test: 'potassium', label: 'Potassium', value: 5.6, refLow: 3.5, refHigh: 5.1, collectedOn: '2026-09-28' }] };
+    const input = buildAnalysisInput(withLabs as InputSources);
+    expect(input.supplied).not.toHaveProperty('labs');
+    expect(input.allowedInputs.some((k) => k.startsWith('lab'))).toBe(false);
+    expect(JSON.stringify(input)).not.toContain('Potassium');
   });
 
   it('includes profile details only when given', () => {

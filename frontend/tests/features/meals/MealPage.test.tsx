@@ -203,7 +203,8 @@ describe('MealPage', () => {
     renderPage();
     const card = screen.getByRole('region', { name: 'Meal score' });
     expect(card).toHaveTextContent('No score yet');
-    expect(within(card).getByRole('link', { name: 'lab result' })).toHaveAttribute('href', '/patient/labs');
+    expect(within(card).getByRole('link', { name: 'daily target' })).toHaveAttribute('href', '/patient/profile');
+    expect(within(card).queryByRole('link', { name: /lab result/ })).toBeNull();
   });
 
   it('asks before sending anything to AI, then analyses', async () => {

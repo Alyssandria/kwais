@@ -61,8 +61,8 @@ export function LabsPage() {
           <div className="max-w-2xl">
             <h1 className="text-[30px] font-extrabold tracking-tight">Lab results</h1>
             <p className="mt-1 text-[#d7eeeb]">
-              Copy values exactly as printed on your lab slip. K-WAIS shows them and uses them in meal scores, but never
-              interprets them as a diagnosis.
+              Copy values exactly as printed on your lab slip. K-WAIS shows them for reference only. It does not use them in
+              meal scores or interpret them.
             </p>
             <p className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-primary-soft px-3 py-1 text-[12.5px] font-bold text-primary-dark">
               <Lock className="size-3.5" aria-hidden />
@@ -91,7 +91,7 @@ export function LabsPage() {
           <EmptyState
             icon={FlaskConical}
             title="No lab results yet"
-            description="Add values from your latest lab slip. With the reference range printed next to each value, K-WAIS can show whether it was in range and use it in meal scores."
+            description="Add values from your latest lab slip. With the reference range printed next to each value, K-WAIS can show whether it was in the range printed on your slip."
             action={
               <Button variant="accent" onClick={openAdd} iconLeft={<Plus className="size-4" />}>
                 Add your first result

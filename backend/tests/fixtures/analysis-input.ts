@@ -6,15 +6,11 @@ const totals = (sodium: number, potassium: number, phosphorus: number, protein: 
 export function sampleInput(over: Partial<AnalysisInput['supplied']> = {}, withMeal = totals(900, 500, 300, 25)): AnalysisInput {
   const supplied: AnalysisInput['supplied'] = {
     targets: { sodium: { dailyMax: 2000, unit: 'mg', source: 'patient_entered' } },
-    labs: {
-      potassium: { label: 'Potassium', value: 5.6, unit: 'mmol/L', refLow: 3.5, refHigh: 5.1, collectedOn: '2026-09-28', source: 'patient_entered' },
-    },
     restrictions: ['Low-salt diet'],
     ...over,
   };
   const allowedInputs: AnalysisInput['allowedInputs'] = ['meal', 'day'];
   for (const n of Object.keys(supplied.targets ?? {})) allowedInputs.push(`target.${n}` as 'target.sodium');
-  for (const t of Object.keys(supplied.labs ?? {})) allowedInputs.push(`lab.${t}`);
   for (const k of ['restrictions', 'allergies'] as const) if (supplied[k]?.length) allowedInputs.push(k);
   const guidance = guidanceWithout(supplied.targets);
   for (const n of Object.keys(guidance)) allowedInputs.push(`guide.${n}` as 'guide.sodium');

@@ -147,7 +147,8 @@ describe('MealService.create', () => {
 
     const analysis = vi.mocked(MealModel.saveAnalysis).mock.calls[0]![2];
     // 1800 earlier + 403.2 now > 2000 target: −2; low-salt diet with patis: −2
-    expect(analysis).toMatchObject({ aiStatus: 'mock', score: 6, scoreBand: 'mixed', promptVersion: 'v3', model: 'mock-rules' });
+    expect(analysis).toMatchObject({ aiStatus: 'mock', score: 6, scoreBand: 'mixed', promptVersion: 'v4', model: 'mock-rules' });
+    expect(LabService.list).not.toHaveBeenCalled();
     expect(analysis.aiOutput).toMatchObject({ scoreBasis: 'personal', actions: [expect.objectContaining({ title: 'Keep the rest of today low in sodium' }), expect.objectContaining({ title: 'Swap the sawsawan' })] });
     const snap = analysis.inputsSnapshot as Record<string, any>;
     expect(snap.day).toMatchObject({ earlierMeals: 1, totalsWithMeal: { sodium: 2203.2 } });

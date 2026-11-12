@@ -1,4 +1,3 @@
-import type { LabView } from '../lab.service.js';
 import type { ProfileView } from '../profile.service.js';
 import type { TargetView } from '../target.service.js';
 import { NUTRIENT_KEYS, type EngineResult, type MealInput, type NutrientKey } from '../nutrition/types.js';
@@ -11,12 +10,12 @@ export interface InputSources {
   day: { date: string; earlierMeals: number; totalsBeforeMeal: Record<NutrientKey, number> };
   profile: Pick<ProfileView, 'ckdStage' | 'dialysisStatus' | 'restrictions' | 'allergies' | 'dietaryPreferences'>;
   targets: TargetView[];
-  labs: LabView[];
 }
 
 const amountOf = (quantity: number, unit: string) => `${Math.round(quantity * 100) / 100} ${unit}`;
 
-// supplied details only: no name, patient code or contact details
+// supplied details only: no name, patient code or contact details.
+// Lab results are never sent: they are kept for reference and are not used in meal scores.
 export function buildAnalysisInput(src: InputSources): AnalysisInput {
   const allowed: InputKey[] = ['meal', 'day'];
   const supplied: AnalysisInput['supplied'] = {};
@@ -26,20 +25,6 @@ export function buildAnalysisInput(src: InputSources): AnalysisInput {
     for (const t of src.targets) {
       supplied.targets[t.nutrient] = { dailyMax: t.dailyMax, unit: t.unit, source: t.source };
       allowed.push(`target.${t.nutrient}`);
-    }
-  }
-
-  const latest = new Map<string, LabView>();
-  for (const l of src.labs) {
-    const key = l.test === 'other' ? `other:${l.label.toLowerCase()}` : l.test;
-    const prev = latest.get(key);
-    if (!prev || l.collectedOn > prev.collectedOn) latest.set(key, l);
-  }
-  if (latest.size) {
-    supplied.labs = {};
-    for (const [key, l] of latest) {
-      supplied.labs[key] = { label: l.label, value: l.value, unit: l.unit, refLow: l.refLow, refHigh: l.refHigh, collectedOn: l.collectedOn, source: l.source };
-      allowed.push(`lab.${key}`);
     }
   }
 
